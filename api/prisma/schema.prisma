@@ -28,3 +28,161 @@ model LinkedProvider {
   @@unique([provider, providerId])
   @@unique([userId, provider])
 }
+
+model WeddingSettings {
+  id                   String    @id @default(uuid())
+  coupleNameA          String    @default("Caleb")
+  coupleNameB          String    @default("Raissa")
+  weddingDate          DateTime?
+  rsvpDeadline         DateTime?
+  siteTitle            String?
+  siteDescription      String?
+  heroImageUrl         String?
+  welcomeMessage       String?
+  isPublic             Boolean   @default(true)
+  isRsvpEnabled        Boolean   @default(true)
+  allowMaybe           Boolean   @default(false)
+  enableMealPreference Boolean   @default(true)
+  enableSongRequest    Boolean   @default(true)
+  enableGuestbook      Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model Guest {
+  id                String            @id @default(uuid())
+  primaryName       String
+  email             String?
+  phone             String?
+  group             String?
+  allowedPartySize  Int               @default(1)
+  plusOneAllowed    Boolean           @default(false)
+  invitationCode    String            @unique
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  rsvp              Rsvp?
+  seatingAssignment SeatingAssignment?
+}
+
+model Rsvp {
+  id                  String     @id @default(uuid())
+  guestId             String     @unique
+  guest               Guest      @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  status              RsvpStatus
+  attendeeCount       Int        @default(0)
+  plusOneName         String?
+  email               String?
+  phone               String?
+  mealPreference      String?
+  dietaryRestrictions String?
+  message             String?
+  songRequest         String?
+  submittedAt         DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+}
+
+enum RsvpStatus {
+  PENDING
+  ATTENDING
+  DECLINED
+  MAYBE
+}
+
+model WeddingEvent {
+  id           String    @id @default(uuid())
+  type         String
+  title        String
+  venueName    String?
+  address      String?
+  startTime    DateTime?
+  endTime      DateTime?
+  mapUrl       String?
+  notes        String?
+  displayOrder Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model ScheduleItem {
+  id           String   @id @default(uuid())
+  timeLabel    String
+  title        String
+  description  String?
+  location     String?
+  displayOrder Int      @default(0)
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model FaqItem {
+  id           String   @id @default(uuid())
+  question     String
+  answer       String
+  category     String?
+  displayOrder Int      @default(0)
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model GalleryImage {
+  id           String   @id @default(uuid())
+  title        String?
+  description  String?
+  imageUrl     String
+  displayOrder Int      @default(0)
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model StoryTimelineItem {
+  id           String   @id @default(uuid())
+  dateLabel    String?
+  title        String
+  description  String?
+  imageUrl     String?
+  displayOrder Int      @default(0)
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ContactPerson {
+  id           String   @id @default(uuid())
+  name         String
+  role         String?
+  email        String?
+  phone        String?
+  notes        String?
+  displayOrder Int      @default(0)
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SeatingTable {
+  id          String              @id @default(uuid())
+  name        String
+  capacity    Int?
+  notes       String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  assignments SeatingAssignment[]
+}
+
+model SeatingAssignment {
+  id        String       @id @default(uuid())
+  guestId   String       @unique
+  guest     Guest        @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  tableId   String
+  table     SeatingTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  seatLabel String?
+  notes     String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}

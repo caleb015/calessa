@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(ls *)",
+      "Bash(ls)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(echo *)",
+      "Bash(pwd)",
+      "Bash(which *)",
+      "Bash(env)",
+      "Bash(printenv *)",
+      "Bash(git status)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git branch *)",
+      "Bash(git show *)",
+      "Bash(git remote *)",
+      "Bash(docker ps *)",
+      "Bash(docker inspect *)",
+      "Bash(docker exec * psql *)",
+      "Bash(npx prisma validate *)",
+      "Bash(npx prisma format *)",
+      "Bash(npx prisma studio *)",
+      "Bash(npm run build *)",
+      "Bash(npm run test *)",
+      "Bash(npm test *)",
+      "Bash(npm run lint *)"
+    ]
+  }
+}

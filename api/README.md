@@ -31,7 +31,7 @@ NestJS authentication backend for a generic, cloneable auth template. Provides l
 Copy `.env.example` to `.env` and fill in values. At minimum:
 
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/auth_template?schema=public
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/calessa?schema=public
 JWT_SECRET=<random-string>     # required — app will not start if missing
 JWT_EXPIRES_IN=7d
 FRONTEND_URL=http://localhost:3000

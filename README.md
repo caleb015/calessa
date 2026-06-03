@@ -1,15 +1,13 @@
-# Auth Template
+# Calessa — Wedding Website
 
-A reusable, full-stack authentication template with email/password login, OAuth social login, JWT sessions, and a profile management dashboard. Built to be cloned and customized as the auth foundation for any web app.
+A wedding website and admin dashboard for Caleb & Raissa. Public guests can view details, browse the story and gallery, and submit RSVPs via a personal invite code. Authenticated admins manage guests, RSVPs, content, and seating from a protected dashboard.
 
 ## Features
 
-- Register and sign in with email + password
-- Sign in with Google, Facebook, or X (Twitter)
-- JWT-based sessions stored in localStorage
-- Protected dashboard route (middleware + server-side token verification)
-- Profile management: display name, change password, link/unlink OAuth providers, delete account
-- Multi-provider accounts (link multiple OAuth providers to a single account)
+- Public wedding pages: homepage, story, details, schedule, FAQ, gallery, contact
+- Guest RSVP via unique invitation code — no account needed
+- Admin dashboard: guest management, RSVP tracking, seating, content, CSV export
+- Auth: email/password + Google/Facebook/X OAuth, JWT sessions, profile management
 
 ## Stack
 
@@ -31,7 +29,7 @@ A reusable, full-stack authentication template with email/password login, OAuth 
 
 ```bash
 # Start Postgres
-docker run --name auth-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=auth_template -p 5432:5432 -d postgres:16
+docker run --name calessa-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=calessa -p 5432:5432 -d postgres:16
 
 # Run DB migrations
 cd api
@@ -45,7 +43,7 @@ cp api/.env.example api/.env
 
 **Terminal 1 — Postgres**
 ```bash
-docker start auth-db
+docker start calessa-db
 ```
 
 **Terminal 2 — Mock OAuth server** (runs on port 8080)
@@ -94,7 +92,7 @@ npm test
 **Backend E2E tests** (requires the test DB to be set up — see `api/.env.test.example`)
 ```bash
 cd api
-npm run test:e2e:setup   # first time only — runs migrations against auth_template_test
+npm run test:e2e:setup   # first time only — runs migrations against calessa_test
 npm run test:e2e
 ```
 
