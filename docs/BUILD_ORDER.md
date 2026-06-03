@@ -6,8 +6,8 @@ Based on `wedding_website_ai_build_spec.md`. Each phase should be fully runnable
 
 - [x] Add all Prisma models to `api/prisma/schema.prisma`
 - [x] Generate and run migration
-- [ ] Add seed data (settings, FAQs, schedule, guests, RSVPs, gallery, seating tables)
-- [ ] NestJS module: `wedding-settings` (CRUD)
+- [x] Add seed data (settings, FAQs, schedule, guests, RSVPs, gallery, seating tables)
+- [x] NestJS module: `wedding-settings` (CRUD)
 - [ ] NestJS module: `guests` (CRUD + invitation code generation)
 - [ ] NestJS module: `rsvp` (public submit/update, admin CRUD)
 - [ ] NestJS module: `public` (unauthenticated read endpoints)
