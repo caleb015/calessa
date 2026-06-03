@@ -14,7 +14,7 @@ Build order and progress tracking: `docs/BUILD_ORDER.md`
 | Frontend | Next.js 15 App Router, TypeScript, Tailwind CSS v4 — in `web/` |
 | Backend | NestJS 11, TypeScript, Passport, JWT — in `api/` |
 | Database | PostgreSQL + Prisma 5 ORM |
-| Package managers | `pnpm` for web, `npm` for api |
+| Package managers | `npm` for both web and api |
 
 ## What Already Exists (Do Not Rebuild)
 
@@ -59,7 +59,7 @@ See `docs/BUILD_ORDER.md` for the full checklist. Summary:
 npm run start:dev
 
 # Web (from web/)
-pnpm dev
+npm run dev
 
 # Database migration
 cd api && npx prisma migrate dev

@@ -22,8 +22,7 @@ A wedding website and admin dashboard for Caleb & Raissa. Public guests can view
 ### Prerequisites
 
 - Docker (for Postgres)
-- Node.js 20+ via nvm
-- pnpm (frontend only)
+- Node.js 20+
 
 ### First-time setup
 
@@ -60,9 +59,8 @@ npm run start:dev
 
 **Terminal 4 — Frontend** (runs on port 3000)
 ```bash
-nvm use 20
 cd web
-pnpm dev
+npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
@@ -98,9 +96,8 @@ npm run test:e2e
 
 **Frontend unit tests**
 ```bash
-nvm use 20
 cd web
-pnpm test
+npm test
 ```
 
 ## Project Structure
