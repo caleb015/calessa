@@ -1,0 +1,40 @@
+# Local development only. Do not use in production.
+# Production requires a managed Postgres instance with proper credentials,
+# SSL, backups, and environment-specific configuration.
+
+services:
+  db:
+    image: postgres:16
+    container_name: calessa-db
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: calessa
+    ports:
+      - "5433:5432"
+    volumes:
+      - calessa_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  db-test:
+    image: postgres:16
+    container_name: calessa-db-test
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: calessa_test
+    ports:
+      - "5434:5432"
+    volumes:
+      - calessa_db_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  calessa_db_data:
+  calessa_db_test_data:

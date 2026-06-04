@@ -745,7 +745,6 @@ Do not implement these until the core MVP works:
 - Print-ready guest list
 - Entourage page
 - Gift registry page
-- Live event updates
 
 ## Final Output Expected From AI Builder
 

@@ -8,7 +8,7 @@ Based on `wedding_website_ai_build_spec.md`. Each phase should be fully runnable
 - [x] Generate and run migration
 - [x] Add seed data (settings, FAQs, schedule, guests, RSVPs, gallery, seating tables)
 - [x] NestJS module: `wedding-settings` (CRUD)
-- [ ] NestJS module: `guests` (CRUD + invitation code generation)
+- [x] NestJS module: `guests` (CRUD + invitation code generation + bulk create)
 - [ ] NestJS module: `rsvp` (public submit/update, admin CRUD)
 - [ ] NestJS module: `public` (unauthenticated read endpoints)
 - [ ] NestJS module: `admin` (summary, CSV export)
@@ -30,7 +30,7 @@ Based on `wedding_website_ai_build_spec.md`. Each phase should be fully runnable
 
 - [ ] Dashboard overview (`/dashboard`) — summary cards, recent RSVPs
 - [ ] Wedding settings (`/dashboard/settings`)
-- [ ] Guest management (`/dashboard/guests`) — CRUD, RSVP link copy, filters
+- [ ] Guest management (`/dashboard/guests`) — CRUD, bulk import (CSV/paste), RSVP link copy, filters
 - [ ] RSVP management (`/dashboard/rsvps`) — view, filter, manual edit
 - [ ] CSV export — guests and RSVPs
 

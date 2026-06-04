@@ -19,6 +19,8 @@ A wedding website and admin dashboard for Caleb & Raissa. Public guests can view
 
 ## Local Development
 
+`docker-compose.yml` is for local development only. In production, set `DATABASE_URL` in your deployment platform (e.g. Vercel, Railway, Render) to point to a managed Postgres instance — Docker Compose is not used.
+
 ### Prerequisites
 
 - Docker (for Postgres)
@@ -27,22 +29,27 @@ A wedding website and admin dashboard for Caleb & Raissa. Public guests can view
 ### First-time setup
 
 ```bash
-# Start Postgres
-docker run --name calessa-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=calessa -p 5432:5432 -d postgres:16
-
-# Run DB migrations
-cd api
-npx prisma migrate deploy
+# Start Postgres (dev + test databases)
+docker compose up -d
 
 # Copy env files
 cp api/.env.example api/.env
+cp api/.env.test.example api/.env.test
+
+# Install API dependencies and run migrations
+cd api
+npm install
+npx prisma migrate deploy
+
+# Run E2E test migrations
+npm run test:e2e:setup
 ```
 
 ### Starting everything
 
 **Terminal 1 — Postgres**
 ```bash
-docker start calessa-db
+docker compose up -d
 ```
 
 **Terminal 2 — Mock OAuth server** (runs on port 8080)

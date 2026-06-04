@@ -2,8 +2,35 @@
   "permissions": {
     "allow": [
       "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(npm test *)",
       "Bash(npx jest *)",
-      "Bash(gh api *)"
+      "Bash(npx prisma *)",
+      "Bash(gh api *)",
+      "Bash(ls *)",
+      "Bash(ls)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(echo *)",
+      "Bash(pwd)",
+      "Bash(which *)",
+      "Bash(env)",
+      "Bash(printenv *)",
+      "Bash(git status)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git branch *)",
+      "Bash(git show *)",
+      "Bash(git remote *)",
+      "Bash(docker ps *)",
+      "Bash(docker inspect *)",
+      "Bash(docker compose *)",
+      "Bash(docker exec calessa-db *)",
+      "Bash(docker exec calessa-db-test *)"
     ]
   }
 }
