@@ -55,10 +55,11 @@ model Guest {
   email             String?
   phone             String?
   group             String?
-  allowedPartySize  Int               @default(1)
-  plusOneAllowed    Boolean           @default(false)
-  invitationCode    String            @unique
-  notes             String?
+  allowedPartySize      Int               @default(1)
+  plusOneAllowed        Boolean           @default(false)
+  requiresMealSelection Boolean           @default(false)
+  invitationCode        String            @unique
+  notes                 String?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 

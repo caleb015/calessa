@@ -29,6 +29,10 @@ export class CreateGuestDto {
   plusOneAllowed?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  requiresMealSelection?: boolean;
+
+  @IsOptional()
   @IsString()
   @MaxLength(50)
   invitationCode?: string;
