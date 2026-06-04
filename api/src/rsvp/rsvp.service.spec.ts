@@ -133,6 +133,30 @@ describe('RsvpService', () => {
         service.submitByCode('TESTCODE', { ...validDto, plusOneName: 'Jane' }),
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('throws BadRequestException when ATTENDING with attendeeCount of 0', async () => {
+      await expect(
+        service.submitByCode('TESTCODE', { ...validDto, status: RsvpStatus.ATTENDING, attendeeCount: 0 }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('allows attendeeCount of 0 when DECLINED', async () => {
+      await service.submitByCode('TESTCODE', { ...validDto, status: RsvpStatus.DECLINED, attendeeCount: 0 });
+      expect(mockPrisma.rsvp.upsert).toHaveBeenCalled();
+    });
+
+    it('allows RSVP submission when no WeddingSettings exist', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue(null);
+      await service.submitByCode('TESTCODE', validDto);
+      expect(mockPrisma.rsvp.upsert).toHaveBeenCalled();
+    });
+
+    it('does not throw when deadline is in the future', async () => {
+      const futureDate = new Date(Date.now() + 86400000);
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ ...mockSettings, rsvpDeadline: futureDate });
+      await service.submitByCode('TESTCODE', validDto);
+      expect(mockPrisma.rsvp.upsert).toHaveBeenCalled();
+    });
   });
 
   // ── admin findAll / findOne ────────────────────────────────────────────────

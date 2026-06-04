@@ -11,7 +11,7 @@ Based on `wedding_website_ai_build_spec.md`. Each phase should be fully runnable
 - [x] NestJS module: `guests` (CRUD + invitation code generation + bulk create)
 - [x] NestJS module: `rsvp` (public submit/update, admin CRUD)
 - [x] NestJS module: `public` (unauthenticated read endpoints)
-- [ ] NestJS module: `admin` (summary, CSV export)
+- [x] NestJS module: `admin` (summary, CSV export)
 - [ ] NestJS modules for content: `events`, `schedule`, `faq`, `gallery`, `story-timeline`, `contact`, `seating`
 
 ## Phase 2 — Public Website (Frontend)

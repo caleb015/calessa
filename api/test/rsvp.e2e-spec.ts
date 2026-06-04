@@ -150,6 +150,21 @@ describe('RSVP (e2e)', () => {
         .send({ status: 'ATTENDING', attendeeCount: 1, email: 'juan@example.com' })
         .expect(404);
     });
+
+    it('returns 400 when ATTENDING with attendeeCount 0', () => {
+      return request(app.getHttpServer())
+        .post(`/public/rsvp/${TEST_CODE}`)
+        .send({ status: 'ATTENDING', attendeeCount: 0, email: 'juan@example.com' })
+        .expect(400);
+    });
+
+    it('allows DECLINED with attendeeCount 0', async () => {
+      const res = await request(app.getHttpServer())
+        .post(`/public/rsvp/${TEST_CODE}`)
+        .send({ status: 'DECLINED', attendeeCount: 0, email: 'juan@example.com' })
+        .expect(201);
+      expect(res.body.status).toBe('DECLINED');
+    });
   });
 
   // ── GET /admin/rsvps ─────────────────────────────────────────────────────

@@ -50,6 +50,31 @@ describe('Public endpoints (e2e)', () => {
     }
   });
 
+  describe('isPublic=false blocks content endpoints but not settings', () => {
+    beforeAll(async () => {
+      await prisma.weddingSettings.upsert({
+        where: { id: 'singleton' },
+        update: { isPublic: false },
+        create: { id: 'singleton', isPublic: false },
+      });
+    });
+
+    afterAll(async () => {
+      await prisma.weddingSettings.update({ where: { id: 'singleton' }, data: { isPublic: true } });
+    });
+
+    it('GET /public/settings still returns 200 (frontend needs it to show maintenance page)', () => {
+      return request(app.getHttpServer()).get('/public/settings').expect(200);
+    });
+
+    const blockedRoutes = ['/public/story', '/public/events', '/public/schedule', '/public/faqs', '/public/gallery', '/public/contact'];
+    for (const route of blockedRoutes) {
+      it(`GET ${route} returns 503`, () => {
+        return request(app.getHttpServer()).get(route).expect(503);
+      });
+    }
+  });
+
   describe('GET /public/settings', () => {
     it('returns public-safe fields only', async () => {
       const res = await request(app.getHttpServer())
@@ -104,6 +129,30 @@ describe('Public endpoints (e2e)', () => {
     it('returns an array', async () => {
       const res = await request(app.getHttpServer()).get('/public/contact').expect(200);
       expect(Array.isArray(res.body)).toBe(true);
+    });
+  });
+
+  describe('isPublished filter', () => {
+    it('excludes unpublished FAQs from GET /public/faqs', async () => {
+      const faq = await prisma.faqItem.create({
+        data: { question: 'E2E hidden?', answer: 'Yes', isPublished: false, displayOrder: 999 },
+      });
+
+      const res = await request(app.getHttpServer()).get('/public/faqs').expect(200);
+      expect(res.body.find((f: any) => f.id === faq.id)).toBeUndefined();
+
+      await prisma.faqItem.delete({ where: { id: faq.id } });
+    });
+
+    it('includes published FAQs in GET /public/faqs', async () => {
+      const faq = await prisma.faqItem.create({
+        data: { question: 'E2E visible?', answer: 'Yes', isPublished: true, displayOrder: 999 },
+      });
+
+      const res = await request(app.getHttpServer()).get('/public/faqs').expect(200);
+      expect(res.body.find((f: any) => f.id === faq.id)).toBeDefined();
+
+      await prisma.faqItem.delete({ where: { id: faq.id } });
     });
   });
 });

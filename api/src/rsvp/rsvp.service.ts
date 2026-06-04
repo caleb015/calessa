@@ -55,6 +55,13 @@ export class RsvpService {
       throw new BadRequestException('"Maybe" is not an accepted RSVP response');
     }
 
+    if (
+      (dto.status === RsvpStatus.ATTENDING || dto.status === RsvpStatus.MAYBE) &&
+      dto.attendeeCount < 1
+    ) {
+      throw new BadRequestException('Attendee count must be at least 1 when attending');
+    }
+
     if (dto.attendeeCount > guest.allowedPartySize) {
       throw new BadRequestException(
         `Attendee count cannot exceed the allowed party size of ${guest.allowedPartySize}`,

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 const SINGLETON_SETTINGS_ID = 'singleton';
@@ -6,6 +6,16 @@ const SINGLETON_SETTINGS_ID = 'singleton';
 @Injectable()
 export class PublicService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private async assertSitePublic() {
+    const settings = await this.prisma.weddingSettings.findUnique({
+      where: { id: SINGLETON_SETTINGS_ID },
+      select: { isPublic: true },
+    });
+    if (settings && !settings.isPublic) {
+      throw new ServiceUnavailableException('The website is not currently available');
+    }
+  }
 
   async getSettings() {
     const settings = await this.prisma.weddingSettings.findUnique({
@@ -29,41 +39,47 @@ export class PublicService {
     };
   }
 
-  getStory() {
+  async getStory() {
+    await this.assertSitePublic();
     return this.prisma.storyTimelineItem.findMany({
       where: { isPublished: true },
       orderBy: { displayOrder: 'asc' },
     });
   }
 
-  getEvents() {
+  async getEvents() {
+    await this.assertSitePublic();
     return this.prisma.weddingEvent.findMany({
       orderBy: { displayOrder: 'asc' },
     });
   }
 
-  getSchedule() {
+  async getSchedule() {
+    await this.assertSitePublic();
     return this.prisma.scheduleItem.findMany({
       where: { isPublished: true },
       orderBy: { displayOrder: 'asc' },
     });
   }
 
-  getFaqs() {
+  async getFaqs() {
+    await this.assertSitePublic();
     return this.prisma.faqItem.findMany({
       where: { isPublished: true },
       orderBy: { displayOrder: 'asc' },
     });
   }
 
-  getGallery() {
+  async getGallery() {
+    await this.assertSitePublic();
     return this.prisma.galleryImage.findMany({
       where: { isPublished: true },
       orderBy: { displayOrder: 'asc' },
     });
   }
 
-  getContact() {
+  async getContact() {
+    await this.assertSitePublic();
     return this.prisma.contactPerson.findMany({
       where: { isPublished: true },
       orderBy: { displayOrder: 'asc' },

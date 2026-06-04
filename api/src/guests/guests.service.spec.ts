@@ -92,6 +92,11 @@ describe('GuestsService', () => {
         service.create({ primaryName: 'Test', invitationCode: 'TESTCODE' }),
       ).rejects.toThrow(ConflictException);
     });
+
+    it('throws ConflictException when all 10 auto-generate attempts collide', async () => {
+      mockPrisma.guest.findUnique.mockResolvedValue(mockGuest); // always collides
+      await expect(service.create({ primaryName: 'Test' })).rejects.toThrow(ConflictException);
+    });
   });
 
   describe('update', () => {

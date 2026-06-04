@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ServiceUnavailableException } from '@nestjs/common';
 import { PublicService } from './public.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -68,61 +69,97 @@ describe('PublicService', () => {
 
   describe('getStory', () => {
     it('returns only published items ordered by displayOrder', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: true });
       mockPrisma.storyTimelineItem.findMany.mockResolvedValue([]);
       await service.getStory();
       expect(mockPrisma.storyTimelineItem.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { isPublished: true }, orderBy: { displayOrder: 'asc' } }),
       );
     });
+
+    it('throws ServiceUnavailableException when isPublic is false', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: false });
+      await expect(service.getStory()).rejects.toThrow(ServiceUnavailableException);
+    });
   });
 
   describe('getEvents', () => {
     it('returns all events ordered by displayOrder', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: true });
       mockPrisma.weddingEvent.findMany.mockResolvedValue([]);
       await service.getEvents();
       expect(mockPrisma.weddingEvent.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ orderBy: { displayOrder: 'asc' } }),
       );
     });
+
+    it('throws ServiceUnavailableException when isPublic is false', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: false });
+      await expect(service.getEvents()).rejects.toThrow(ServiceUnavailableException);
+    });
   });
 
   describe('getSchedule', () => {
     it('returns only published items', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: true });
       mockPrisma.scheduleItem.findMany.mockResolvedValue([]);
       await service.getSchedule();
       expect(mockPrisma.scheduleItem.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { isPublished: true } }),
       );
     });
+
+    it('throws ServiceUnavailableException when isPublic is false', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: false });
+      await expect(service.getSchedule()).rejects.toThrow(ServiceUnavailableException);
+    });
   });
 
   describe('getFaqs', () => {
     it('returns only published FAQs', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: true });
       mockPrisma.faqItem.findMany.mockResolvedValue([]);
       await service.getFaqs();
       expect(mockPrisma.faqItem.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { isPublished: true } }),
       );
     });
+
+    it('throws ServiceUnavailableException when isPublic is false', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: false });
+      await expect(service.getFaqs()).rejects.toThrow(ServiceUnavailableException);
+    });
   });
 
   describe('getGallery', () => {
     it('returns only published images', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: true });
       mockPrisma.galleryImage.findMany.mockResolvedValue([]);
       await service.getGallery();
       expect(mockPrisma.galleryImage.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { isPublished: true } }),
       );
     });
+
+    it('throws ServiceUnavailableException when isPublic is false', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: false });
+      await expect(service.getGallery()).rejects.toThrow(ServiceUnavailableException);
+    });
   });
 
   describe('getContact', () => {
     it('returns only published contacts', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: true });
       mockPrisma.contactPerson.findMany.mockResolvedValue([]);
       await service.getContact();
       expect(mockPrisma.contactPerson.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { isPublished: true } }),
       );
+    });
+
+    it('throws ServiceUnavailableException when isPublic is false', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: false });
+      await expect(service.getContact()).rejects.toThrow(ServiceUnavailableException);
     });
   });
 });
