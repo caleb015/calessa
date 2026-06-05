@@ -26,7 +26,7 @@ const mockProfile = {
 const mockProviders = [{ provider: 'google', linkedAt: '2026-01-01T00:00:00.000Z' }];
 
 function setupFetch(profile = mockProfile, providers = mockProviders) {
-  (global.fetch as jest.Mock).mockImplementation((url: string, opts?: any) => {
+  (global.fetch as jest.Mock).mockImplementation((url: string, opts?: { method?: string }) => {
     const method: string = opts?.method ?? 'GET';
     if (url.includes('/auth/me')) {
       return Promise.resolve({ ok: true, json: () => Promise.resolve(profile) });

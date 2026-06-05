@@ -1,9 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function AuthCallback() {
+  return (
+    <Suspense>
+      <AuthCallbackContent />
+    </Suspense>
+  );
+}
+
+function AuthCallbackContent() {
   const router = useRouter();
   const params = useSearchParams();
   const [error, setError] = useState('');
@@ -13,12 +21,13 @@ export default function AuthCallback() {
     const err = params.get('error');
 
     if (err) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError(decodeURIComponent(err));
       return;
     }
 
     if (!token) {
-      router.push('/');
+      router.push('/login');
       return;
     }
 
@@ -33,7 +42,7 @@ export default function AuthCallback() {
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
           <p className="text-red-600 font-medium mb-4">{error}</p>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/login')}
             className="text-indigo-600 hover:underline text-sm"
           >
             Back to sign in

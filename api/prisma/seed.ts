@@ -15,7 +15,7 @@ async function main() {
       rsvpDeadline: new Date('2026-11-30T23:59:59.000Z'),
       siteTitle: 'Caleb & Raissa',
       siteDescription: 'Join us as we celebrate our wedding day.',
-      heroImageUrl: 'https://placehold.co/1920x1080',
+      heroImageUrl: '/images/hero.png',
       welcomeMessage: 'We are so excited to celebrate this special day with our family and friends. Please join us!',
       isPublic: true,
       isRsvpEnabled: true,

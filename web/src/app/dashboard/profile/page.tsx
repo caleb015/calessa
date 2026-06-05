@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { appConfig } from '@/config/app';
 
 const OAUTH_PROVIDERS = ['google', 'facebook', 'x'] as const;
-type OAuthProvider = typeof OAUTH_PROVIDERS[number];
 
 interface LinkedProvider {
   provider: string;
@@ -23,6 +22,14 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
+  return (
+    <Suspense>
+      <ProfilePageContent />
+    </Suspense>
+  );
+}
+
+function ProfilePageContent() {
   const router = useRouter();
   const params = useSearchParams();
 
@@ -58,16 +65,19 @@ export default function ProfilePage() {
   const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
   useEffect(() => {
-    if (!token) { router.push('/'); return; }
+    if (!token) { router.push('/login'); return; }
 
     // Handle return from OAuth link flow
     const linked = params.get('linked');
     const error = params.get('error');
-    if (linked) setBanner({ type: 'success', message: `${linked.charAt(0).toUpperCase() + linked.slice(1)} account connected successfully.` });
-    if (error === 'provider_taken') setBanner({ type: 'error', message: 'That account is already linked to a different user.' });
-    if (error === 'already_linked') setBanner({ type: 'error', message: 'That provider is already connected to your account.' });
-    if (error === 'invalid_state') setBanner({ type: 'error', message: 'Link request expired. Please try again.' });
-    if (error === 'link_failed') setBanner({ type: 'error', message: 'Failed to connect provider. Please try again.' });
+    let initialBanner: { type: 'success' | 'error'; message: string } | null = null;
+    if (linked) initialBanner = { type: 'success', message: `${linked.charAt(0).toUpperCase() + linked.slice(1)} account connected successfully.` };
+    if (error === 'provider_taken') initialBanner = { type: 'error', message: 'That account is already linked to a different user.' };
+    if (error === 'already_linked') initialBanner = { type: 'error', message: 'That provider is already connected to your account.' };
+    if (error === 'invalid_state') initialBanner = { type: 'error', message: 'Link request expired. Please try again.' };
+    if (error === 'link_failed') initialBanner = { type: 'error', message: 'Failed to connect provider. Please try again.' };
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (initialBanner) setBanner(initialBanner);
 
     Promise.all([
       fetch(`${appConfig.apiUrl}/auth/me`, { headers: authHeaders }).then(r => r.json()),
@@ -97,8 +107,8 @@ export default function ProfilePage() {
       });
       if (!res.ok) throw new Error((await res.json()).message ?? 'Failed to update name');
       setNameMsg({ type: 'success', text: 'Display name updated.' });
-    } catch (err: any) {
-      setNameMsg({ type: 'error', text: err.message });
+    } catch (err: unknown) {
+      setNameMsg({ type: 'error', text: err instanceof Error ? err.message : 'An error occurred' });
     } finally {
       setNameLoading(false);
     }
@@ -123,8 +133,8 @@ export default function ProfilePage() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err: any) {
-      setPasswordMsg({ type: 'error', text: err.message });
+    } catch (err: unknown) {
+      setPasswordMsg({ type: 'error', text: err instanceof Error ? err.message : 'An error occurred' });
     } finally {
       setPasswordLoading(false);
     }
@@ -139,8 +149,8 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error((await res.json()).message ?? 'Failed to unlink');
       setLinkedProviders(prev => prev.filter(p => p.provider !== provider));
       setBanner({ type: 'success', message: `${provider.charAt(0).toUpperCase() + provider.slice(1)} account disconnected.` });
-    } catch (err: any) {
-      setBanner({ type: 'error', message: err.message });
+    } catch (err: unknown) {
+      setBanner({ type: 'error', message: err instanceof Error ? err.message : 'An error occurred' });
     }
   };
 
@@ -151,7 +161,7 @@ export default function ProfilePage() {
       localStorage.removeItem('access_token');
       localStorage.removeItem('user_email');
       document.cookie = 'logged_in=; Max-Age=0; path=/';
-      router.push('/');
+      router.push('/login');
     } catch {
       setBanner({ type: 'error', message: 'Failed to delete account. Please try again.' });
       setDeleteLoading(false);
@@ -165,13 +175,13 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error('Failed to get link URL');
       const { url } = await res.json();
       window.location.href = url;
-    } catch (err: any) {
-      setBanner({ type: 'error', message: err.message });
+    } catch (err: unknown) {
+      setBanner({ type: 'error', message: err instanceof Error ? err.message : 'An error occurred' });
     }
   };
 
   const isProviderLinked = (provider: string) => linkedProviders.some(p => p.provider === provider);
-  const canUnlink = (provider: string) => {
+  const canUnlink = () => {
     const hasOtherMethod = linkedProviders.length > 1 || profile?.hasPassword;
     return !!hasOtherMethod;
   };
@@ -318,9 +328,9 @@ export default function ProfilePage() {
                   {linked ? (
                     <button
                       onClick={() => handleUnlink(provider)}
-                      disabled={!canUnlink(provider)}
+                      disabled={!canUnlink()}
                       className="text-sm text-red-600 hover:underline disabled:text-gray-400 disabled:no-underline"
-                      title={!canUnlink(provider) ? 'Cannot remove your only login method' : undefined}
+                      title={!canUnlink() ? 'Cannot remove your only login method' : undefined}
                     >
                       Disconnect
                     </button>

@@ -16,15 +16,15 @@ Based on `wedding_website_ai_build_spec.md`. Each phase should be fully runnable
 
 ## Phase 2 — Public Website (Frontend)
 
-- [ ] Public layout with navigation (Home, Story, Details, Schedule, RSVP, FAQ, Gallery, Contact)
-- [ ] Homepage (`/`) — hero, countdown, CTAs, highlights
-- [ ] Our Story page (`/story`) — story body + timeline
-- [ ] Wedding Details page (`/details`) — ceremony, reception, dress code, map
-- [ ] Schedule page (`/schedule`) — ordered day-of timeline
-- [ ] RSVP page (`/rsvp` and `/rsvp/[code]`) — full form with validation
-- [ ] FAQ page (`/faq`) — accordion or list
-- [ ] Gallery page (`/gallery`) — photo grid + lightbox
-- [ ] Contact page (`/contact`) — contact persons list
+- [x] Public layout with navigation (Home, Story, Details, Schedule, RSVP, FAQ, Gallery, Contact)
+- [x] Homepage (`/`) — hero, countdown, CTAs, highlights
+- [x] Our Story page (`/story`) — story body + timeline
+- [x] Wedding Details page (`/details`) — ceremony, reception, dress code, map
+- [x] Schedule page (`/schedule`) — ordered day-of timeline
+- [x] RSVP page (`/rsvp` and `/rsvp/[code]`) — full form with validation
+- [x] FAQ page (`/faq`) — accordion or list
+- [x] Gallery page (`/gallery`) — photo grid + lightbox
+- [x] Contact page (`/contact`) — contact persons list
 
 ## Phase 3 — Admin Dashboard (Frontend + Admin APIs)
 
