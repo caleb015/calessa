@@ -10,9 +10,11 @@ import { GuestsModule } from './guests/guests.module';
 import { RsvpModule } from './rsvp/rsvp.module';
 import { PublicModule } from './public/public.module';
 import { AdminModule } from './admin/admin.module';
+import { ContentModule } from './content/content.module';
+import { SeatingModule } from './seating/seating.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, UsersModule, AuthModule, WeddingSettingsModule, GuestsModule, RsvpModule, PublicModule, AdminModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, UsersModule, AuthModule, WeddingSettingsModule, GuestsModule, RsvpModule, PublicModule, AdminModule, ContentModule, SeatingModule],
   controllers: [AppController],
   providers: [AppService],
 })
