@@ -28,11 +28,12 @@ Based on `wedding_website_ai_build_spec.md`. Each phase should be fully runnable
 
 ## Phase 3 — Admin Dashboard (Frontend + Admin APIs)
 
-- [ ] Dashboard overview (`/dashboard`) — summary cards, recent RSVPs
-- [ ] Wedding settings (`/dashboard/settings`)
-- [ ] Guest management (`/dashboard/guests`) — CRUD, bulk import (CSV/paste), RSVP link copy, filters
-- [ ] RSVP management (`/dashboard/rsvps`) — view, filter, manual edit
-- [ ] CSV export — guests and RSVPs
+- [x] Dashboard overview (`/dashboard`) — summary cards, recent RSVPs
+- [x] Wedding settings (`/dashboard/settings`)
+- [x] Guest management (`/dashboard/guests`) — CRUD, bulk import (CSV/paste), RSVP link copy, filters
+- [ ] Guest detail page (`/dashboard/guests/[id]`) — full profile, RSVP details, seating assignment
+- [x] RSVP management (`/dashboard/rsvps`) — view, filter, manual edit
+- [x] CSV export — guests and RSVPs
 
 ## Phase 4 — Seating + Content Polish
 

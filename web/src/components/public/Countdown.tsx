@@ -17,6 +17,7 @@ export default function Countdown({ date }: { date: string }) {
   const [time, setTime] = useState<ReturnType<typeof getTimeLeft> | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTime(getTimeLeft(new Date(date)));
     const timer = setInterval(() => setTime(getTimeLeft(new Date(date))), 1000);
     return () => clearInterval(timer);
