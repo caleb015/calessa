@@ -50,6 +50,20 @@ export const adminApi = {
   updateRsvp: (id: string, body: unknown) => patch(`/admin/rsvps/${id}`, body),
   deleteRsvp: (id: string) => del(`/admin/rsvps/${id}`),
 
+  // Seating tables
+  getSeatingTables: () => get('/admin/seating/tables'),
+  createSeatingTable: (body: unknown) => post('/admin/seating/tables', body),
+  updateSeatingTable: (id: string, body: unknown) => patch(`/admin/seating/tables/${id}`, body),
+  deleteSeatingTable: (id: string) => del(`/admin/seating/tables/${id}`),
+
+  // Seating assignments
+  getSeatingAssignments: () => get('/admin/seating/assignments'),
+  createSeatingAssignment: (body: unknown) => post('/admin/seating/assignments', body),
+  deleteSeatingAssignment: (id: string) => del(`/admin/seating/assignments/${id}`),
+
+  // Unassigned guests
+  getUnassignedGuests: () => get('/admin/seating/unassigned'),
+
   // CSV exports
   exportGuestsCsv: () => `${BASE_URL}/admin/export/guests.csv`,
   exportRsvpsCsv: () => `${BASE_URL}/admin/export/rsvps.csv`,

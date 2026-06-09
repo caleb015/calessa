@@ -8,9 +8,10 @@ const mockGuest = { id: 'guest-1', primaryName: 'Juan', invitationCode: 'CODE001
 const mockAssignment = { id: 'assign-1', guestId: 'guest-1', tableId: 'table-1', seatLabel: null, notes: null };
 
 const mockPrisma = {
-  seatingTable: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
+  seatingTable: { findMany: jest.fn(), findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
   seatingAssignment: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
   guest: { findMany: jest.fn() },
+  weddingSettings: { findFirst: jest.fn() },
 };
 
 describe('SeatingService', () => {
@@ -37,9 +38,55 @@ describe('SeatingService', () => {
     });
 
     it('createTable creates and returns table', async () => {
+      mockPrisma.weddingSettings.findFirst.mockResolvedValue(null);
       mockPrisma.seatingTable.create.mockResolvedValue(mockTable);
       const result = await service.createTable({ name: 'Table 1', capacity: 8 });
       expect(result).toEqual(mockTable);
+    });
+  });
+
+  describe('table uniqueness checks', () => {
+    it('skips the duplicate check entirely when no settings row exists', async () => {
+      mockPrisma.weddingSettings.findFirst.mockResolvedValue(null);
+      mockPrisma.seatingTable.create.mockResolvedValue(mockTable);
+      const result = await service.createTable({ name: 'Table 1', capacity: 8, tableNumber: 1 });
+      expect(result).toEqual(mockTable);
+      expect(mockPrisma.seatingTable.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('throws ConflictException when tableNumber is taken and uniqueness is required', async () => {
+      mockPrisma.weddingSettings.findFirst.mockResolvedValue({ requireUniqueTableNumbers: true, requireUniqueTableNames: false });
+      mockPrisma.seatingTable.findFirst.mockResolvedValue(mockTable);
+      await expect(
+        service.createTable({ name: 'Table 2', capacity: 8, tableNumber: 1 }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('creates the table when its number is not taken', async () => {
+      mockPrisma.weddingSettings.findFirst.mockResolvedValue({ requireUniqueTableNumbers: true, requireUniqueTableNames: false });
+      mockPrisma.seatingTable.findFirst.mockResolvedValue(null);
+      mockPrisma.seatingTable.create.mockResolvedValue(mockTable);
+      const result = await service.createTable({ name: 'Table 2', capacity: 8, tableNumber: 1 });
+      expect(result).toEqual(mockTable);
+    });
+
+    it('throws ConflictException when name is taken and uniqueness is required', async () => {
+      mockPrisma.weddingSettings.findFirst.mockResolvedValue({ requireUniqueTableNumbers: false, requireUniqueTableNames: true });
+      mockPrisma.seatingTable.findFirst.mockResolvedValue(mockTable);
+      await expect(
+        service.createTable({ name: 'Table 1', capacity: 8 }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('excludes the table itself from the duplicate lookup on update', async () => {
+      mockPrisma.seatingTable.findUnique.mockResolvedValue(mockTable);
+      mockPrisma.weddingSettings.findFirst.mockResolvedValue({ requireUniqueTableNumbers: true, requireUniqueTableNames: false });
+      mockPrisma.seatingTable.findFirst.mockResolvedValue(null);
+      mockPrisma.seatingTable.update.mockResolvedValue({ ...mockTable, tableNumber: 5 });
+      await service.updateTable('table-1', { tableNumber: 5 });
+      expect(mockPrisma.seatingTable.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ id: { not: 'table-1' } }) }),
+      );
     });
   });
 

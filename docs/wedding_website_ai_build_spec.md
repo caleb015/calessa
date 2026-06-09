@@ -315,7 +315,8 @@ Features:
 
 Table fields:
 
-- Table name/number
+- Table number (optional)
+- Table name (optional) — lets couples fully customize tables (e.g. "Head Table") instead of relying on numbers alone
 - Capacity
 - Notes
 
@@ -474,7 +475,8 @@ model ContactPerson {
 
 model SeatingTable {
   id           String   @id @default(cuid())
-  name         String
+  tableNumber  Int?
+  name         String?
   capacity     Int?
   notes        String?
   createdAt    DateTime @default(now())

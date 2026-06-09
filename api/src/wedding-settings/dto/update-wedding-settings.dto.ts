@@ -60,4 +60,12 @@ export class UpdateWeddingSettingsDto {
   @IsOptional()
   @IsBoolean()
   enableGuestbook?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  requireUniqueTableNumbers?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  requireUniqueTableNames?: boolean;
 }

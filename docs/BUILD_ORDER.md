@@ -37,7 +37,7 @@ Based on `wedding_website_ai_build_spec.md`. Each phase should be fully runnable
 
 ## Phase 4 — Seating + Content Polish
 
-- [ ] Seating management (`/dashboard/seating`) — tables, assignments, unassigned view
+- [x] Seating management (`/dashboard/seating`) — tables, assignments, unassigned view
 - [ ] Content management (`/dashboard/content`) — story, FAQs, gallery, schedule, events, contact
 - [ ] Messages and song requests (`/dashboard/messages`)
 - [ ] Loading states and empty states across all pages

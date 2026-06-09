@@ -10,7 +10,7 @@ export class SeatingService {
 
   findAllTables() {
     return this.prisma.seatingTable.findMany({
-      orderBy: { name: 'asc' },
+      orderBy: [{ tableNumber: { sort: 'asc', nulls: 'last' } }, { name: 'asc' }],
       include: { assignments: { include: { guest: true } } },
     });
   }
@@ -24,13 +24,45 @@ export class SeatingService {
     return table;
   }
 
-  createTable(dto: CreateSeatingTableDto) {
+  async createTable(dto: CreateSeatingTableDto) {
+    await this.assertTableFieldsUnique({ tableNumber: dto.tableNumber, name: dto.name });
     return this.prisma.seatingTable.create({ data: dto });
   }
 
   async updateTable(id: string, dto: UpdateSeatingTableDto) {
     await this.findOneTable(id);
+    await this.assertTableFieldsUnique({ tableNumber: dto.tableNumber, name: dto.name }, id);
     return this.prisma.seatingTable.update({ where: { id }, data: dto });
+  }
+
+  private async assertTableFieldsUnique(
+    fields: { tableNumber?: number | null; name?: string | null },
+    excludeId?: string,
+  ) {
+    const settings = await this.prisma.weddingSettings.findFirst();
+    if (!settings) return;
+
+    if (settings.requireUniqueTableNumbers && fields.tableNumber != null) {
+      const existing = await this.prisma.seatingTable.findFirst({
+        where: { tableNumber: fields.tableNumber, ...(excludeId ? { id: { not: excludeId } } : {}) },
+      });
+      if (existing) {
+        throw new ConflictException(
+          `Table number ${fields.tableNumber} is already taken — since unique table numbers are turned on, give this one a different number.`,
+        );
+      }
+    }
+
+    if (settings.requireUniqueTableNames && fields.name) {
+      const existing = await this.prisma.seatingTable.findFirst({
+        where: { name: fields.name, ...(excludeId ? { id: { not: excludeId } } : {}) },
+      });
+      if (existing) {
+        throw new ConflictException(
+          `The name "${fields.name}" is already taken — since unique table names are turned on, give this one a different name.`,
+        );
+      }
+    }
   }
 
   async removeTable(id: string) {

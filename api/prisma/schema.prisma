@@ -45,6 +45,8 @@ model WeddingSettings {
   enableMealPreference Boolean   @default(true)
   enableSongRequest    Boolean   @default(true)
   enableGuestbook      Boolean   @default(false)
+  requireUniqueTableNumbers Boolean @default(false)
+  requireUniqueTableNames   Boolean @default(false)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 }
@@ -167,7 +169,8 @@ model ContactPerson {
 
 model SeatingTable {
   id          String              @id @default(uuid())
-  name        String
+  tableNumber Int?
+  name        String?
   capacity    Int?
   notes       String?
   createdAt   DateTime            @default(now())
