@@ -64,6 +64,42 @@ export const adminApi = {
   // Unassigned guests
   getUnassignedGuests: () => get('/admin/seating/unassigned'),
 
+  // Events
+  getEvents: () => get('/admin/events'),
+  createEvent: (body: unknown) => post('/admin/events', body),
+  updateEvent: (id: string, body: unknown) => patch(`/admin/events/${id}`, body),
+  deleteEvent: (id: string) => del(`/admin/events/${id}`),
+
+  // Schedule
+  getSchedule: () => get('/admin/schedule'),
+  createScheduleItem: (body: unknown) => post('/admin/schedule', body),
+  updateScheduleItem: (id: string, body: unknown) => patch(`/admin/schedule/${id}`, body),
+  deleteScheduleItem: (id: string) => del(`/admin/schedule/${id}`),
+
+  // FAQs
+  getFaqs: () => get('/admin/faqs'),
+  createFaq: (body: unknown) => post('/admin/faqs', body),
+  updateFaq: (id: string, body: unknown) => patch(`/admin/faqs/${id}`, body),
+  deleteFaq: (id: string) => del(`/admin/faqs/${id}`),
+
+  // Gallery
+  getGallery: () => get('/admin/gallery'),
+  createGalleryImage: (body: unknown) => post('/admin/gallery', body),
+  updateGalleryImage: (id: string, body: unknown) => patch(`/admin/gallery/${id}`, body),
+  deleteGalleryImage: (id: string) => del(`/admin/gallery/${id}`),
+
+  // Story timeline
+  getStoryTimeline: () => get('/admin/story-timeline'),
+  createStoryItem: (body: unknown) => post('/admin/story-timeline', body),
+  updateStoryItem: (id: string, body: unknown) => patch(`/admin/story-timeline/${id}`, body),
+  deleteStoryItem: (id: string) => del(`/admin/story-timeline/${id}`),
+
+  // Contact persons
+  getContacts: () => get('/admin/contact'),
+  createContact: (body: unknown) => post('/admin/contact', body),
+  updateContact: (id: string, body: unknown) => patch(`/admin/contact/${id}`, body),
+  deleteContact: (id: string) => del(`/admin/contact/${id}`),
+
   // CSV exports
   exportGuestsCsv: () => `${BASE_URL}/admin/export/guests.csv`,
   exportRsvpsCsv: () => `${BASE_URL}/admin/export/rsvps.csv`,

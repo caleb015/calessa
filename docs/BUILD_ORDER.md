@@ -51,6 +51,7 @@ Based on `wedding_website_ai_build_spec.md`. Each phase should be fully runnable
 - [ ] Test: invalid RSVP code returns graceful error
 - [ ] Test: CSV export correctness
 - [ ] Security review: no guest data leaked through public endpoints
+- [ ] Soft deletes — all delete actions across the app should mark records as deleted (e.g. `deletedAt DateTime?`) rather than hard-removing them, so data can be recovered if needed
 
 ---
 

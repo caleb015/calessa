@@ -30,7 +30,8 @@
       "Bash(docker inspect *)",
       "Bash(docker compose *)",
       "Bash(docker exec calessa-db *)",
-      "Bash(docker exec calessa-db-test *)"
+      "Bash(docker exec calessa-db-test *)",
+      "Bash(npx tsc *)"
     ]
   }
 }
