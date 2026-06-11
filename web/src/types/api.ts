@@ -42,6 +42,7 @@ export interface FaqItem {
   answer: string;
   category: string | null;
   displayOrder: number;
+  isPublished: boolean;
 }
 
 export interface GalleryImage {

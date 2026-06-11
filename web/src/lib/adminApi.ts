@@ -59,6 +59,7 @@ export const adminApi = {
   // Seating assignments
   getSeatingAssignments: () => get('/admin/seating/assignments'),
   createSeatingAssignment: (body: unknown) => post('/admin/seating/assignments', body),
+  updateSeatingAssignment: (id: string, body: unknown) => patch(`/admin/seating/assignments/${id}`, body),
   deleteSeatingAssignment: (id: string) => del(`/admin/seating/assignments/${id}`),
 
   // Unassigned guests

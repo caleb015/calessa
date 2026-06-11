@@ -27,7 +27,7 @@ export class GuestsService {
   async findOne(id: string) {
     const guest = await this.prisma.guest.findUnique({
       where: { id },
-      include: { rsvp: true },
+      include: { rsvp: true, seatingAssignment: { include: { table: true } } },
     });
     if (!guest) throw new NotFoundException(`Guest ${id} not found`);
     return guest;

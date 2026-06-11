@@ -31,15 +31,15 @@ Based on `wedding_website_ai_build_spec.md`. Each phase should be fully runnable
 - [x] Dashboard overview (`/dashboard`) — summary cards, recent RSVPs
 - [x] Wedding settings (`/dashboard/settings`)
 - [x] Guest management (`/dashboard/guests`) — CRUD, bulk import (CSV/paste), RSVP link copy, filters
-- [ ] Guest detail page (`/dashboard/guests/[id]`) — full profile, RSVP details, seating assignment
+- [x] Guest detail page (`/dashboard/guests/[id]`) — full profile, RSVP details, seating assignment
 - [x] RSVP management (`/dashboard/rsvps`) — view, filter, manual edit
 - [x] CSV export — guests and RSVPs
 
 ## Phase 4 — Seating + Content Polish
 
 - [x] Seating management (`/dashboard/seating`) — tables, assignments, unassigned view
-- [ ] Content management (`/dashboard/content`) — story, FAQs, gallery, schedule, events, contact
-- [ ] Messages and song requests (`/dashboard/messages`)
+- [x] Content management (`/dashboard/content`) — story, FAQs, gallery, schedule, events, contact
+- [x] Messages and song requests (`/dashboard/messages`)
 - [ ] Loading states and empty states across all pages
 - [ ] Mobile responsiveness pass
 

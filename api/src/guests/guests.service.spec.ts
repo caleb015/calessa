@@ -16,6 +16,7 @@ const mockGuest = {
   createdAt: new Date(),
   updatedAt: new Date(),
   rsvp: null,
+  seatingAssignment: null,
 };
 
 const mockPrisma = {
@@ -59,6 +60,10 @@ describe('GuestsService', () => {
       mockPrisma.guest.findUnique.mockResolvedValue(mockGuest);
       const result = await service.findOne('guest-1');
       expect(result).toEqual(mockGuest);
+      expect(mockPrisma.guest.findUnique).toHaveBeenCalledWith({
+        where: { id: 'guest-1' },
+        include: { rsvp: true, seatingAssignment: { include: { table: true } } },
+      });
     });
 
     it('throws NotFoundException when guest not found', async () => {

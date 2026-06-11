@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { adminApi } from '@/lib/adminApi';
 import { RxCopy, RxPencil1, RxTrash, RxPlus, RxMagnifyingGlass } from 'react-icons/rx';
 
@@ -232,7 +233,14 @@ export default function GuestsPage() {
                 </tr>
               ) : (
                 <tr key={guest.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-900 font-medium">{guest.primaryName}</td>
+                  <td className="px-4 py-3 text-gray-900 font-medium">
+                    <Link
+                      href={`/dashboard/guests/${guest.id}`}
+                      className="inline-block -mx-1.5 -my-0.5 px-1.5 py-0.5 rounded transition-colors hover:bg-gray-200 hover:underline underline-offset-2"
+                    >
+                      {guest.primaryName}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-gray-500">{guest.group ?? '—'}</td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">{guest.invitationCode}</td>
                   <td className="px-4 py-3 text-gray-600">{guest.allowedPartySize}</td>
