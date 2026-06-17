@@ -40,6 +40,7 @@ Based on `wedding_website_ai_build_spec.md`. Each phase should be fully runnable
 - [x] Seating management (`/dashboard/seating`) — tables, assignments, unassigned view
 - [x] Content management (`/dashboard/content`) — story, FAQs, gallery, schedule, events, contact
 - [x] Messages and song requests (`/dashboard/messages`)
+- [ ] RSVP page text management — add `rsvpTagline` and `rsvpSubtext` fields to `WeddingSettings` (Prisma + migration), expose via `wedding-settings` module, pass from `RsvpPage` server component to `RsvpEntryPage`, and surface in `/dashboard/content`
 - [ ] Loading states and empty states across all pages
 - [ ] Mobile responsiveness pass
 

@@ -31,7 +31,13 @@
       "Bash(docker compose *)",
       "Bash(docker exec calessa-db *)",
       "Bash(docker exec calessa-db-test *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(npx playwright *)",
+      "Read(//tmp/**)",
+      "Bash(mv /home/caleb/projects/calessa/odie-closed-mouth.png /home/caleb/projects/calessa/web/public/images/odie.png && ls web/public/images/)"
+    ],
+    "additionalDirectories": [
+      "/home/caleb/projects/calessa"
     ]
   }
 }

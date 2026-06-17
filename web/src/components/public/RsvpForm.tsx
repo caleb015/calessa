@@ -123,16 +123,20 @@ export default function RsvpForm({ code, guest, settings }: Props) {
       )}
 
       {/* Email */}
-      <div>
-        <label className={labelClass}>Email address <span className="text-red-400">*</span></label>
-        <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className={inputClass} placeholder="your@email.com" />
-      </div>
+      {isAttending && (
+        <div>
+          <label className={labelClass}>Email address <span className="text-red-400">*</span></label>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className={inputClass} placeholder="your@email.com" />
+        </div>
+      )}
 
       {/* Phone */}
-      <div>
-        <label className={labelClass}>Phone number (optional)</label>
-        <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className={inputClass} placeholder="+63 912 345 6789" />
-      </div>
+      {isAttending && (
+        <div>
+          <label className={labelClass}>Phone number (optional)</label>
+          <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className={inputClass} placeholder="+63 912 345 6789" />
+        </div>
+      )}
 
       {/* Meal preference */}
       {isAttending && guest.requiresMealSelection && settings.enableMealPreference && (
@@ -143,15 +147,17 @@ export default function RsvpForm({ code, guest, settings }: Props) {
       )}
 
       {/* Dietary restrictions */}
-      <div>
-        <label className={labelClass}>Dietary restrictions / allergies (optional)</label>
-        <input type="text" value={dietaryRestrictions} onChange={e => setDietaryRestrictions(e.target.value)} className={inputClass} placeholder="e.g. Gluten-free, Nut allergy" />
-      </div>
+      {isAttending && (
+        <div>
+          <label className={labelClass}>Dietary restrictions / allergies (optional)</label>
+          <input type="text" value={dietaryRestrictions} onChange={e => setDietaryRestrictions(e.target.value)} className={inputClass} placeholder="e.g. Gluten-free, Nut allergy" />
+        </div>
+      )}
 
       {/* Message */}
       <div>
-        <label className={labelClass}>Message to the couple (optional)</label>
-        <textarea value={message} onChange={e => setMessage(e.target.value)} rows={3} className={`${inputClass} resize-none`} placeholder="A heartfelt note..." />
+        <label className={labelClass}>Message to the couple</label>
+        <textarea value={message} onChange={e => setMessage(e.target.value)} rows={3} className={`${inputClass} resize-none`} placeholder="Leave us a heartfelt note or your favorite memory with us..." />
       </div>
 
       {/* Song request */}
