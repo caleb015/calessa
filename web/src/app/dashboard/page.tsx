@@ -31,6 +31,7 @@ const statusColors: Record<string, string> = {
 
 export default function DashboardOverview() {
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [allowMaybe, setAllowMaybe] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -38,6 +39,9 @@ export default function DashboardOverview() {
     adminApi.getSummary()
       .then(data => { setSummary(data as Summary); setLoading(false); })
       .catch(err => { setError(err.message); setLoading(false); });
+    adminApi.getSettings()
+      .then(data => setAllowMaybe(Boolean((data as { allowMaybe?: boolean }).allowMaybe)))
+      .catch(() => {});
   }, []);
 
   if (loading) return <div className="p-8 text-gray-400 text-sm">Loading...</div>;
@@ -52,7 +56,7 @@ export default function DashboardOverview() {
     { label: 'Expected Headcount', value: summary.totalHeadcount },
     { label: 'Plus-ones', value: summary.plusOneCount },
     { label: 'Dietary Notes', value: summary.allergyCount },
-    { label: 'Maybe', value: summary.maybe, color: 'text-yellow-500' },
+    ...(allowMaybe ? [{ label: 'Maybe', value: summary.maybe, color: 'text-yellow-500' }] : []),
   ];
 
   return (

@@ -13,6 +13,8 @@ const mockSettings = {
   siteDescription: 'Our wedding',
   heroImageUrl: null,
   monogramUrl: null,
+  rsvpTagline: null,
+  rsvpSubtext: null,
   welcomeMessage: null,
   isPublic: true,
   isRsvpEnabled: true,
@@ -56,6 +58,8 @@ describe('PublicService', () => {
       expect(result).toHaveProperty('coupleNameA');
       expect(result).toHaveProperty('isRsvpEnabled');
       expect(result).toHaveProperty('monogramUrl');
+      expect(result).toHaveProperty('rsvpTagline');
+      expect(result).toHaveProperty('rsvpSubtext');
       expect(result).not.toHaveProperty('id');
       expect(result).not.toHaveProperty('rsvpDeadline');
       expect(result).not.toHaveProperty('createdAt');

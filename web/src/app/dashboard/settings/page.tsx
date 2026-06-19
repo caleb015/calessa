@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/adminApi';
+import ImagePreview from '@/components/dashboard/ImagePreview';
+import InfoTooltip from '@/components/dashboard/InfoTooltip';
 
 export default function SettingsPage() {
   const [form, setForm] = useState<Record<string, unknown>>({});
@@ -22,7 +24,8 @@ export default function SettingsPage() {
     setSaving(true);
     setMsg(null);
     try {
-      await adminApi.updateSettings(form);
+      const { id, createdAt, updatedAt, ...payload } = form;
+      await adminApi.updateSettings(payload);
       setMsg({ type: 'success', text: 'Settings saved.' });
     } catch (err: unknown) {
       setMsg({ type: 'error', text: err instanceof Error ? err.message : 'Failed to save.' });
@@ -83,20 +86,36 @@ export default function SettingsPage() {
           <h2 className="text-sm font-semibold text-gray-700 mb-4">Site Content</h2>
           <div className="space-y-3">
             <div>
-              <label className={labelClass}>Site Title</label>
+              <label className={labelClass}>
+                Browser Tab Title
+                <InfoTooltip text="Shown in the browser tab and as the title when this page is shared as a link preview." />
+              </label>
               <input className={inputClass} value={(form.siteTitle as string) ?? ''} onChange={e => set('siteTitle', e.target.value)} />
             </div>
             <div>
-              <label className={labelClass}>Site Description</label>
+              <label className={labelClass}>
+                Browser Tab Description
+                <InfoTooltip text="Shown beneath the title in search results and link previews when this page is shared — not displayed anywhere on the site itself." />
+              </label>
               <input className={inputClass} value={(form.siteDescription as string) ?? ''} onChange={e => set('siteDescription', e.target.value)} />
             </div>
             <div>
               <label className={labelClass}>Hero Image URL</label>
               <input className={inputClass} placeholder="/images/hero.png or https://..." value={(form.heroImageUrl as string) ?? ''} onChange={e => set('heroImageUrl', e.target.value)} />
+              <ImagePreview src={(form.heroImageUrl as string) ?? ''} />
             </div>
             <div>
               <label className={labelClass}>Monogram URL</label>
               <input className={inputClass} placeholder="/images/monogram.png or https://..." value={(form.monogramUrl as string) ?? ''} onChange={e => set('monogramUrl', e.target.value)} />
+              <ImagePreview src={(form.monogramUrl as string) ?? ''} />
+            </div>
+            <div>
+              <label className={labelClass}>RSVP Page Tagline</label>
+              <input className={inputClass} placeholder="We can't wait to celebrate with you." value={(form.rsvpTagline as string) ?? ''} onChange={e => set('rsvpTagline', e.target.value)} />
+            </div>
+            <div>
+              <label className={labelClass}>RSVP Page Subtext</label>
+              <input className={inputClass} placeholder="My Hoomans are tying the knot!!" value={(form.rsvpSubtext as string) ?? ''} onChange={e => set('rsvpSubtext', e.target.value)} />
             </div>
             <div>
               <label className={labelClass}>Welcome Message</label>

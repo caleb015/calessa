@@ -25,10 +25,11 @@ const STATUS_COLORS: Record<string, string> = {
   PENDING: 'bg-gray-100 text-gray-500',
 };
 
-const STATUSES = ['ATTENDING', 'DECLINED', 'MAYBE', 'PENDING'];
+const ALL_STATUSES = ['ATTENDING', 'DECLINED', 'MAYBE', 'PENDING'];
 
 export default function RsvpsPage() {
   const [rsvps, setRsvps] = useState<Rsvp[]>([]);
+  const [allowMaybe, setAllowMaybe] = useState(true);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -36,10 +37,15 @@ export default function RsvpsPage() {
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  const STATUSES = allowMaybe ? ALL_STATUSES : ALL_STATUSES.filter(s => s !== 'MAYBE');
+
   const load = useCallback(() => {
     adminApi.getRsvps()
       .then(data => { setRsvps(data as Rsvp[]); setLoading(false); })
       .catch(() => setLoading(false));
+    adminApi.getSettings()
+      .then(data => setAllowMaybe(Boolean((data as { allowMaybe?: boolean }).allowMaybe)))
+      .catch(() => {});
   }, []);
 
   useEffect(() => { load(); }, [load]);

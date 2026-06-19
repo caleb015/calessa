@@ -59,7 +59,7 @@ const RSVP_STATUS_COLORS: Record<string, string> = {
   PENDING: 'bg-gray-100 text-gray-500',
 };
 
-const STATUSES = ['PENDING', 'ATTENDING', 'DECLINED', 'MAYBE'];
+const ALL_STATUSES = ['PENDING', 'ATTENDING', 'DECLINED', 'MAYBE'];
 
 function tableLabel(t: { tableNumber: number | null; name: string | null }) {
   if (t.tableNumber && t.name) return `Table ${t.tableNumber} — ${t.name}`;
@@ -81,9 +81,12 @@ export default function GuestDetailPage() {
 
   const [guest, setGuest] = useState<Guest | null>(null);
   const [tables, setTables] = useState<SeatingTable[]>([]);
+  const [allowMaybe, setAllowMaybe] = useState(true);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const STATUSES = allowMaybe ? ALL_STATUSES : ALL_STATUSES.filter(s => s !== 'MAYBE');
 
   const [profileForm, setProfileForm] = useState<Partial<Guest>>({});
   const [savingProfile, setSavingProfile] = useState(false);
@@ -103,10 +106,12 @@ export default function GuestDetailPage() {
     Promise.all([
       adminApi.getGuest(id) as Promise<Guest>,
       adminApi.getSeatingTables() as Promise<SeatingTable[]>,
+      (adminApi.getSettings() as Promise<{ allowMaybe?: boolean }>).catch(() => undefined),
     ])
-      .then(([g, t]) => {
+      .then(([g, t, settings]) => {
         setGuest(g);
         setTables(t);
+        setAllowMaybe(Boolean(settings?.allowMaybe));
         setProfileForm({
           primaryName: g.primaryName,
           email: g.email ?? '',

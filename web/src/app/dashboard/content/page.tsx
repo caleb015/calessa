@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { adminApi } from '@/lib/adminApi';
+import ImagePreview from '@/components/dashboard/ImagePreview';
 
-type FieldType = 'text' | 'textarea' | 'datetime' | 'number' | 'checkbox' | 'email';
+type FieldType = 'text' | 'textarea' | 'datetime' | 'number' | 'checkbox' | 'email' | 'image';
 
 interface FieldConfig {
   key: string;
@@ -104,7 +105,7 @@ const SECTIONS: SectionConfig[] = [
     itemLabel: (item) => (item.title || item.imageUrl) as string,
     itemSublabel: (item) => (item.title ? item.imageUrl as string : '') || '',
     fields: [
-      { key: 'imageUrl', label: 'Image URL', type: 'text', required: true, placeholder: '/images/photo.jpg or https://…' },
+      { key: 'imageUrl', label: 'Image URL', type: 'image', required: true, placeholder: '/images/photo.jpg or https://…' },
       { key: 'title', label: 'Title', type: 'text' },
       { key: 'description', label: 'Description', type: 'text' },
       { key: 'displayOrder', label: 'Display Order', type: 'number' },
@@ -126,7 +127,7 @@ const SECTIONS: SectionConfig[] = [
       { key: 'title', label: 'Title', type: 'text', required: true },
       { key: 'dateLabel', label: 'Date Label', type: 'text', placeholder: 'June 2019' },
       { key: 'description', label: 'Description', type: 'textarea' },
-      { key: 'imageUrl', label: 'Image URL', type: 'text', placeholder: '/images/story.jpg or https://…' },
+      { key: 'imageUrl', label: 'Image URL', type: 'image', placeholder: '/images/story.jpg or https://…' },
       { key: 'displayOrder', label: 'Display Order', type: 'number' },
       { key: 'isPublished', label: 'Published', type: 'checkbox' },
     ],
@@ -153,6 +154,11 @@ const SECTIONS: SectionConfig[] = [
     ],
   },
 ];
+
+function stripMeta(item: Record<string, unknown>) {
+  const { id, createdAt, updatedAt, ...rest } = item;
+  return rest;
+}
 
 const inputCls = 'w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent';
 const labelCls = 'block text-xs font-medium text-gray-600 mb-1';
@@ -215,6 +221,21 @@ function FormField({
         value={(value as number) ?? 0}
         onChange={e => onChange(field.key, e.target.value === '' ? 0 : parseInt(e.target.value, 10))}
       />
+    );
+  }
+
+  if (field.type === 'image') {
+    return (
+      <div>
+        <input
+          type="text"
+          className={inputCls}
+          placeholder={field.placeholder}
+          value={(value as string) ?? ''}
+          onChange={e => onChange(field.key, e.target.value)}
+        />
+        <ImagePreview src={(value as string) ?? ''} />
+      </div>
     );
   }
 
@@ -303,10 +324,10 @@ export default function ContentPage() {
     setError(null);
     try {
       if (editingId === 'new') {
-        const created = await section.apiCreate(form) as Item;
+        const created = await section.apiCreate(stripMeta(form)) as Item;
         setAllItems(prev => ({ ...prev, [activeTab]: [...(prev[activeTab] ?? []), created] }));
       } else {
-        const updated = await section.apiUpdate(editingId!, form) as Item;
+        const updated = await section.apiUpdate(editingId!, stripMeta(form)) as Item;
         setAllItems(prev => ({
           ...prev,
           [activeTab]: prev[activeTab].map(it => it.id === editingId ? updated : it),
@@ -353,7 +374,7 @@ export default function ContentPage() {
     setSavingFaqId(id);
     setError(null);
     try {
-      const updated = await section.apiUpdate(id, faqForms[id]) as Item;
+      const updated = await section.apiUpdate(id, stripMeta(faqForms[id])) as Item;
       setAllItems(prev => ({
         ...prev,
         [activeTab]: prev[activeTab].map(it => it.id === id ? updated : it),

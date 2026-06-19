@@ -10,7 +10,19 @@ type Phase = 'closed' | 'happy' | 'opening' | 'open';
 
 const ANIMATION_MS = 600;
 
-export default function RsvpEntryPage({ initialCode = '' }: { initialCode?: string }) {
+interface Props {
+  initialCode?: string;
+  coupleNames?: string;
+  tagline?: string;
+  subtext?: string;
+}
+
+export default function RsvpEntryPage({
+  initialCode = '',
+  coupleNames = 'Caleb & Raissa',
+  tagline = "We can't wait to celebrate with you.",
+  subtext = 'My Hoomans are tying the knot!!',
+}: Props) {
   const [code, setCode] = useState(initialCode);
   const [error, setError] = useState('');
   const [phase, setPhase] = useState<Phase>('closed');
@@ -81,8 +93,8 @@ export default function RsvpEntryPage({ initialCode = '' }: { initialCode?: stri
 
           {/* Couple names + tagline at top */}
           <div className={`mb-4 transition-opacity duration-300 ${phase === 'opening' ? 'opacity-0' : ''}`}>
-            <p className="font-serif text-3xl mt-0.5">Caleb &amp; Raissa</p>
-            <p className="text-xs text-[var(--muted)] mt-0.5">We can&apos;t wait to celebrate with you.</p>
+            <p className="font-serif text-3xl mt-0.5">{coupleNames}</p>
+            <p className="text-xs text-[var(--muted)] mt-0.5">{tagline}</p>
           </div>
 
           <p className={`text-xs uppercase tracking-[0.3em] text-[var(--muted)] mb-2 transition-opacity duration-300 ${phase === 'opening' ? 'opacity-0' : ''}`}>
@@ -127,7 +139,7 @@ export default function RsvpEntryPage({ initialCode = '' }: { initialCode?: stri
 
             {/* Input + instruction — solid background so flowers don't bleed through */}
             <div className={`mt-4 transition-opacity duration-300 ${phase === 'opening' ? 'opacity-0' : ''} bg-[var(--background)] rounded-xl px-4 py-4 shadow-md`}>
-              <p className="text-xl text-[var(--muted)] [font-family:'Slopes'] mb-3">My Hoomans are tying the knot!!</p>
+              <p className="text-xl text-[var(--muted)] [font-family:'Slopes'] mb-3">{subtext}</p>
               <input
                 type="text"
                 value={code}

@@ -27,6 +27,7 @@ const RSVP_STATUS_COLORS: Record<string, string> = {
 
 export default function GuestsPage() {
   const [guests, setGuests] = useState<Guest[]>([]);
+  const [allowMaybe, setAllowMaybe] = useState(true);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterGroup, setFilterGroup] = useState('');
@@ -45,6 +46,9 @@ export default function GuestsPage() {
     adminApi.getGuests()
       .then(data => { setGuests(data as Guest[]); setLoading(false); })
       .catch(() => setLoading(false));
+    adminApi.getSettings()
+      .then(data => setAllowMaybe(Boolean((data as { allowMaybe?: boolean }).allowMaybe)))
+      .catch(() => {});
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -188,7 +192,7 @@ export default function GuestsPage() {
         </select>
         <select className={inputClass} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
           <option value="">All statuses</option>
-          {['ATTENDING', 'DECLINED', 'MAYBE', 'PENDING'].map(s => <option key={s} value={s}>{s}</option>)}
+          {(allowMaybe ? ['ATTENDING', 'DECLINED', 'MAYBE', 'PENDING'] : ['ATTENDING', 'DECLINED', 'PENDING']).map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <span className="text-xs text-gray-400 self-center">{filtered.length} of {guests.length}</span>
       </div>

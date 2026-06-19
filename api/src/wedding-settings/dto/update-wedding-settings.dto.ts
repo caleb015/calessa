@@ -39,6 +39,16 @@ export class UpdateWeddingSettingsDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(200)
+  rsvpTagline?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  rsvpSubtext?: string;
+
+  @IsOptional()
+  @IsString()
   welcomeMessage?: string;
 
   @IsOptional()

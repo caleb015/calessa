@@ -26,14 +26,14 @@ export class PublicService {
     // Only expose fields safe for public consumption
     const {
       coupleNameA, coupleNameB, weddingDate, siteTitle,
-      siteDescription, heroImageUrl, monogramUrl, welcomeMessage,
+      siteDescription, heroImageUrl, monogramUrl, rsvpTagline, rsvpSubtext, welcomeMessage,
       isPublic, isRsvpEnabled, allowMaybe,
       enableMealPreference, enableSongRequest, enableGuestbook,
     } = settings;
 
     return {
       coupleNameA, coupleNameB, weddingDate, siteTitle,
-      siteDescription, heroImageUrl, monogramUrl, welcomeMessage,
+      siteDescription, heroImageUrl, monogramUrl, rsvpTagline, rsvpSubtext, welcomeMessage,
       isPublic, isRsvpEnabled, allowMaybe,
       enableMealPreference, enableSongRequest, enableGuestbook,
     };

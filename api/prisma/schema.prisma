@@ -39,6 +39,8 @@ model WeddingSettings {
   siteDescription      String?
   heroImageUrl         String?
   monogramUrl          String?
+  rsvpTagline          String?
+  rsvpSubtext          String?
   welcomeMessage       String?
   isPublic             Boolean   @default(true)
   isRsvpEnabled        Boolean   @default(true)
