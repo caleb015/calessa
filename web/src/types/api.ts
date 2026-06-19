@@ -5,6 +5,7 @@ export interface WeddingSettings {
   siteTitle: string | null;
   siteDescription: string | null;
   heroImageUrl: string | null;
+  monogramUrl: string | null;
   welcomeMessage: string | null;
   isPublic: boolean;
   isRsvpEnabled: boolean;

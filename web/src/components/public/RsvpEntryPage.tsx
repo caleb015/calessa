@@ -88,7 +88,7 @@ export default function RsvpEntryPage({ initialCode = '' }: { initialCode?: stri
           <p className={`text-xs uppercase tracking-[0.3em] text-[var(--muted)] mb-2 transition-opacity duration-300 ${phase === 'opening' ? 'opacity-0' : ''}`}>
             You&apos;re Invited
           </p>
-          <h1 className={`text-3xl md:text-4xl font-serif mb-4 transition-opacity duration-300 ${phase === 'opening' ? 'opacity-0' : ''}`}>
+          <h1 className={`text-3xl md:text-4xl font-serif mb-0 transition-opacity duration-300 ${phase === 'opening' ? 'opacity-0' : ''}`}>
             RSVP
           </h1>
 

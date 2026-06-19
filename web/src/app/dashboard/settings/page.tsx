@@ -95,6 +95,10 @@ export default function SettingsPage() {
               <input className={inputClass} placeholder="/images/hero.png or https://..." value={(form.heroImageUrl as string) ?? ''} onChange={e => set('heroImageUrl', e.target.value)} />
             </div>
             <div>
+              <label className={labelClass}>Monogram URL</label>
+              <input className={inputClass} placeholder="/images/monogram.png or https://..." value={(form.monogramUrl as string) ?? ''} onChange={e => set('monogramUrl', e.target.value)} />
+            </div>
+            <div>
               <label className={labelClass}>Welcome Message</label>
               <textarea className={`${inputClass} resize-none`} rows={3} value={(form.welcomeMessage as string) ?? ''} onChange={e => set('welcomeMessage', e.target.value)} />
             </div>

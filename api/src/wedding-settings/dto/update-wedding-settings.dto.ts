@@ -35,6 +35,10 @@ export class UpdateWeddingSettingsDto {
 
   @IsOptional()
   @IsString()
+  monogramUrl?: string;
+
+  @IsOptional()
+  @IsString()
   welcomeMessage?: string;
 
   @IsOptional()

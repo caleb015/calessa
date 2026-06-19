@@ -37,7 +37,7 @@ export default function FloatingNav({ coupleNames }: { coupleNames?: string }) {
         aria-label={open ? 'Close menu' : 'Open menu'}
         className={`
           fixed top-5 right-5 z-[60] w-11 h-11 flex flex-col items-center justify-center gap-[5px]
-          transition-all duration-300
+          transition-all duration-300 md:hidden
         `}
       >
         <span className={`block w-6 h-px transition-all duration-300 origin-center

@@ -3,6 +3,19 @@ import Image from 'next/image';
 import { publicApi } from '@/lib/api';
 import Countdown from '@/components/public/Countdown';
 
+const leftNavLinks = [
+  { href: '/story', label: 'Our Story' },
+  { href: '/details', label: 'Details' },
+  { href: '/schedule', label: 'Schedule' },
+];
+
+const rightNavLinks = [
+  { href: '/rsvp', label: 'RSVP' },
+  { href: '/faq', label: 'FAQ' },
+  { href: '/gallery', label: 'Gallery' },
+  { href: '/contact', label: 'Contact' },
+];
+
 export default async function HomePage() {
   const settings = await publicApi.getSettings().catch(() => null);
   const events = await publicApi.getEvents().catch(() => []);
@@ -10,6 +23,7 @@ export default async function HomePage() {
   const coupleA = settings?.coupleNameA ?? 'Caleb';
   const coupleB = settings?.coupleNameB ?? 'Raissa';
   const heroSrc = settings?.heroImageUrl ?? '/images/hero.png';
+  const monogramSrc = settings?.monogramUrl ?? '/images/rc-monogram-floral-green.png';
   const hasImage = true; // always has hero
   const textColor = 'text-white';
   const mutedColor = 'text-white/60';
@@ -42,8 +56,37 @@ export default async function HomePage() {
         {/* Gradient scrim — dark at bottom so text is legible, transparent at top so photo breathes */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-        {/* Text anchored to bottom */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 px-8 pb-14 flex flex-col items-center text-center">
+        {/* Desktop top nav — monogram centerpiece flanked by page links, clustered at center */}
+        <nav className="hidden md:flex absolute top-0 left-0 right-0 z-20 items-center justify-center gap-10 px-10 pt-8">
+          <div className="flex items-center gap-8">
+            {leftNavLinks.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="text-[11px] tracking-[0.25em] uppercase text-white/80 hover:text-white transition-colors"
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+          <Link href="/">
+            <Image src={monogramSrc} alt="Caleb & Raissa" width={68} height={68} className="opacity-90" />
+          </Link>
+          <div className="flex items-center gap-8">
+            {rightNavLinks.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="text-[11px] tracking-[0.25em] uppercase text-white/80 hover:text-white transition-colors"
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+        </nav>
+
+        {/* Text centered in hero */}
+        <div className="relative z-10 px-8 flex flex-col items-center text-center">
           <p className={`text-[10px] tracking-[0.45em] uppercase mb-5 ${mutedColor}`}>
             {weddingDateFormatted ?? 'Save the Date'}
           </p>

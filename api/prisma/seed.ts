@@ -16,6 +16,7 @@ async function main() {
       siteTitle: 'Caleb & Raissa',
       siteDescription: 'Join us as we celebrate our wedding day.',
       heroImageUrl: '/images/hero.png',
+      monogramUrl: '/images/rc-monogram-floral-green.png',
       welcomeMessage: 'We are so excited to celebrate this special day with our family and friends. Please join us!',
       isPublic: true,
       isRsvpEnabled: true,
