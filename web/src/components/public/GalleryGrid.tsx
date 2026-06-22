@@ -35,7 +35,7 @@ export default function GalleryGrid({ images }: { images: GalleryImage[] }) {
           onClick={() => setLightboxIndex(null)}
         >
           <button
-            className="absolute top-4 right-4 text-white hover:text-[var(--accent)]"
+            className="absolute top-4 left-4 text-white hover:text-[var(--accent)]"
             onClick={() => setLightboxIndex(null)}
             aria-label="Close"
           >

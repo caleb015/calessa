@@ -101,7 +101,7 @@ export default async function HomePage() {
           </div>
           <Link
             href="/rsvp"
-            className={`mt-8 border text-[10px] tracking-[0.35em] uppercase px-10 py-3.5 transition-all duration-300 backdrop-blur-sm ${btnClass}`}
+            className={`mt-8 border text-[10px] tracking-[0.35em] uppercase px-10 py-4 transition-all duration-300 backdrop-blur-sm ${btnClass}`}
           >
             RSVP
           </Link>
@@ -174,9 +174,9 @@ export default async function HomePage() {
         <div className="text-center mt-12">
           <Link
             href="/details"
-            className="text-[10px] tracking-[0.35em] uppercase text-[var(--foreground)] border-b border-[var(--foreground)] pb-0.5 hover:text-[var(--accent)] hover:border-[var(--accent)] transition-colors"
+            className="group inline-block py-4 text-[10px] tracking-[0.35em] uppercase text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
           >
-            View full details →
+            <span className="border-b border-[var(--foreground)] pb-0.5 group-hover:border-[var(--accent)] transition-colors">View full details →</span>
           </Link>
         </div>
       </section>

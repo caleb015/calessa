@@ -41,8 +41,9 @@ Based on `wedding_website_ai_build_spec.md`. Each phase should be fully runnable
 - [x] Content management (`/dashboard/content`) — story, FAQs, gallery, schedule, events, contact
 - [x] Messages and song requests (`/dashboard/messages`)
 - [x] RSVP page text management — added `rsvpTagline` and `rsvpSubtext` fields to `WeddingSettings` (Prisma + migration), exposed via `wedding-settings` module, passed from `RsvpPage` server component to `RsvpEntryPage`, surfaced in `/dashboard/settings` (singleton fields, same pattern as `heroImageUrl`/`monogramUrl` — not `/dashboard/content`, which is for repeatable item lists)
-- [ ] Loading states and empty states across all pages
-- [ ] Mobile responsiveness pass
+- [x] Loading states and empty states across all pages — audited every page; dashboard and most public pages already had adequate handling, added `web/src/app/(public)/loading.tsx` as the one real gap (public route group had no Suspense fallback during page data fetches)
+- [x] Mobile responsiveness pass — audited all 8 public pages at 375×812 via Playwright (no horizontal overflow, no console errors); fixed lightbox close button overlapping the global hamburger nav button in `GalleryGrid.tsx`, and bumped two undersized tap targets on the homepage (hero RSVP CTA, "View full details" link) to meet the ~44px touch-target guideline
+- [ ] Admin-configurable color theme — add color fields to `WeddingSettings` (Prisma + migration) mapping to the CSS variables in `web/src/app/globals.css` (`--background`, `--foreground`, `--muted`, `--accent`, `--rose`, `--border`), surface as color pickers in `/dashboard/settings`, and apply them at runtime (e.g. inline `style` with CSS custom properties on the `(public)` layout root, falling back to the current hardcoded defaults if unset)
 
 ## Phase 5 — Tests + Hardening
 
