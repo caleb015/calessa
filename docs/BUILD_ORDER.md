@@ -43,7 +43,7 @@ Based on `wedding_website_ai_build_spec.md`. Each phase should be fully runnable
 - [x] RSVP page text management — added `rsvpTagline` and `rsvpSubtext` fields to `WeddingSettings` (Prisma + migration), exposed via `wedding-settings` module, passed from `RsvpPage` server component to `RsvpEntryPage`, surfaced in `/dashboard/settings` (singleton fields, same pattern as `heroImageUrl`/`monogramUrl` — not `/dashboard/content`, which is for repeatable item lists)
 - [x] Loading states and empty states across all pages — audited every page; dashboard and most public pages already had adequate handling, added `web/src/app/(public)/loading.tsx` as the one real gap (public route group had no Suspense fallback during page data fetches)
 - [x] Mobile responsiveness pass — audited all 8 public pages at 375×812 via Playwright (no horizontal overflow, no console errors); fixed lightbox close button overlapping the global hamburger nav button in `GalleryGrid.tsx`, and bumped two undersized tap targets on the homepage (hero RSVP CTA, "View full details" link) to meet the ~44px touch-target guideline
-- [x] Admin-configurable color theme — added 9 color fields to `WeddingSettings` (Prisma + migration), surfaced as color pickers (swatch + hex input) in `/dashboard/settings` → Theme Colors, applied at runtime via inline `style` with CSS custom properties on the `(public)` layout root. Also fixed several hardcoded hex colors on the homepage that didn't reference any variable (so theme changes had no effect on them), removed the unused `--rose` variable, and made hero-photo overlay text/scrim themeable so the text stays legible if the hero photo changes. Full writeup in `docs/THEME.md`
+- [x] Admin-configurable color theme — added 9 color fields to `WeddingSettings` (Prisma + migration), surfaced as color pickers (swatch + hex input) in `/dashboard/settings` → Theme Colors, applied at runtime via inline `style` with CSS custom properties on the `(public)` layout root. Also fixed several hardcoded hex colors on the homepage that didn't reference any variable (so theme changes had no effect on them), removed the unused `--rose` variable, and made hero-photo overlay text/scrim themeable so the text stays legible if the hero photo changes
 
 ## Phase 5 — Tests + Hardening
 
@@ -54,6 +54,12 @@ Based on `wedding_website_ai_build_spec.md`. Each phase should be fully runnable
 - [ ] Test: CSV export correctness
 - [ ] Security review: no guest data leaked through public endpoints
 - [ ] Soft deletes — all delete actions across the app should mark records as deleted (e.g. `deletedAt DateTime?`) rather than hard-removing them, so data can be recovered if needed
+
+## Phase 6 — Post-Launch Enhancements
+
+Not required to launch — revisit after the site is live.
+
+- [ ] Gallery file upload (admin + guest) — let admins and guests upload real photo files instead of pasting URLs, with an AI-assisted moderation check on guest submissions. Full design in `docs/GALLERY_UPLOADS.md`
 
 ---
 
