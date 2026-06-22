@@ -8,6 +8,15 @@ export interface WeddingSettings {
   monogramUrl: string | null;
   rsvpTagline: string | null;
   rsvpSubtext: string | null;
+  themeBackground: string | null;
+  themeForeground: string | null;
+  themeMuted: string | null;
+  themeAccent: string | null;
+  themeBorder: string | null;
+  themeSurface: string | null;
+  themeInverseBackground: string | null;
+  themeOverlayText: string | null;
+  themeOverlayScrim: string | null;
   welcomeMessage: string | null;
   isPublic: boolean;
   isRsvpEnabled: boolean;

@@ -25,9 +25,9 @@ export default async function HomePage() {
   const heroSrc = settings?.heroImageUrl ?? '/images/hero.png';
   const monogramSrc = settings?.monogramUrl ?? '/images/rc-monogram-floral-green.png';
   const hasImage = true; // always has hero
-  const textColor = 'text-white';
-  const mutedColor = 'text-white/60';
-  const btnClass = 'border-white/50 text-white hover:bg-white hover:text-[#1e2b1a]';
+  const textColor = 'text-[var(--overlay-text)]';
+  const mutedColor = 'text-[var(--overlay-text)]/60';
+  const btnClass = 'border-[var(--overlay-text)]/50 text-[var(--overlay-text)] hover:bg-white hover:text-[var(--foreground)]';
 
   const weddingDateFormatted = settings?.weddingDate
     ? new Date(settings.weddingDate).toLocaleDateString('en-US', {
@@ -54,7 +54,7 @@ export default async function HomePage() {
         />
 
         {/* Gradient scrim — dark at bottom so text is legible, transparent at top so photo breathes */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--overlay-scrim)]/80 via-[var(--overlay-scrim)]/20 to-transparent" />
 
         {/* Desktop top nav — monogram centerpiece flanked by page links, clustered at center */}
         <nav className="hidden md:flex absolute top-0 left-0 right-0 z-20 items-center justify-center gap-10 px-10 pt-8">
@@ -108,9 +108,9 @@ export default async function HomePage() {
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-4 right-6 flex flex-col items-center gap-1.5 text-white/30 z-10">
+        <div className="absolute bottom-4 right-6 flex flex-col items-center gap-1.5 text-[var(--overlay-text)]/30 z-10">
           <div className="w-px h-8 bg-current relative overflow-hidden">
-            <div className="absolute top-0 w-full h-[40%] bg-white/60 animate-[scrollDot_1.8s_ease-in-out_infinite]" />
+            <div className="absolute top-0 w-full h-[40%] bg-[var(--overlay-text)]/60 animate-[scrollDot_1.8s_ease-in-out_infinite]" />
           </div>
         </div>
       </section>
@@ -145,12 +145,12 @@ export default async function HomePage() {
       </section>
 
       {/* ── Event highlights ─────────────────────────────────────────────── */}
-      <section className="py-20 px-6 bg-[#f2ede8]">
+      <section className="py-20 px-6 bg-[var(--surface)]">
         <p className="text-[9px] tracking-[0.45em] uppercase text-[var(--muted)] text-center mb-14">
           The Celebration
         </p>
-        <div className="max-w-3xl mx-auto grid md:grid-cols-2 gap-px bg-[#d8cfc6]">
-          <div className="bg-[#f2ede8] p-10 text-center">
+        <div className="max-w-3xl mx-auto grid md:grid-cols-2 gap-px bg-[var(--border)]">
+          <div className="bg-[var(--surface)] p-10 text-center">
             <p className="text-[9px] tracking-[0.35em] uppercase text-[var(--accent)] mb-3">Ceremony</p>
             <h3 className="font-serif text-2xl mb-3">{ceremony?.title ?? 'Wedding Ceremony'}</h3>
             <p className="text-[var(--muted)] text-sm">{ceremony?.venueName ?? 'Venue TBA'}</p>
@@ -160,7 +160,7 @@ export default async function HomePage() {
               </p>
             )}
           </div>
-          <div className="bg-[#f2ede8] p-10 text-center">
+          <div className="bg-[var(--surface)] p-10 text-center">
             <p className="text-[9px] tracking-[0.35em] uppercase text-[var(--accent)] mb-3">Reception</p>
             <h3 className="font-serif text-2xl mb-3">{reception?.title ?? 'Wedding Reception'}</h3>
             <p className="text-[var(--muted)] text-sm">{reception?.venueName ?? 'Venue TBA'}</p>
@@ -182,12 +182,12 @@ export default async function HomePage() {
       </section>
 
       {/* ── RSVP banner ──────────────────────────────────────────────────── */}
-      <section className="py-28 px-6 text-center" style={{ backgroundColor: '#1a2618' }}>
+      <section className="py-28 px-6 text-center bg-[var(--inverse-background)]">
         <p className="text-[9px] tracking-[0.45em] uppercase text-white/30 mb-6">You&apos;re invited</p>
         <h2 className="font-serif text-4xl md:text-6xl text-white mb-10">Will you join us?</h2>
         <Link
           href="/rsvp"
-          className="inline-block border border-white/30 text-white text-[10px] tracking-[0.35em] uppercase px-12 py-4 hover:bg-white hover:text-[#2a1f1a] transition-all duration-300"
+          className="inline-block border border-white/30 text-white text-[10px] tracking-[0.35em] uppercase px-12 py-4 hover:bg-white hover:text-[var(--foreground)] transition-all duration-300"
         >
           RSVP Now
         </Link>

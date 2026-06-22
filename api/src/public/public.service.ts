@@ -27,6 +27,8 @@ export class PublicService {
     const {
       coupleNameA, coupleNameB, weddingDate, siteTitle,
       siteDescription, heroImageUrl, monogramUrl, rsvpTagline, rsvpSubtext, welcomeMessage,
+      themeBackground, themeForeground, themeMuted, themeAccent, themeBorder,
+      themeSurface, themeInverseBackground, themeOverlayText, themeOverlayScrim,
       isPublic, isRsvpEnabled, allowMaybe,
       enableMealPreference, enableSongRequest, enableGuestbook,
     } = settings;
@@ -34,6 +36,8 @@ export class PublicService {
     return {
       coupleNameA, coupleNameB, weddingDate, siteTitle,
       siteDescription, heroImageUrl, monogramUrl, rsvpTagline, rsvpSubtext, welcomeMessage,
+      themeBackground, themeForeground, themeMuted, themeAccent, themeBorder,
+      themeSurface, themeInverseBackground, themeOverlayText, themeOverlayScrim,
       isPublic, isRsvpEnabled, allowMaybe,
       enableMealPreference, enableSongRequest, enableGuestbook,
     };

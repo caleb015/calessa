@@ -41,6 +41,15 @@ model WeddingSettings {
   monogramUrl          String?
   rsvpTagline          String?
   rsvpSubtext          String?
+  themeBackground      String?
+  themeForeground      String?
+  themeMuted           String?
+  themeAccent          String?
+  themeBorder          String?
+  themeSurface         String?
+  themeInverseBackground String?
+  themeOverlayText     String?
+  themeOverlayScrim    String?
   welcomeMessage       String?
   isPublic             Boolean   @default(true)
   isRsvpEnabled        Boolean   @default(true)

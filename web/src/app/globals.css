@@ -12,8 +12,15 @@
   --foreground: #1e2b1a;
   --muted: #7a8e82;
   --accent: #c84b7a;
-  --rose: #e84b8a;
   --border: #e2d8d0;
+  /* Secondary section/card background, distinct from --background */
+  --surface: #f2ede8;
+  /* Background for deliberately dark sections (e.g. the RSVP banner) */
+  --inverse-background: #1a2618;
+  /* Text/border color for content overlaid on the hero photo */
+  --overlay-text: #ffffff;
+  /* Gradient scrim behind --overlay-text — keep these two in sync for contrast */
+  --overlay-scrim: #000000;
 }
 
 @theme inline {
@@ -21,8 +28,11 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
-  --color-rose: var(--rose);
   --color-border: var(--border);
+  --color-surface: var(--surface);
+  --color-inverse-background: var(--inverse-background);
+  --color-overlay-text: var(--overlay-text);
+  --color-overlay-scrim: var(--overlay-scrim);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);

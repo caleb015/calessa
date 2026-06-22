@@ -4,6 +4,39 @@ import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import ImagePreview from '@/components/dashboard/ImagePreview';
 import InfoTooltip from '@/components/dashboard/InfoTooltip';
+import ColorInput from '@/components/dashboard/ColorInput';
+
+const THEME_COLORS: { key: string; label: string; tooltip?: string; defaultValue: string }[] = [
+  { key: 'themeBackground', label: 'Background', defaultValue: '#faf7f2' },
+  { key: 'themeForeground', label: 'Foreground (text)', defaultValue: '#1e2b1a' },
+  { key: 'themeMuted', label: 'Muted text', defaultValue: '#7a8e82' },
+  { key: 'themeAccent', label: 'Accent', defaultValue: '#c84b7a' },
+  { key: 'themeBorder', label: 'Border', defaultValue: '#e2d8d0' },
+  {
+    key: 'themeSurface',
+    label: 'Surface',
+    tooltip: 'A secondary background used for alternating sections and cards (e.g. the "Event Highlights" section on the homepage), distinct from the main page Background.',
+    defaultValue: '#f2ede8',
+  },
+  {
+    key: 'themeInverseBackground',
+    label: 'Dark Section Background',
+    tooltip: 'Background for deliberately dark sections, like the homepage\'s "Will you join us?" RSVP banner.',
+    defaultValue: '#1a2618',
+  },
+  {
+    key: 'themeOverlayText',
+    label: 'Hero Photo Text',
+    tooltip: 'Text and border color for content overlaid directly on the hero photo. If you change the hero photo, adjust this (and Hero Photo Backdrop below) so the text stays readable.',
+    defaultValue: '#ffffff',
+  },
+  {
+    key: 'themeOverlayScrim',
+    label: 'Hero Photo Backdrop',
+    tooltip: 'The gradient shading behind the hero photo text, used to keep it legible against the photo. Pick a color that contrasts with Hero Photo Text above (e.g. black backdrop with white text, or white backdrop with dark text).',
+    defaultValue: '#000000',
+  },
+];
 
 export default function SettingsPage() {
   const [form, setForm] = useState<Record<string, unknown>>({});
@@ -121,6 +154,27 @@ export default function SettingsPage() {
               <label className={labelClass}>Welcome Message</label>
               <textarea className={`${inputClass} resize-none`} rows={3} value={(form.welcomeMessage as string) ?? ''} onChange={e => set('welcomeMessage', e.target.value)} />
             </div>
+          </div>
+        </div>
+
+        {/* Theme Colors */}
+        <div className="bg-white rounded-lg border border-gray-200 p-5">
+          <h2 className="text-sm font-semibold text-gray-700 mb-1 flex items-center">
+            Theme Colors
+            <InfoTooltip text="Controls the color palette across the public site. Leave a field blank to use the default shown." />
+          </h2>
+          <p className="text-xs text-gray-400 mb-4">Leave any field blank to use its default.</p>
+          <div className="grid grid-cols-2 gap-4">
+            {THEME_COLORS.map(({ key, label, tooltip, defaultValue }) => (
+              <ColorInput
+                key={key}
+                label={label}
+                tooltip={tooltip}
+                value={(form[key] as string) ?? ''}
+                defaultValue={defaultValue}
+                onChange={v => set(key, v)}
+              />
+            ))}
           </div>
         </div>
 

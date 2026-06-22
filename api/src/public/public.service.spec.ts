@@ -15,6 +15,15 @@ const mockSettings = {
   monogramUrl: null,
   rsvpTagline: null,
   rsvpSubtext: null,
+  themeBackground: null,
+  themeForeground: null,
+  themeMuted: null,
+  themeAccent: null,
+  themeBorder: null,
+  themeSurface: null,
+  themeInverseBackground: null,
+  themeOverlayText: null,
+  themeOverlayScrim: null,
   welcomeMessage: null,
   isPublic: true,
   isRsvpEnabled: true,
@@ -60,6 +69,11 @@ describe('PublicService', () => {
       expect(result).toHaveProperty('monogramUrl');
       expect(result).toHaveProperty('rsvpTagline');
       expect(result).toHaveProperty('rsvpSubtext');
+      expect(result).toHaveProperty('themeAccent');
+      expect(result).toHaveProperty('themeSurface');
+      expect(result).toHaveProperty('themeInverseBackground');
+      expect(result).toHaveProperty('themeOverlayText');
+      expect(result).toHaveProperty('themeOverlayScrim');
       expect(result).not.toHaveProperty('id');
       expect(result).not.toHaveProperty('rsvpDeadline');
       expect(result).not.toHaveProperty('createdAt');
