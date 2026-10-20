@@ -1,4 +1,4 @@
-import { IsBoolean, IsDateString, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 
 // Empty string is allowed — it means "clear this override and use the default".
 const HEX_COLOR = /^$|^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
@@ -35,6 +35,24 @@ export class UpdateWeddingSettingsDto {
   @IsOptional()
   @IsString()
   heroImageUrl?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(-50)
+  @Max(50)
+  heroImageOffsetX?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(-50)
+  @Max(50)
+  heroImageOffsetY?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(20)
+  @Max(200)
+  heroImageHeight?: number;
 
   @IsOptional()
   @IsString()

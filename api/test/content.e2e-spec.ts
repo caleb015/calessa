@@ -86,6 +86,8 @@ describe('Content & Seating (e2e)', () => {
       await prisma.guest.deleteMany({ where: { invitationCode: 'SEAT0001' } });
     });
 
+    it('returns 401 without token', () => request(app.getHttpServer()).get('/admin/seating/tables').expect(401));
+
     it('GET /admin/seating/tables returns array', async () => {
       const res = await request(app.getHttpServer()).get('/admin/seating/tables').set('Authorization', token).expect(200);
       expect(Array.isArray(res.body)).toBe(true);

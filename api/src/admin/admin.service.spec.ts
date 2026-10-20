@@ -42,6 +42,34 @@ const mockPrisma = {
   rsvp: { findMany: jest.fn() },
 };
 
+// Minimal RFC 4180 parser (handles quoted commas and quoted newlines) so CSV
+// correctness tests verify actual row/column structure, not just substrings.
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+      else if (ch === '"') { inQuotes = false; }
+      else { cell += ch; }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ',') {
+      row.push(cell); cell = '';
+    } else if (ch === '\n') {
+      row.push(cell); cell = ''; rows.push(row); row = [];
+    } else {
+      cell += ch;
+    }
+  }
+  row.push(cell);
+  rows.push(row);
+  return rows;
+}
+
 describe('AdminService', () => {
   let service: AdminService;
 
@@ -98,6 +126,29 @@ describe('AdminService', () => {
       const csv = await service.exportGuestsCsv();
       expect(csv).toContain('""The""');
     });
+
+    it('keeps a comma inside a value from creating extra columns', async () => {
+      mockPrisma.guest.findMany.mockResolvedValue([
+        makeGuest({ primaryName: 'Smith, John', group: 'Family, Maternal', rsvp: null }),
+      ]);
+      const csv = await service.exportGuestsCsv();
+      const [headerRow, dataRow] = parseCsv(csv);
+      expect(dataRow).toHaveLength(headerRow.length);
+      expect(dataRow[0]).toBe('Smith, John');
+      expect(dataRow[3]).toBe('Family, Maternal');
+    });
+
+    it('keeps an embedded newline inside a value from splitting into an extra row', async () => {
+      mockPrisma.guest.findMany.mockResolvedValue([
+        makeGuest({ notes: 'Allergic to nuts.\nNeeds wheelchair access.', rsvp: null }),
+        makeGuest({ id: 'g2', invitationCode: 'CODE0002', primaryName: 'Second Guest', rsvp: null }),
+      ]);
+      const csv = await service.exportGuestsCsv();
+      const rows = parseCsv(csv);
+      expect(rows).toHaveLength(3); // header + 2 guests, despite the embedded newline
+      expect(rows[1][rows[0].indexOf('Notes')]).toBe('Allergic to nuts.\nNeeds wheelchair access.');
+      expect(rows[2][0]).toBe('Second Guest');
+    });
   });
 
   describe('exportRsvpsCsv', () => {
@@ -118,6 +169,19 @@ describe('AdminService', () => {
       const lines = csv.split('\n');
       expect(lines).toHaveLength(1);
       expect(lines[0]).toContain('Guest Name');
+    });
+
+    it('keeps a comma and embedded newline inside the message field from corrupting rows/columns', async () => {
+      mockPrisma.rsvp.findMany.mockResolvedValue([
+        { ...makeRsvp(), message: 'Congrats, can\'t wait!\nSee you there.', guest: makeGuest() },
+        { ...makeRsvp(), id: 'r2', guest: makeGuest({ id: 'g2', primaryName: 'Second Guest' }) },
+      ]);
+      const csv = await service.exportRsvpsCsv();
+      const rows = parseCsv(csv);
+      expect(rows).toHaveLength(3); // header + 2 RSVPs
+      expect(rows[0]).toHaveLength(rows[1].length);
+      expect(rows[1][rows[0].indexOf('Message')]).toBe('Congrats, can\'t wait!\nSee you there.');
+      expect(rows[2][0]).toBe('Second Guest');
     });
   });
 

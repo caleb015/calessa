@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   UnprocessableEntityException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SubmitRsvpDto } from './dto/submit-rsvp.dto';
@@ -18,6 +19,14 @@ export class RsvpService {
   // ── Public ─────────────────────────────────────────────────────────────────
 
   async getByCode(code: string) {
+    const settings = await this.prisma.weddingSettings.findUnique({
+      where: { id: SINGLETON_SETTINGS_ID },
+      select: { isPublic: true },
+    });
+    if (settings && !settings.isPublic) {
+      throw new ServiceUnavailableException('The website is not currently available');
+    }
+
     const guest = await this.prisma.guest.findUnique({
       where: { invitationCode: code },
       select: {
@@ -33,15 +42,19 @@ export class RsvpService {
   }
 
   async submitByCode(code: string, dto: SubmitRsvpDto) {
+    const settings = await this.prisma.weddingSettings.findUnique({
+      where: { id: SINGLETON_SETTINGS_ID },
+    });
+
+    if (settings && !settings.isPublic) {
+      throw new ServiceUnavailableException('The website is not currently available');
+    }
+
     const guest = await this.prisma.guest.findUnique({
       where: { invitationCode: code },
       include: { rsvp: true },
     });
     if (!guest) throw new NotFoundException('Invitation code not found');
-
-    const settings = await this.prisma.weddingSettings.findUnique({
-      where: { id: SINGLETON_SETTINGS_ID },
-    });
 
     if (settings && !settings.isRsvpEnabled) {
       throw new UnprocessableEntityException('RSVPs are currently closed');

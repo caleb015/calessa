@@ -37,9 +37,20 @@ describe('Admin (e2e)', () => {
       .expect(201);
 
     token = `Bearer ${res.body.access_token}`;
+
+    // A guest with a comma in their name so CSV export is verified against
+    // real, structurally-tricky data — not just headers from an empty table.
+    const guest = await prisma.guest.create({
+      data: { primaryName: 'Smith, Jane', invitationCode: 'ADMINE2E1', allowedPartySize: 1 },
+    });
+    await prisma.rsvp.create({
+      data: { guestId: guest.id, status: 'ATTENDING', attendeeCount: 1, email: 'jane@example.com' },
+    });
   });
 
   afterAll(async () => {
+    await prisma.rsvp.deleteMany({ where: { guest: { invitationCode: 'ADMINE2E1' } } });
+    await prisma.guest.deleteMany({ where: { invitationCode: 'ADMINE2E1' } });
     await prisma.user.deleteMany({ where: { email: { startsWith: 'e2e+admin' } } });
     await app.close();
   });
@@ -94,6 +105,17 @@ describe('Admin (e2e)', () => {
       expect(res.text).toContain('Invitation Code');
       expect(res.text).toContain('RSVP Status');
     });
+
+    it('includes real guest data, with the comma in the name kept inside a single quoted column', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/admin/export/guests.csv')
+        .set('Authorization', token)
+        .expect(200);
+
+      expect(res.text).toContain('"Smith, Jane"');
+      expect(res.text).toContain('ADMINE2E1');
+      expect(res.text).toContain('ATTENDING');
+    });
   });
 
   // ── GET /admin/export/rsvps.csv ──────────────────────────────────────────
@@ -114,6 +136,17 @@ describe('Admin (e2e)', () => {
       expect(res.text).toContain('Guest Name');
       expect(res.text).toContain('Status');
       expect(res.text).toContain('Meal Preference');
+    });
+
+    it('includes the real RSVP linked to its guest', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/admin/export/rsvps.csv')
+        .set('Authorization', token)
+        .expect(200);
+
+      expect(res.text).toContain('"Smith, Jane"');
+      expect(res.text).toContain('jane@example.com');
+      expect(res.text).toContain('ATTENDING');
     });
   });
 });

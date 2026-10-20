@@ -27,6 +27,14 @@ describe('WeddingSettings (e2e)', () => {
     prisma = moduleRef.get(PrismaService);
     await prisma.user.deleteMany({ where: { email: { startsWith: 'e2e+settings' } } });
 
+    // Defensive baseline: another spec file may have left isPublic flipped off,
+    // which the test DB persists across separate `npm run test:e2e` invocations.
+    await prisma.weddingSettings.upsert({
+      where: { id: 'singleton' },
+      update: { isPublic: true },
+      create: { id: 'singleton', isPublic: true },
+    });
+
     await request(app.getHttpServer())
       .post('/auth/register')
       .send({ email: TEST_EMAIL, password: TEST_PASSWORD })
@@ -41,6 +49,9 @@ describe('WeddingSettings (e2e)', () => {
   });
 
   afterAll(async () => {
+    // This file's own "updates scalar fields" test sets isPublic to false —
+    // restore it so later spec files/runs don't inherit a "site offline" state.
+    await prisma.weddingSettings.update({ where: { id: 'singleton' }, data: { isPublic: true } });
     await prisma.user.deleteMany({ where: { email: { startsWith: 'e2e+settings' } } });
     await app.close();
   });

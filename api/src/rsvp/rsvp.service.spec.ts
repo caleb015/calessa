@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, NotFoundException, ServiceUnavailableException, UnprocessableEntityException } from '@nestjs/common';
 import { RsvpStatus } from '@prisma/client';
 import { RsvpService } from './rsvp.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -31,6 +31,7 @@ const mockRsvp = {
 
 const mockSettings = {
   id: 'singleton',
+  isPublic: true,
   isRsvpEnabled: true,
   allowMaybe: false,
   rsvpDeadline: null,
@@ -70,6 +71,19 @@ describe('RsvpService', () => {
       mockPrisma.guest.findUnique.mockResolvedValue(null);
       await expect(service.getByCode('BADCODE')).rejects.toThrow(NotFoundException);
     });
+
+    it('throws ServiceUnavailableException when the site is not public, without looking up the guest', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: false });
+      await expect(service.getByCode('TESTCODE')).rejects.toThrow(ServiceUnavailableException);
+      expect(mockPrisma.guest.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('allows lookup when no WeddingSettings exist', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue(null);
+      mockPrisma.guest.findUnique.mockResolvedValue(mockGuest);
+      const result = await service.getByCode('TESTCODE');
+      expect(result).toEqual(mockGuest);
+    });
   });
 
   // ── submitByCode ───────────────────────────────────────────────────────────
@@ -96,6 +110,12 @@ describe('RsvpService', () => {
     it('throws NotFoundException for invalid code', async () => {
       mockPrisma.guest.findUnique.mockResolvedValue(null);
       await expect(service.submitByCode('BADCODE', validDto)).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ServiceUnavailableException when the site is not public, without looking up the guest', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ ...mockSettings, isPublic: false });
+      await expect(service.submitByCode('TESTCODE', validDto)).rejects.toThrow(ServiceUnavailableException);
+      expect(mockPrisma.guest.findUnique).not.toHaveBeenCalled();
     });
 
     it('throws UnprocessableEntityException when RSVPs are disabled', async () => {
@@ -127,6 +147,18 @@ describe('RsvpService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
+    it('allows attendeeCount exactly equal to allowedPartySize', async () => {
+      await service.submitByCode('TESTCODE', { ...validDto, attendeeCount: mockGuest.allowedPartySize });
+      expect(mockPrisma.rsvp.upsert).toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when MAYBE is submitted with attendeeCount of 0', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ ...mockSettings, allowMaybe: true });
+      await expect(
+        service.submitByCode('TESTCODE', { ...validDto, status: RsvpStatus.MAYBE, attendeeCount: 0 }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
     it('throws BadRequestException when plusOneName provided but not allowed', async () => {
       mockPrisma.guest.findUnique.mockResolvedValue({ ...mockGuest, plusOneAllowed: false, rsvp: null });
       await expect(
@@ -149,6 +181,26 @@ describe('RsvpService', () => {
       mockPrisma.weddingSettings.findUnique.mockResolvedValue(null);
       await service.submitByCode('TESTCODE', validDto);
       expect(mockPrisma.rsvp.upsert).toHaveBeenCalled();
+    });
+
+    it('upserts with a create payload keyed on guestId for a first-time submission', async () => {
+      await service.submitByCode('TESTCODE', validDto);
+      expect(mockPrisma.rsvp.upsert).toHaveBeenCalledWith({
+        where: { guestId: mockGuest.id },
+        update: expect.objectContaining({ ...validDto, updatedAt: expect.any(Date) }),
+        create: expect.objectContaining({ guestId: mockGuest.id, ...validDto }),
+      });
+    });
+
+    it('upserts with an updatedAt timestamp when re-submitting an existing RSVP', async () => {
+      mockPrisma.guest.findUnique.mockResolvedValue({ ...mockGuest, rsvp: mockRsvp });
+      await service.submitByCode('TESTCODE', { ...validDto, status: RsvpStatus.DECLINED, attendeeCount: 0 });
+      expect(mockPrisma.rsvp.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { guestId: mockGuest.id },
+          update: expect.objectContaining({ status: RsvpStatus.DECLINED, attendeeCount: 0, updatedAt: expect.any(Date) }),
+        }),
+      );
     });
 
     it('does not throw when deadline is in the future', async () => {

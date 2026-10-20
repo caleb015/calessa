@@ -38,6 +38,9 @@ model WeddingSettings {
   siteTitle            String?
   siteDescription      String?
   heroImageUrl         String?
+  heroImageOffsetX     Int?
+  heroImageOffsetY     Int?
+  heroImageHeight      Int?
   monogramUrl          String?
   rsvpTagline          String?
   rsvpSubtext          String?

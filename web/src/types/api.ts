@@ -5,6 +5,9 @@ export interface WeddingSettings {
   siteTitle: string | null;
   siteDescription: string | null;
   heroImageUrl: string | null;
+  heroImageOffsetX: number | null;
+  heroImageOffsetY: number | null;
+  heroImageHeight: number | null;
   monogramUrl: string | null;
   rsvpTagline: string | null;
   rsvpSubtext: string | null;

@@ -12,6 +12,9 @@ const mockSettings = {
   siteTitle: 'Caleb & Raissa',
   siteDescription: 'Our wedding',
   heroImageUrl: null,
+  heroImageOffsetX: null,
+  heroImageOffsetY: null,
+  heroImageHeight: null,
   monogramUrl: null,
   rsvpTagline: null,
   rsvpSubtext: null,
@@ -67,6 +70,9 @@ describe('PublicService', () => {
       expect(result).toHaveProperty('coupleNameA');
       expect(result).toHaveProperty('isRsvpEnabled');
       expect(result).toHaveProperty('monogramUrl');
+      expect(result).toHaveProperty('heroImageOffsetX');
+      expect(result).toHaveProperty('heroImageOffsetY');
+      expect(result).toHaveProperty('heroImageHeight');
       expect(result).toHaveProperty('rsvpTagline');
       expect(result).toHaveProperty('rsvpSubtext');
       expect(result).toHaveProperty('themeAccent');

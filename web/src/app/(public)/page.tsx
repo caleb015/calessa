@@ -23,6 +23,13 @@ export default async function HomePage() {
   const coupleA = settings?.coupleNameA ?? 'Caleb';
   const coupleB = settings?.coupleNameB ?? 'Raissa';
   const heroSrc = settings?.heroImageUrl ?? '/images/hero.png';
+  // Shifts the image by a percentage of its own rendered height/width via
+  // transform, not object-position (whose percentages interact non-linearly
+  // with cover-scaling overflow and barely move the image visually).
+  // 0 = no shift. Positive Y moves the image up; positive X moves it right.
+  const heroOffsetX = settings?.heroImageOffsetX ?? 0;
+  const heroOffsetY = settings?.heroImageOffsetY ?? 0;
+  const heroHeight = settings?.heroImageHeight ?? 100;
   const monogramSrc = settings?.monogramUrl ?? '/images/rc-monogram-floral-green.png';
   const hasImage = true; // always has hero
   const textColor = 'text-[var(--overlay-text)]';
@@ -42,14 +49,15 @@ export default async function HomePage() {
     <div className="overflow-x-hidden">
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6">
+      <section className="relative overflow-hidden flex flex-col items-center justify-center text-center px-6" style={{ height: `${heroHeight}vh` }}>
         {/* Hero image */}
         <Image
           src={heroSrc}
           alt="Hero"
           fill
           priority
-          className="object-cover object-top"
+          className="object-cover"
+          style={{ transform: `translate(${heroOffsetX}%, ${-heroOffsetY}%)` }}
           sizes="100vw"
         />
 

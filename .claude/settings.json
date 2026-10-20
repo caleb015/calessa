@@ -34,7 +34,9 @@
       "Bash(npx tsc *)",
       "Bash(npx playwright *)",
       "Read(//tmp/**)",
-      "Bash(mv /home/caleb/projects/calessa/odie-closed-mouth.png /home/caleb/projects/calessa/web/public/images/odie.png && ls web/public/images/)"
+      "Bash(mv /home/caleb/projects/calessa/odie-closed-mouth.png /home/caleb/projects/calessa/web/public/images/odie.png && ls web/public/images/)",
+      "Bash(python3 -c \"import json,sys; p=json.load\\(sys.stdin\\); print\\('next:', p['dependencies'].get\\('next','?'\\), 'react:', p['dependencies'].get\\('react','?'\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; p=json.load\\(sys.stdin\\); print\\('@nestjs/core:', p['dependencies'].get\\('@nestjs/core','?'\\), 'node engine:', p.get\\('engines',{}\\).get\\('node','not specified'\\)\\)\")"
     ],
     "additionalDirectories": [
       "/home/caleb/projects/calessa"

@@ -45,11 +45,12 @@ describe('RSVP (e2e)', () => {
       data: { primaryName: 'E2E RSVP Guest No Plus', invitationCode: TEST_CODE_NO_PLUS, allowedPartySize: 1, plusOneAllowed: false },
     });
 
-    // Ensure RSVPs are enabled
+    // Ensure RSVPs are enabled and the site is public (another spec file may have
+    // left isPublic flipped off, which the test DB persists across separate runs)
     await prisma.weddingSettings.upsert({
       where: { id: 'singleton' },
-      update: { isRsvpEnabled: true, allowMaybe: false, rsvpDeadline: null },
-      create: { id: 'singleton', isRsvpEnabled: true, allowMaybe: false },
+      update: { isPublic: true, isRsvpEnabled: true, allowMaybe: false, rsvpDeadline: null },
+      create: { id: 'singleton', isPublic: true, isRsvpEnabled: true, allowMaybe: false },
     });
 
     // Admin login
@@ -164,6 +165,59 @@ describe('RSVP (e2e)', () => {
         .send({ status: 'DECLINED', attendeeCount: 0, email: 'juan@example.com' })
         .expect(201);
       expect(res.body.status).toBe('DECLINED');
+    });
+  });
+
+  // ── POST /public/rsvp/:code — settings-dependent rules, exercised end-to-end ─
+
+  describe('POST /public/rsvp/:code with site-wide settings toggled', () => {
+    afterEach(async () => {
+      // Restore the baseline settings set up in beforeAll so later tests aren't affected.
+      await prisma.weddingSettings.update({
+        where: { id: 'singleton' },
+        data: { isPublic: true, isRsvpEnabled: true, allowMaybe: false, rsvpDeadline: null },
+      });
+    });
+
+    it('returns 503 when the site is not public, for both lookup and submission', async () => {
+      await prisma.weddingSettings.update({ where: { id: 'singleton' }, data: { isPublic: false } });
+
+      await request(app.getHttpServer()).get(`/public/rsvp/${TEST_CODE}`).expect(503);
+      await request(app.getHttpServer())
+        .post(`/public/rsvp/${TEST_CODE}`)
+        .send({ status: 'ATTENDING', attendeeCount: 1, email: 'juan@example.com' })
+        .expect(503);
+    });
+
+    it('returns 422 when RSVPs are disabled', async () => {
+      await prisma.weddingSettings.update({ where: { id: 'singleton' }, data: { isRsvpEnabled: false } });
+
+      return request(app.getHttpServer())
+        .post(`/public/rsvp/${TEST_CODE}`)
+        .send({ status: 'ATTENDING', attendeeCount: 1, email: 'juan@example.com' })
+        .expect(422);
+    });
+
+    it('returns 422 when the RSVP deadline has passed', async () => {
+      await prisma.weddingSettings.update({
+        where: { id: 'singleton' },
+        data: { rsvpDeadline: new Date(Date.now() - 1000) },
+      });
+
+      return request(app.getHttpServer())
+        .post(`/public/rsvp/${TEST_CODE}`)
+        .send({ status: 'ATTENDING', attendeeCount: 1, email: 'juan@example.com' })
+        .expect(422);
+    });
+
+    it('allows MAYBE when allowMaybe is enabled', async () => {
+      await prisma.weddingSettings.update({ where: { id: 'singleton' }, data: { allowMaybe: true } });
+
+      const res = await request(app.getHttpServer())
+        .post(`/public/rsvp/${TEST_CODE}`)
+        .send({ status: 'MAYBE', attendeeCount: 1, email: 'juan@example.com' })
+        .expect(201);
+      expect(res.body.status).toBe('MAYBE');
     });
   });
 

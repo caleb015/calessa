@@ -137,6 +137,38 @@ export default function SettingsPage() {
               <input className={inputClass} placeholder="/images/hero.png or https://..." value={(form.heroImageUrl as string) ?? ''} onChange={e => set('heroImageUrl', e.target.value)} />
               <ImagePreview src={(form.heroImageUrl as string) ?? ''} />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>
+                  Hero Horizontal Offset
+                  <InfoTooltip text="Shifts the photo by this percentage of its own width. 0 = no shift (default). Positive moves the image right, negative moves it left." />
+                </label>
+                <input type="number" min={-50} max={50} className={inputClass} placeholder="0"
+                  value={(form.heroImageOffsetX as number) ?? ''}
+                  onChange={e => set('heroImageOffsetX', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>
+                  Hero Vertical Offset
+                  <InfoTooltip text="Shifts the photo by this percentage of its own height. 0 = no shift (default). Positive moves the image up, negative moves it down." />
+                </label>
+                <input type="number" min={-50} max={50} className={inputClass} placeholder="0"
+                  value={(form.heroImageOffsetY as number) ?? ''}
+                  onChange={e => set('heroImageOffsetY', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                />
+              </div>
+            </div>
+            <div>
+              <label className={labelClass}>
+                Hero Image Height
+                <InfoTooltip text="Height of the hero section as a percentage of the screen height. 100 = full screen (default)." />
+              </label>
+              <input type="number" min={20} max={200} className={inputClass} placeholder="100"
+                value={(form.heroImageHeight as number) ?? ''}
+                onChange={e => set('heroImageHeight', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+              />
+            </div>
             <div>
               <label className={labelClass}>Monogram URL</label>
               <input className={inputClass} placeholder="/images/monogram.png or https://..." value={(form.monogramUrl as string) ?? ''} onChange={e => set('monogramUrl', e.target.value)} />
