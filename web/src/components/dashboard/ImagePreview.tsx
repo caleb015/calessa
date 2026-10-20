@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export default function ImagePreview({ src }: { src: string }) {
   const [error, setError] = useState(false);
+  const [prevSrc, setPrevSrc] = useState(src);
 
-  useEffect(() => { setError(false); }, [src]);
+  if (src !== prevSrc) {
+    setPrevSrc(src);
+    setError(false);
+  }
 
   if (!src) return null;
 

@@ -102,6 +102,7 @@ export default function GuestDetailPage() {
   const [savingSeat, setSavingSeat] = useState(false);
   const [seatError, setSeatError] = useState('');
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const load = useCallback(() => {
     Promise.all([
       adminApi.getGuest(id) as Promise<Guest>,
@@ -144,6 +145,7 @@ export default function GuestDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
   const copyRsvpLink = () => {

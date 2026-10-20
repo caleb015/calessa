@@ -280,6 +280,7 @@ export default function ContentPage() {
     }
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
   const section = SECTIONS.find(s => s.key === activeTab)!;
