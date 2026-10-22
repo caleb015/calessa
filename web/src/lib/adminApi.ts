@@ -46,6 +46,11 @@ export const adminApi = {
   deleteGuest: (id: string) => del(`/admin/guests/${id}`),
   sendGuestInvitation: (id: string) => post(`/admin/guests/${id}/send-invitation`, {}),
 
+  // Invitation email template
+  getInviteEmail: () => get('/admin/invite-email'),
+  updateInviteEmail: (body: unknown) => patch('/admin/invite-email', body),
+  previewInviteEmail: (body: unknown) => post('/admin/invite-email/preview', body),
+
   // RSVPs
   getRsvps: () => get('/admin/rsvps'),
   updateRsvp: (id: string, body: unknown) => patch(`/admin/rsvps/${id}`, body),

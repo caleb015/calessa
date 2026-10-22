@@ -80,9 +80,20 @@ describe('EmailService.sendInvitation', () => {
     expect(payload.subject).toContain('Ana & Ben & Raissa');
   });
 
-  it('omits the date sentence when no wedding date is set', async () => {
+  it('says the date is to be announced when no wedding date is set', async () => {
     const service = makeService({ RESEND_API_KEY: 're_test' });
     await service.sendInvitation({ ...baseOpts, weddingDate: null });
-    expect(mockSend.mock.calls[0][0].html).not.toContain('Please join us on');
+    expect(mockSend.mock.calls[0][0].html).toContain('Please join us on a date to be announced.');
+  });
+
+  it('uses saved template overrides for subject and body', async () => {
+    const service = makeService({ RESEND_API_KEY: 're_test' });
+    await service.sendInvitation({
+      ...baseOpts,
+      template: { inviteSubject: 'Save the date, {guestName}!', inviteButtonText: 'Reply here' },
+    });
+    const payload = mockSend.mock.calls[0][0];
+    expect(payload.subject).toBe('Save the date, Juan dela Cruz!');
+    expect(payload.html).toContain('Reply here');
   });
 });

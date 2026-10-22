@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import { RxPencil1, RxTrash } from 'react-icons/rx';
+import InviteEmailEditor from '@/components/dashboard/InviteEmailEditor';
 
 interface Rsvp {
   id: string;
@@ -36,6 +37,7 @@ export default function RsvpsPage() {
   const [editForm, setEditForm] = useState<Partial<Rsvp>>({});
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [tab, setTab] = useState<'responses' | 'invite'>('responses');
 
   const STATUSES = allowMaybe ? ALL_STATUSES : ALL_STATUSES.filter(s => s !== 'MAYBE');
 
@@ -75,14 +77,30 @@ export default function RsvpsPage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">RSVPs</h1>
-        <a
+        {tab === 'responses' && <a
           href={adminApi.exportRsvpsCsv()}
           download="rsvps.csv"
           className="border border-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm hover:bg-gray-50 transition-colors"
         >
           Export CSV
-        </a>
+        </a>}
       </div>
+
+      <div className="flex gap-1 mb-6 border-b border-gray-200">
+        {([['responses', 'Responses'], ['invite', 'Invitation Email']] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`px-4 py-2 text-sm -mb-px border-b-2 transition-colors ${
+              tab === key ? 'border-gray-900 text-gray-900 font-medium' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'invite' ? <InviteEmailEditor /> : (<>
 
       {/* Filters + counts */}
       <div className="flex gap-3 mb-4 flex-wrap">
@@ -175,6 +193,7 @@ export default function RsvpsPage() {
           </tbody>
         </table>
       </div>
+      </>)}
     </div>
   );
 }

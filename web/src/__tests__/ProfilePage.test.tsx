@@ -52,10 +52,26 @@ describe('ProfilePage', () => {
 
   // ── auth guard ───────────────────────────────────────────────────────────────
 
-  it('redirects to / when no token in localStorage', () => {
+  it('redirects to /login when no token in localStorage', () => {
     localStorage.removeItem('access_token');
     render(<ProfilePage />);
-    expect(mockPush).toHaveBeenCalledWith('/');
+    expect(mockPush).toHaveBeenCalledWith('/login');
+  });
+
+  it('redirects to /login when the session is rejected (e.g. expired token)', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: () => Promise.resolve({ statusCode: 401, message: 'Unauthorized' }),
+    });
+    render(<ProfilePage />);
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
+  });
+
+  it('redirects to /login when the profile cannot be loaded at all', async () => {
+    (global.fetch as jest.Mock).mockRejectedValue(new TypeError('Failed to fetch'));
+    render(<ProfilePage />);
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
   });
 
   // ── initial load ─────────────────────────────────────────────────────────────
@@ -216,14 +232,14 @@ describe('ProfilePage', () => {
     expect(confirmBtn).not.toBeDisabled();
   });
 
-  it('clears storage and redirects to / after account deletion', async () => {
+  it('clears storage and redirects to /login after account deletion', async () => {
     setupFetch();
     render(<ProfilePage />);
     await waitFor(() => screen.getByRole('button', { name: /delete my account/i }));
     await userEvent.click(screen.getByRole('button', { name: /delete my account/i }));
     await userEvent.type(screen.getByPlaceholderText(/type your email/i), 'test@example.com');
     await userEvent.click(screen.getByRole('button', { name: /^delete account$/i }));
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/'));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
     expect(localStorage.getItem('access_token')).toBeNull();
   });
 });

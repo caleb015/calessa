@@ -189,7 +189,8 @@ describe('GuestsService', () => {
       mockPrisma.guest.findUnique.mockResolvedValue(mockGuest);
       mockConfig.get.mockReturnValue('https://raissaandcaleb.com');
       const weddingDate = new Date('2027-02-12T07:00:00.000Z');
-      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ weddingDate, coupleNameA: 'Caleb', coupleNameB: 'Raissa' });
+      const settings = { weddingDate, coupleNameA: 'Caleb', coupleNameB: 'Raissa', inviteButtonText: 'Reply here' };
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue(settings);
 
       await expect(service.sendInvitation('guest-1')).resolves.toEqual({ sent: true, to: 'juan@example.com' });
       expect(mockEmail.sendInvitation).toHaveBeenCalledWith({
@@ -199,7 +200,11 @@ describe('GuestsService', () => {
         weddingDate,
         coupleNameA: 'Caleb',
         coupleNameB: 'Raissa',
+        template: settings,
       });
+      expect(mockPrisma.weddingSettings.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({ select: expect.objectContaining({ inviteButtonText: true, inviteAccentColor: true }) }),
+      );
     });
 
     it('rejects guests without an email and sends nothing', async () => {

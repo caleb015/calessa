@@ -79,15 +79,18 @@ function ProfilePageContent() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (initialBanner) setBanner(initialBanner);
 
-    Promise.all([
-      fetch(`${appConfig.apiUrl}/auth/me`, { headers: authHeaders }).then(r => r.json()),
-      fetch(`${appConfig.apiUrl}/auth/providers`, { headers: authHeaders }).then(r => r.json()),
-    ]).then(([me, providers]) => {
+    const getJson = (path: string) =>
+      fetch(`${appConfig.apiUrl}${path}`, { headers: authHeaders }).then(r => {
+        if (!r.ok) throw new Error(`Request failed: ${r.status}`);
+        return r.json();
+      });
+
+    Promise.all([getJson('/auth/me'), getJson('/auth/providers')]).then(([me, providers]) => {
       setProfile(me);
       setName(me.name ?? '');
       setLinkedProviders(providers);
     }).catch(() => {
-      router.push('/');
+      router.push('/login');
     }).finally(() => setIsLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -35,12 +35,12 @@ describe('AuthCallback', () => {
     });
   });
 
-  it('redirects to / when no token and no error', async () => {
+  it('redirects to /login when no token and no error', async () => {
     mockParams = {};
     render(<AuthCallback />);
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/');
+      expect(mockPush).toHaveBeenCalledWith('/login');
     });
   });
 
@@ -74,7 +74,7 @@ describe('AuthCallback', () => {
     expect(localStorage.getItem('access_token')).toBeNull();
   });
 
-  it('navigates to / when Back to sign in is clicked', async () => {
+  it('navigates to /login when Back to sign in is clicked', async () => {
     mockParams = { error: encodeURIComponent('Some error') };
     render(<AuthCallback />);
 
@@ -83,6 +83,6 @@ describe('AuthCallback', () => {
     });
 
     await userEvent.click(screen.getByRole('button', { name: /back to sign in/i }));
-    expect(mockPush).toHaveBeenCalledWith('/');
+    expect(mockPush).toHaveBeenCalledWith('/login');
   });
 });

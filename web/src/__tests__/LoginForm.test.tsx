@@ -143,7 +143,7 @@ describe('LoginForm', () => {
     await userEvent.type(screen.getByPlaceholderText('••••••••'), 'password123');
     await userEvent.click(screen.getByRole('button', { name: 'Sign In' }));
 
-    const btn = screen.getByRole('button', { name: /please wait/i });
+    const btn = screen.getByRole('button', { name: /signing in/i });
     expect(btn).toBeDisabled();
 
     resolveResponse!({ ok: true, json: async () => ({ access_token: 'tok' }) });

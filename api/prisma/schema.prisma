@@ -54,6 +54,18 @@ model WeddingSettings {
   themeOverlayText     String?
   themeOverlayScrim    String?
   welcomeMessage       String?
+  inviteSubject        String?
+  inviteHeading        String?
+  inviteTagline        String?
+  inviteGreeting       String?
+  inviteMessage        String?
+  inviteButtonText     String?
+  inviteSignoff        String?
+  inviteBackgroundColor String?
+  inviteTextColor      String?
+  inviteAccentColor    String?
+  inviteMutedColor     String?
+  inviteButtonTextColor String?
   isPublic             Boolean   @default(true)
   isRsvpEnabled        Boolean   @default(true)
   allowMaybe           Boolean   @default(false)

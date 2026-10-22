@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ConflictException, BadRequestException }
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+import { INVITE_SELECT } from '../email/invite-template';
 import { CreateGuestDto } from './dto/create-guest.dto';
 import { UpdateGuestDto } from './dto/update-guest.dto';
 import { BulkCreateGuestsDto } from './dto/bulk-create-guests.dto';
@@ -87,7 +88,12 @@ export class GuestsService {
 
     const settings = await this.prisma.weddingSettings.findUnique({
       where: { id: 'singleton' },
-      select: { weddingDate: true, coupleNameA: true, coupleNameB: true },
+      select: {
+        weddingDate: true,
+        coupleNameA: true,
+        coupleNameB: true,
+        ...INVITE_SELECT,
+      },
     });
 
     await this.emailService.sendInvitation({
@@ -97,6 +103,7 @@ export class GuestsService {
       weddingDate: settings?.weddingDate,
       coupleNameA: settings?.coupleNameA,
       coupleNameB: settings?.coupleNameB,
+      template: settings,
     });
 
     return { sent: true, to: guest.email };
