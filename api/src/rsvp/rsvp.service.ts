@@ -32,6 +32,8 @@ export class RsvpService {
       select: {
         id: true,
         primaryName: true,
+        email: true,
+        phone: true,
         allowedPartySize: true,
         plusOneAllowed: true,
         rsvp: true,

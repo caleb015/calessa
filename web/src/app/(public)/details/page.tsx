@@ -12,9 +12,9 @@ function EventCard({ event }: { event: WeddingEvent }) {
         <p className="text-[var(--muted)] text-sm mt-3">
           {event.startTime && new Date(event.startTime).toLocaleString('en-US', {
             weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-            hour: 'numeric', minute: '2-digit',
+            hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Manila',
           })}
-          {event.endTime && ` – ${new Date(event.endTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`}
+          {event.endTime && ` – ${new Date(event.endTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Manila' })}`}
         </p>
       )}
       {event.notes && <p className="text-[var(--muted)] text-sm mt-3 italic">{event.notes}</p>}

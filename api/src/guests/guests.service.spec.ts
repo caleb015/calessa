@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { GuestsService } from './guests.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 
 const mockGuest = {
   id: 'guest-1',
@@ -27,7 +29,13 @@ const mockPrisma = {
     update: jest.fn(),
     delete: jest.fn(),
   },
+  weddingSettings: {
+    findUnique: jest.fn(),
+  },
 };
+
+const mockConfig = { get: jest.fn() };
+const mockEmail = { sendInvitation: jest.fn() };
 
 describe('GuestsService', () => {
   let service: GuestsService;
@@ -37,6 +45,8 @@ describe('GuestsService', () => {
       providers: [
         GuestsService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: ConfigService, useValue: mockConfig },
+        { provide: EmailService, useValue: mockEmail },
       ],
     }).compile();
 
@@ -171,6 +181,38 @@ describe('GuestsService', () => {
     it('throws NotFoundException when guest not found', async () => {
       mockPrisma.guest.findUnique.mockResolvedValue(null);
       await expect(service.remove('bad-id')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('sendInvitation', () => {
+    it('emails the guest their RSVP link with wedding details', async () => {
+      mockPrisma.guest.findUnique.mockResolvedValue(mockGuest);
+      mockConfig.get.mockReturnValue('https://raissaandcaleb.com');
+      const weddingDate = new Date('2027-02-12T07:00:00.000Z');
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ weddingDate, coupleNameA: 'Caleb', coupleNameB: 'Raissa' });
+
+      await expect(service.sendInvitation('guest-1')).resolves.toEqual({ sent: true, to: 'juan@example.com' });
+      expect(mockEmail.sendInvitation).toHaveBeenCalledWith({
+        to: 'juan@example.com',
+        guestName: 'Juan dela Cruz',
+        rsvpLink: 'https://raissaandcaleb.com/rsvp/TESTCODE',
+        weddingDate,
+        coupleNameA: 'Caleb',
+        coupleNameB: 'Raissa',
+      });
+    });
+
+    it('rejects guests without an email and sends nothing', async () => {
+      mockPrisma.guest.findUnique.mockResolvedValue({ ...mockGuest, email: null });
+      await expect(service.sendInvitation('guest-1')).rejects.toThrow(BadRequestException);
+      expect(mockEmail.sendInvitation).not.toHaveBeenCalled();
+    });
+
+    it('propagates email provider failures instead of reporting success', async () => {
+      mockPrisma.guest.findUnique.mockResolvedValue(mockGuest);
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue(null);
+      mockEmail.sendInvitation.mockRejectedValueOnce(new Error('provider down'));
+      await expect(service.sendInvitation('guest-1')).rejects.toThrow('provider down');
     });
   });
 });

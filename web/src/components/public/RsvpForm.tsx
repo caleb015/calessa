@@ -17,8 +17,8 @@ export default function RsvpForm({ code, guest, settings }: Props) {
 
   const [status, setStatus] = useState<Status>((existing?.status as Status) ?? 'ATTENDING');
   const [attendeeCount, setAttendeeCount] = useState(existing?.attendeeCount ?? 1);
-  const [email, setEmail] = useState(existing?.email ?? '');
-  const [phone, setPhone] = useState(existing?.phone ?? '');
+  const [email, setEmail] = useState(existing?.email ?? guest.email ?? '');
+  const [phone, setPhone] = useState(existing?.phone ?? guest.phone ?? '');
   const [plusOneName, setPlusOneName] = useState(existing?.plusOneName ?? '');
   const [mealPreference, setMealPreference] = useState(existing?.mealPreference ?? '');
   const [dietaryRestrictions, setDietaryRestrictions] = useState(existing?.dietaryRestrictions ?? '');

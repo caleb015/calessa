@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useId } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import ImagePreview from '@/components/dashboard/ImagePreview';
+import { toLocalDateTimeInput, fromLocalDateTimeInput } from '@/lib/datetime';
 
 type FieldType = 'text' | 'textarea' | 'datetime' | 'number' | 'checkbox' | 'email' | 'image';
 
@@ -12,6 +13,7 @@ interface FieldConfig {
   type: FieldType;
   required?: boolean;
   placeholder?: string;
+  suggestions?: string[];
 }
 
 type Item = Record<string, unknown> & { id: string };
@@ -43,7 +45,10 @@ const SECTIONS: SectionConfig[] = [
     itemLabel: (item) => item.title as string,
     itemSublabel: (item) => [item.type, item.venueName].filter(Boolean).join(' · ') as string,
     fields: [
-      { key: 'type', label: 'Type', type: 'text', required: true, placeholder: 'ceremony, reception…' },
+      {
+        key: 'type', label: 'Type', type: 'text', required: true, placeholder: 'Pick one or type your own',
+        suggestions: ['Ceremony', 'Reception', 'Cocktails', 'Dinner', 'Program', 'After-party', 'Welcome Dinner', 'Rehearsal Dinner'],
+      },
       { key: 'title', label: 'Title', type: 'text', required: true },
       { key: 'venueName', label: 'Venue', type: 'text' },
       { key: 'address', label: 'Address', type: 'text' },
@@ -52,6 +57,7 @@ const SECTIONS: SectionConfig[] = [
       { key: 'mapUrl', label: 'Map URL', type: 'text', placeholder: 'https://maps.google.com/…' },
       { key: 'notes', label: 'Notes', type: 'textarea' },
       { key: 'displayOrder', label: 'Display Order', type: 'number' },
+      { key: 'showOnHomepage', label: 'Show on homepage', type: 'checkbox' },
     ],
   },
   {
@@ -173,6 +179,7 @@ function FormField({
   onChange: (key: string, value: unknown) => void;
 }) {
   const value = form[field.key];
+  const listId = useId();
 
   if (field.type === 'checkbox') {
     return (
@@ -201,13 +208,13 @@ function FormField({
   }
 
   if (field.type === 'datetime') {
-    const dateVal = value ? new Date(value as string).toISOString().slice(0, 16) : '';
+    const dateVal = value ? toLocalDateTimeInput(value as string) : '';
     return (
       <input
         type="datetime-local"
         className={inputCls}
         value={dateVal}
-        onChange={e => onChange(field.key, e.target.value ? new Date(e.target.value).toISOString() : null)}
+        onChange={e => onChange(field.key, fromLocalDateTimeInput(e.target.value))}
       />
     );
   }
@@ -240,13 +247,21 @@ function FormField({
   }
 
   return (
-    <input
-      type={field.type}
-      className={inputCls}
-      placeholder={field.placeholder}
-      value={(value as string) ?? ''}
-      onChange={e => onChange(field.key, e.target.value)}
-    />
+    <>
+      <input
+        type={field.type}
+        className={inputCls}
+        placeholder={field.placeholder}
+        list={field.suggestions ? listId : undefined}
+        value={(value as string) ?? ''}
+        onChange={e => onChange(field.key, e.target.value)}
+      />
+      {field.suggestions && (
+        <datalist id={listId}>
+          {field.suggestions.map(s => <option key={s} value={s} />)}
+        </datalist>
+      )}
+    </>
   );
 }
 

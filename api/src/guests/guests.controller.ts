@@ -35,6 +35,11 @@ export class GuestsController {
     return this.service.update(id, dto);
   }
 
+  @Post(':id/send-invitation')
+  sendInvitation(@Param('id') id: string) {
+    return this.service.sendInvitation(id);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {

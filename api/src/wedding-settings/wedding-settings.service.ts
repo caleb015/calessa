@@ -3,6 +3,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UpdateWeddingSettingsDto } from './dto/update-wedding-settings.dto';
 
 const SINGLETON_ID = 'singleton';
+const DAY_MS = 24 * 60 * 60 * 1000;
+// Asia/Manila is a fixed UTC+8 with no DST.
+const MANILA_OFFSET_MS = 8 * 60 * 60 * 1000;
+
+function manilaMidnight(d: Date): number {
+  return Math.floor((d.getTime() + MANILA_OFFSET_MS) / DAY_MS) * DAY_MS - MANILA_OFFSET_MS;
+}
 
 @Injectable()
 export class WeddingSettingsService {
@@ -29,11 +36,29 @@ export class WeddingSettingsService {
     const data: Record<string, unknown> = { ...dto };
     if (dto.weddingDate) data.weddingDate = new Date(dto.weddingDate);
     if (dto.rsvpDeadline) data.rsvpDeadline = new Date(dto.rsvpDeadline);
-    return this.prisma.weddingSettings.upsert({
-      where: { id: SINGLETON_ID },
-      update: data,
-      create: { id: SINGLETON_ID, ...data },
-    });
+    const weddingDate = dto.weddingDate ? new Date(dto.weddingDate) : null;
+    const events = weddingDate
+      ? await this.prisma.weddingEvent.findMany({ where: { startTime: { not: null } } })
+      : [];
+
+    const [settings] = await this.prisma.$transaction([
+      this.prisma.weddingSettings.upsert({
+        where: { id: SINGLETON_ID },
+        update: data,
+        create: { id: SINGLETON_ID, ...data },
+      }),
+      ...events.map((event) => {
+        const shift = manilaMidnight(weddingDate!) - manilaMidnight(event.startTime!);
+        return this.prisma.weddingEvent.update({
+          where: { id: event.id },
+          data: {
+            startTime: new Date(event.startTime!.getTime() + shift),
+            endTime: event.endTime ? new Date(event.endTime.getTime() + shift) : null,
+          },
+        });
+      }),
+    ]);
+    return settings;
   }
 
   private async assertNoDuplicateTableNumbers() {

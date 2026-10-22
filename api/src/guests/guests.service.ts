@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import { CreateGuestDto } from './dto/create-guest.dto';
 import { UpdateGuestDto } from './dto/update-guest.dto';
 import { BulkCreateGuestsDto } from './dto/bulk-create-guests.dto';
@@ -15,7 +17,11 @@ function generateCode(): string {
 
 @Injectable()
 export class GuestsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+    private readonly emailService: EmailService,
+  ) {}
 
   findAll() {
     return this.prisma.guest.findMany({
@@ -68,6 +74,32 @@ export class GuestsService {
   async remove(id: string) {
     await this.findOne(id);
     return this.prisma.guest.delete({ where: { id } });
+  }
+
+  async sendInvitation(id: string): Promise<{ sent: boolean; to: string }> {
+    const guest = await this.findOne(id);
+    if (!guest.email) {
+      throw new BadRequestException('This guest has no email address on file');
+    }
+
+    const frontendUrl = this.config.get<string>('FRONTEND_URL') ?? 'https://raissaandcaleb.com';
+    const rsvpLink = `${frontendUrl}/rsvp/${guest.invitationCode}`;
+
+    const settings = await this.prisma.weddingSettings.findUnique({
+      where: { id: 'singleton' },
+      select: { weddingDate: true, coupleNameA: true, coupleNameB: true },
+    });
+
+    await this.emailService.sendInvitation({
+      to: guest.email,
+      guestName: guest.primaryName,
+      rsvpLink,
+      weddingDate: settings?.weddingDate,
+      coupleNameA: settings?.coupleNameA,
+      coupleNameB: settings?.coupleNameB,
+    });
+
+    return { sent: true, to: guest.email };
   }
 
   async bulkCreate(dto: BulkCreateGuestsDto) {

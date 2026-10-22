@@ -129,4 +129,73 @@ describe('WeddingSettings (e2e)', () => {
         .expect(400);
     });
   });
+
+  // ── Wedding date → event date sync ───────────────────────────────────────────
+
+  describe('PATCH /admin/settings weddingDate syncs event dates', () => {
+    const TITLE_PREFIX = 'E2E Sync';
+    let ceremonyId: string;
+    let receptionId: string;
+
+    beforeEach(async () => {
+      await prisma.weddingEvent.deleteMany({ where: { title: { startsWith: TITLE_PREFIX } } });
+      // Jan 1 2027 in Manila: ceremony 1:00–2:00 AM, reception 3:00 PM – 1:00 AM next day
+      const ceremony = await prisma.weddingEvent.create({
+        data: {
+          type: 'ceremony', title: `${TITLE_PREFIX} Ceremony`,
+          startTime: new Date('2026-12-31T17:00:00.000Z'), endTime: new Date('2026-12-31T18:00:00.000Z'),
+        },
+      });
+      const reception = await prisma.weddingEvent.create({
+        data: {
+          type: 'reception', title: `${TITLE_PREFIX} Reception`,
+          startTime: new Date('2027-01-01T07:00:00.000Z'), endTime: new Date('2027-01-01T17:00:00.000Z'),
+        },
+      });
+      ceremonyId = ceremony.id;
+      receptionId = reception.id;
+    });
+
+    afterAll(async () => {
+      await prisma.weddingEvent.deleteMany({ where: { title: { startsWith: TITLE_PREFIX } } });
+    });
+
+    it('moves events to the new date in Manila, keeping time of day and duration', async () => {
+      await request(app.getHttpServer())
+        .patch('/admin/settings')
+        .set('Authorization', token)
+        .send({ weddingDate: '2027-02-12T07:00:00.000Z' }) // Feb 12, 3:00 PM Manila
+        .expect(200);
+
+      const ceremony = await prisma.weddingEvent.findUniqueOrThrow({ where: { id: ceremonyId } });
+      const reception = await prisma.weddingEvent.findUniqueOrThrow({ where: { id: receptionId } });
+
+      expect(ceremony.startTime!.toISOString()).toBe('2027-02-11T17:00:00.000Z'); // Feb 12, 1:00 AM Manila
+      expect(ceremony.endTime!.toISOString()).toBe('2027-02-11T18:00:00.000Z');
+      expect(reception.startTime!.toISOString()).toBe('2027-02-12T07:00:00.000Z'); // Feb 12, 3:00 PM Manila
+      expect(reception.endTime!.toISOString()).toBe('2027-02-12T17:00:00.000Z'); // Feb 13, 1:00 AM Manila
+    });
+
+    it('leaves events alone when the update does not include weddingDate', async () => {
+      await request(app.getHttpServer())
+        .patch('/admin/settings')
+        .set('Authorization', token)
+        .send({ siteTitle: 'E2E sync check' })
+        .expect(200);
+
+      const ceremony = await prisma.weddingEvent.findUniqueOrThrow({ where: { id: ceremonyId } });
+      expect(ceremony.startTime!.toISOString()).toBe('2026-12-31T17:00:00.000Z');
+    });
+
+    it('does not move events when the settings update is rejected', async () => {
+      await request(app.getHttpServer())
+        .patch('/admin/settings')
+        .set('Authorization', token)
+        .send({ weddingDate: 'not-a-date' })
+        .expect(400);
+
+      const ceremony = await prisma.weddingEvent.findUniqueOrThrow({ where: { id: ceremonyId } });
+      expect(ceremony.startTime!.toISOString()).toBe('2026-12-31T17:00:00.000Z');
+    });
+  });
 });

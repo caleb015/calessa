@@ -5,6 +5,7 @@ import { adminApi } from '@/lib/adminApi';
 import ImagePreview from '@/components/dashboard/ImagePreview';
 import InfoTooltip from '@/components/dashboard/InfoTooltip';
 import ColorInput from '@/components/dashboard/ColorInput';
+import { toLocalDateTimeInput, fromLocalDateTimeInput } from '@/lib/datetime';
 
 const THEME_COLORS: { key: string; label: string; tooltip?: string; defaultValue: string }[] = [
   { key: 'themeBackground', label: 'Background', defaultValue: '#faf7f2' },
@@ -100,15 +101,15 @@ export default function SettingsPage() {
             <div>
               <label className={labelClass}>Wedding Date</label>
               <input type="datetime-local" className={inputClass}
-                value={form.weddingDate ? new Date(form.weddingDate as string).toISOString().slice(0, 16) : ''}
-                onChange={e => set('weddingDate', e.target.value ? new Date(e.target.value).toISOString() : null)}
+                value={form.weddingDate ? toLocalDateTimeInput(form.weddingDate as string) : ''}
+                onChange={e => set('weddingDate', fromLocalDateTimeInput(e.target.value))}
               />
             </div>
             <div>
               <label className={labelClass}>RSVP Deadline</label>
               <input type="datetime-local" className={inputClass}
-                value={form.rsvpDeadline ? new Date(form.rsvpDeadline as string).toISOString().slice(0, 16) : ''}
-                onChange={e => set('rsvpDeadline', e.target.value ? new Date(e.target.value).toISOString() : null)}
+                value={form.rsvpDeadline ? toLocalDateTimeInput(form.rsvpDeadline as string) : ''}
+                onChange={e => set('rsvpDeadline', fromLocalDateTimeInput(e.target.value))}
               />
             </div>
           </div>

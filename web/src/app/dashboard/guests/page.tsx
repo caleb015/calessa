@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { adminApi } from '@/lib/adminApi';
-import { RxCopy, RxPencil1, RxTrash, RxPlus, RxMagnifyingGlass } from 'react-icons/rx';
+import { RxCopy, RxPencil1, RxTrash, RxPlus, RxMagnifyingGlass, RxEnvelopeClosed } from 'react-icons/rx';
 
 interface Guest {
   id: string;
@@ -38,6 +38,8 @@ export default function GuestsPage() {
   const [addForm, setAddForm] = useState({ primaryName: '', email: '', group: '', allowedPartySize: 1, plusOneAllowed: false, requiresMealSelection: false });
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [sending, setSending] = useState<string | null>(null);
+  const [sentTo, setSentTo] = useState<string | null>(null);
   const [bulkText, setBulkText] = useState('');
   const [showBulk, setShowBulk] = useState(false);
   const [bulkResult, setBulkResult] = useState<{ created: number; skipped: number } | null>(null);
@@ -61,6 +63,21 @@ export default function GuestsPage() {
     const matchStatus = !filterStatus || (g.rsvp?.status ?? 'PENDING') === filterStatus;
     return matchSearch && matchGroup && matchStatus;
   });
+
+  const handleSendInvitation = async (id: string, email: string | null) => {
+    if (!email) { alert('This guest has no email address.'); return; }
+    if (!confirm(`Send invitation email to ${email}?`)) return;
+    setSending(id);
+    try {
+      await adminApi.sendGuestInvitation(id);
+      setSentTo(id);
+      setTimeout(() => setSentTo(null), 3000);
+    } catch (err: unknown) {
+      alert((err as Error).message ?? 'Failed to send email.');
+    } finally {
+      setSending(null);
+    }
+  };
 
   const copyRsvpLink = (code: string) => {
     const link = `${window.location.origin}/rsvp/${code}`;
@@ -255,6 +272,9 @@ export default function GuestsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
+                      <button onClick={() => handleSendInvitation(guest.id, guest.email)} title="Send invitation email" disabled={sending === guest.id} className="text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40">
+                        {sentTo === guest.id ? <span className="text-xs text-blue-500">Sent!</span> : sending === guest.id ? <span className="text-xs text-gray-400">…</span> : <RxEnvelopeClosed size={14} />}
+                      </button>
                       <button onClick={() => copyRsvpLink(guest.invitationCode)} title="Copy RSVP link" className="text-gray-400 hover:text-gray-700 transition-colors">
                         {copied === guest.invitationCode ? <span className="text-xs text-green-500">Copied!</span> : <RxCopy size={14} />}
                       </button>

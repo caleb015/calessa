@@ -38,12 +38,11 @@ export default async function HomePage() {
 
   const weddingDateFormatted = settings?.weddingDate
     ? new Date(settings.weddingDate).toLocaleDateString('en-US', {
-        month: 'long', day: 'numeric', year: 'numeric',
+        month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila',
       })
     : null;
 
-  const ceremony = events.find(e => e.type === 'ceremony');
-  const reception = events.find(e => e.type === 'reception');
+  const homepageEvents = events.filter(e => e.showOnHomepage);
 
   return (
     <div className="overflow-x-hidden">
@@ -153,41 +152,52 @@ export default async function HomePage() {
       </section>
 
       {/* ── Event highlights ─────────────────────────────────────────────── */}
-      <section className="py-20 px-6 bg-[var(--surface)]">
-        <p className="text-[9px] tracking-[0.45em] uppercase text-[var(--muted)] text-center mb-14">
-          The Celebration
-        </p>
-        <div className="max-w-3xl mx-auto grid md:grid-cols-2 gap-px bg-[var(--border)]">
-          <div className="bg-[var(--surface)] p-10 text-center">
-            <p className="text-[9px] tracking-[0.35em] uppercase text-[var(--accent)] mb-3">Ceremony</p>
-            <h3 className="font-serif text-2xl mb-3">{ceremony?.title ?? 'Wedding Ceremony'}</h3>
-            <p className="text-[var(--muted)] text-sm">{ceremony?.venueName ?? 'Venue TBA'}</p>
-            {ceremony?.startTime && (
-              <p className="text-[var(--muted)] text-sm mt-1">
-                {new Date(ceremony.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' })}
-              </p>
-            )}
-          </div>
-          <div className="bg-[var(--surface)] p-10 text-center">
-            <p className="text-[9px] tracking-[0.35em] uppercase text-[var(--accent)] mb-3">Reception</p>
-            <h3 className="font-serif text-2xl mb-3">{reception?.title ?? 'Wedding Reception'}</h3>
-            <p className="text-[var(--muted)] text-sm">{reception?.venueName ?? 'Venue TBA'}</p>
-            {reception?.startTime && (
-              <p className="text-[var(--muted)] text-sm mt-1">
-                {new Date(reception.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' })}
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="text-center mt-12">
-          <Link
-            href="/details"
-            className="group inline-block py-4 text-[10px] tracking-[0.35em] uppercase text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
+      {homepageEvents.length > 0 && (
+        <section className="py-20 px-6 bg-[var(--surface)]">
+          <p className="text-[9px] tracking-[0.45em] uppercase text-[var(--muted)] text-center mb-14">
+            The Celebration
+          </p>
+          <div
+            className={`mx-auto grid gap-px bg-[var(--border)] ${
+              homepageEvents.length === 1
+                ? 'max-w-md'
+                : homepageEvents.length === 2
+                  ? 'max-w-3xl md:grid-cols-2'
+                  : 'max-w-5xl md:grid-cols-3'
+            }`}
           >
-            <span className="border-b border-[var(--foreground)] pb-0.5 group-hover:border-[var(--accent)] transition-colors">View full details →</span>
-          </Link>
-        </div>
-      </section>
+            {homepageEvents.map(event => (
+              <div key={event.id} className="bg-[var(--surface)] p-10 text-center">
+                <p className="text-[9px] tracking-[0.35em] uppercase text-[var(--accent)] mb-3">{event.type}</p>
+                <h3 className="font-serif text-2xl mb-3">{event.title}</h3>
+                {event.venueName && <p className="text-[var(--muted)] text-sm">{event.venueName}</p>}
+                {event.startTime && (
+                  <>
+                    <p className="text-[var(--muted)] text-sm mt-1">
+                      {new Date(event.startTime).toLocaleDateString('en-US', {
+                        month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila',
+                      })}
+                    </p>
+                    <p className="text-[var(--muted)] text-sm">
+                      {new Date(event.startTime).toLocaleTimeString('en-US', {
+                        hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Manila',
+                      })}
+                    </p>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <Link
+              href="/details"
+              className="group inline-block py-4 text-[10px] tracking-[0.35em] uppercase text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
+            >
+              <span className="border-b border-[var(--foreground)] pb-0.5 group-hover:border-[var(--accent)] transition-colors">View full details →</span>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* ── RSVP banner ──────────────────────────────────────────────────── */}
       <section className="py-28 px-6 text-center bg-[var(--inverse-background)]">

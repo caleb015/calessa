@@ -40,6 +40,7 @@ export interface WeddingEvent {
   mapUrl: string | null;
   notes: string | null;
   displayOrder: number;
+  showOnHomepage: boolean;
 }
 
 export interface ScheduleItem {
@@ -90,6 +91,8 @@ export interface ContactPerson {
 export interface RsvpGuest {
   id: string;
   primaryName: string;
+  email: string | null;
+  phone: string | null;
   allowedPartySize: number;
   plusOneAllowed: boolean;
   requiresMealSelection: boolean;

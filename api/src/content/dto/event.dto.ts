@@ -1,4 +1,4 @@
-import { IsDateString, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 export class CreateEventDto {
   @IsString()
@@ -16,6 +16,7 @@ export class CreateEventDto {
   @IsOptional() @IsString() mapUrl?: string;
   @IsOptional() @IsString() notes?: string;
   @IsOptional() @IsInt() @Min(0) displayOrder?: number;
+  @IsOptional() @IsBoolean() showOnHomepage?: boolean;
 }
 
 export class UpdateEventDto {
@@ -28,4 +29,5 @@ export class UpdateEventDto {
   @IsOptional() @IsString() mapUrl?: string;
   @IsOptional() @IsString() notes?: string;
   @IsOptional() @IsInt() @Min(0) displayOrder?: number;
+  @IsOptional() @IsBoolean() showOnHomepage?: boolean;
 }

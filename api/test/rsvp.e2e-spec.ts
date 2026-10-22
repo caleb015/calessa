@@ -83,7 +83,12 @@ describe('RSVP (e2e)', () => {
 
       expect(res.body.primaryName).toBe('E2E RSVP Guest');
       expect(res.body.allowedPartySize).toBe(2);
-      expect(res.body).not.toHaveProperty('email'); // limited data only
+      // Own contact details are returned to prefill the form; admin-only fields are not.
+      expect(res.body).toHaveProperty('email');
+      expect(res.body).toHaveProperty('phone');
+      expect(res.body).not.toHaveProperty('notes');
+      expect(res.body).not.toHaveProperty('group');
+      expect(res.body).not.toHaveProperty('invitationCode');
     });
 
     it('returns 404 for an invalid code', () => {

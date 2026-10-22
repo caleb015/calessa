@@ -44,6 +44,7 @@ export const adminApi = {
   bulkCreateGuests: (body: unknown) => post('/admin/guests/bulk', body),
   updateGuest: (id: string, body: unknown) => patch(`/admin/guests/${id}`, body),
   deleteGuest: (id: string) => del(`/admin/guests/${id}`),
+  sendGuestInvitation: (id: string) => post(`/admin/guests/${id}/send-invitation`, {}),
 
   // RSVPs
   getRsvps: () => get('/admin/rsvps'),

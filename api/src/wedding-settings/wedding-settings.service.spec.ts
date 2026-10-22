@@ -32,6 +32,11 @@ const mockPrisma = {
   seatingTable: {
     groupBy: jest.fn(),
   },
+  weddingEvent: {
+    findMany: jest.fn(),
+    update: jest.fn((args) => args),
+  },
+  $transaction: jest.fn((ops: unknown[]) => Promise.all(ops)),
 };
 
 describe('WeddingSettingsService', () => {
@@ -47,6 +52,7 @@ describe('WeddingSettingsService', () => {
 
     service = module.get<WeddingSettingsService>(WeddingSettingsService);
     jest.clearAllMocks();
+    mockPrisma.weddingEvent.findMany.mockResolvedValue([]);
   });
 
   describe('get', () => {
@@ -99,6 +105,48 @@ describe('WeddingSettingsService', () => {
       expect(mockPrisma.weddingSettings.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: 'singleton' } }),
       );
+    });
+  });
+
+  describe('event date sync', () => {
+    beforeEach(() => mockPrisma.weddingSettings.upsert.mockResolvedValue(mockSettings));
+
+    it('moves events to the new wedding date, keeping Manila time of day and duration', async () => {
+      mockPrisma.weddingEvent.findMany.mockResolvedValue([
+        // Jan 1 2027, 1:00–2:00 AM Manila
+        { id: 'ceremony', startTime: new Date('2026-12-31T17:00:00.000Z'), endTime: new Date('2026-12-31T18:00:00.000Z') },
+        // Jan 1 2027, 3:00 PM Manila, ends after midnight Jan 2
+        { id: 'reception', startTime: new Date('2027-01-01T07:00:00.000Z'), endTime: new Date('2027-01-01T17:00:00.000Z') },
+      ]);
+
+      // Feb 12 2027, 3:00 PM Manila
+      await service.update({ weddingDate: '2027-02-12T07:00:00.000Z' });
+
+      const updates = mockPrisma.weddingEvent.update.mock.calls.map(([a]) => a);
+      expect(updates).toEqual([
+        { where: { id: 'ceremony' }, data: {
+          startTime: new Date('2027-02-11T17:00:00.000Z'), // Feb 12, 1:00 AM Manila
+          endTime: new Date('2027-02-11T18:00:00.000Z'),
+        } },
+        { where: { id: 'reception' }, data: {
+          startTime: new Date('2027-02-12T07:00:00.000Z'), // Feb 12, 3:00 PM Manila
+          endTime: new Date('2027-02-12T17:00:00.000Z'),   // Feb 13, 1:00 AM Manila
+        } },
+      ]);
+    });
+
+    it('leaves endTime null when the event has none', async () => {
+      mockPrisma.weddingEvent.findMany.mockResolvedValue([
+        { id: 'e1', startTime: new Date('2026-12-31T09:00:00.000Z'), endTime: null },
+      ]);
+      await service.update({ weddingDate: '2027-02-12T07:00:00.000Z' });
+      expect(mockPrisma.weddingEvent.update.mock.calls[0][0].data.endTime).toBeNull();
+    });
+
+    it('does not touch events when weddingDate is not in the update', async () => {
+      await service.update({ coupleNameA: 'Cal' });
+      expect(mockPrisma.weddingEvent.findMany).not.toHaveBeenCalled();
+      expect(mockPrisma.weddingEvent.update).not.toHaveBeenCalled();
     });
   });
 
