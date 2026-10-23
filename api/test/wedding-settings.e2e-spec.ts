@@ -198,4 +198,24 @@ describe('WeddingSettings (e2e)', () => {
       expect(ceremony.startTime!.toISOString()).toBe('2026-12-31T17:00:00.000Z');
     });
   });
+
+  // ── What the dashboard Settings page does on Save ────────────────────────────
+
+  describe('GET → PATCH round trip', () => {
+    it('does not expose invite email template fields', async () => {
+      const res = await request(app.getHttpServer()).get('/admin/settings').set('Authorization', token).expect(200);
+      expect(Object.keys(res.body).filter(k => k.startsWith('invite'))).toEqual([]);
+    });
+
+    it('accepts the GET response sent straight back, as the Settings page does', async () => {
+      const res = await request(app.getHttpServer()).get('/admin/settings').set('Authorization', token).expect(200);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, createdAt, updatedAt, ...payload } = res.body;
+      await request(app.getHttpServer())
+        .patch('/admin/settings')
+        .set('Authorization', token)
+        .send({ ...payload, isPublic: true })
+        .expect(200);
+    });
+  });
 });
