@@ -61,12 +61,34 @@ npm run start:dev
 # Web (from web/)
 npm run dev
 
-# Database migration
+# Database migration (LOCAL ONLY)
 cd api && npx prisma migrate dev
 
-# Seed database
+# Seed database (LOCAL ONLY — adds sample guests)
 cd api && npx prisma db seed
 ```
+
+## Production Data Safety
+
+The live site (raissaandcaleb.com, Heroku app `calessa-api`, Postgres `essential-0`) holds real
+wedding content and guest data. The plan has **no point-in-time rollback**, so lost data is gone.
+Every change must minimize impact on existing data and never risk losing it.
+
+- **Additive migrations only.** New tables and new optional columns. No `DROP`, renames, column
+  type changes, or overwriting existing values. Data copies may only fill empty fields.
+- **"Removing" a field = stop using it in code.** Keep the column and its values (make it optional).
+  Physically dropping it is a separate step that needs explicit approval and a fresh backup.
+- **Backup before every deploy that includes a migration:**
+  `heroku pg:backups:capture --app calessa-api` (and `heroku pg:backups:download` for an off-Heroku copy).
+- **Rehearse on a copy of production:** restore the latest backup into a local database, run the
+  migration against it, and compare row counts and key values before/after. Then deploy.
+- **Review each migration's SQL before committing.** Anything destructive is a stop — ask first.
+- **Production only ever runs `prisma migrate deploy`** (Procfile `release` phase; a failed migration
+  keeps the previous release running). Never run `migrate dev`, `migrate reset`, `db push`, or the
+  seed script against production.
+- **No pre-filling production.** New single-row tables are created on first save from the dashboard.
+- **Don't write to production data while testing** unless explicitly asked; read-only checks are fine.
+- **Verify after deploy:** row counts per table match and live pages look unchanged.
 
 ## Security Rules
 
