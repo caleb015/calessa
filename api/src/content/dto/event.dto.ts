@@ -1,9 +1,7 @@
 import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 export class CreateEventDto {
-  @IsString()
-  @MaxLength(50)
-  type!: string;
+  @IsOptional() @IsString() @MaxLength(100) tagline?: string;
 
   @IsString()
   @MaxLength(200)
@@ -20,7 +18,7 @@ export class CreateEventDto {
 }
 
 export class UpdateEventDto {
-  @IsOptional() @IsString() @MaxLength(50) type?: string;
+  @IsOptional() @IsString() @MaxLength(100) tagline?: string;
   @IsOptional() @IsString() @MaxLength(200) title?: string;
   @IsOptional() @IsString() venueName?: string;
   @IsOptional() @IsString() address?: string;

@@ -57,7 +57,7 @@ describe('ContentService', () => {
   describe('createEvent converts date strings', () => {
     it('converts startTime and endTime strings to Date', async () => {
       mockPrisma.weddingEvent.create.mockResolvedValue({});
-      await service.createEvent({ type: 'ceremony', title: 'Ceremony', startTime: '2026-12-31T17:00:00.000Z' });
+      await service.createEvent({ tagline: 'Ceremony', title: 'Ceremony', startTime: '2026-12-31T17:00:00.000Z' });
       const { data } = mockPrisma.weddingEvent.create.mock.calls[0][0];
       expect(data.startTime).toBeInstanceOf(Date);
     });

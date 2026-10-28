@@ -46,6 +46,16 @@ export const adminApi = {
   deleteGuest: (id: string) => del(`/admin/guests/${id}`),
   sendGuestInvitation: (id: string) => post(`/admin/guests/${id}/send-invitation`, {}),
 
+  // Details page + Dress Code
+  getDetailsPage: () => get('/admin/details-page'),
+  updateDetailsPage: (body: unknown) => patch('/admin/details-page', body),
+  getDressCode: () => get('/admin/dress-code'),
+  updateDressCode: (body: unknown) => patch('/admin/dress-code', body),
+  getDressCodeGuidelines: () => get('/admin/dress-code-guidelines'),
+  createDressCodeGuideline: (body: unknown) => post('/admin/dress-code-guidelines', body),
+  updateDressCodeGuideline: (id: string, body: unknown) => patch(`/admin/dress-code-guidelines/${id}`, body),
+  deleteDressCodeGuideline: (id: string) => del(`/admin/dress-code-guidelines/${id}`),
+
   // Invitation email template
   getInviteEmail: () => get('/admin/invite-email'),
   updateInviteEmail: (body: unknown) => patch('/admin/invite-email', body),

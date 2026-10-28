@@ -34,7 +34,7 @@ async function main() {
     skipDuplicates: true,
     data: [
       {
-        type: 'ceremony',
+        tagline: 'Ceremony',
         title: 'Wedding Ceremony',
         venueName: 'TBD Venue',
         address: 'TBD Address, City, Country',
@@ -45,7 +45,7 @@ async function main() {
         displayOrder: 1,
       },
       {
-        type: 'reception',
+        tagline: 'Reception',
         title: 'Wedding Reception',
         venueName: 'TBD Venue',
         address: 'TBD Address, City, Country',

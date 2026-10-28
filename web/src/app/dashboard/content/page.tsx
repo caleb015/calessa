@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback, useId } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import ImagePreview from '@/components/dashboard/ImagePreview';
+import DetailsPageEditor from '@/components/dashboard/DetailsPageEditor';
+import DressCodeSettingsEditor from '@/components/dashboard/DressCodeSettingsEditor';
 import { toLocalDateTimeInput, fromLocalDateTimeInput } from '@/lib/datetime';
 
 type FieldType = 'text' | 'textarea' | 'datetime' | 'number' | 'checkbox' | 'email' | 'image';
@@ -30,6 +32,10 @@ interface SectionConfig {
   itemLabel: (item: Item) => string;
   itemSublabel?: (item: Item) => string;
   hasPublished: boolean;
+  /** Rendered above the item list (e.g. section-wide settings). */
+  header?: React.ReactNode;
+  /** Wording for the empty state, defaults to the lowercased label. */
+  emptyLabel?: string;
 }
 
 const SECTIONS: SectionConfig[] = [
@@ -43,12 +49,9 @@ const SECTIONS: SectionConfig[] = [
     apiDelete: (id) => adminApi.deleteEvent(id),
     hasPublished: false,
     itemLabel: (item) => item.title as string,
-    itemSublabel: (item) => [item.type, item.venueName].filter(Boolean).join(' · ') as string,
+    itemSublabel: (item) => [item.tagline, item.venueName].filter(Boolean).join(' · ') as string,
     fields: [
-      {
-        key: 'type', label: 'Type', type: 'text', required: true, placeholder: 'Pick one or type your own',
-        suggestions: ['Ceremony', 'Reception', 'Cocktails', 'Dinner', 'Program', 'After-party', 'Welcome Dinner', 'Rehearsal Dinner'],
-      },
+      { key: 'tagline', label: 'Tagline', type: 'text', placeholder: 'e.g. Where forever begins' },
       { key: 'title', label: 'Title', type: 'text', required: true },
       { key: 'venueName', label: 'Venue', type: 'text' },
       { key: 'address', label: 'Address', type: 'text' },
@@ -58,6 +61,26 @@ const SECTIONS: SectionConfig[] = [
       { key: 'notes', label: 'Notes', type: 'textarea' },
       { key: 'displayOrder', label: 'Display Order', type: 'number' },
       { key: 'showOnHomepage', label: 'Show on homepage', type: 'checkbox' },
+    ],
+  },
+  {
+    key: 'dressCode',
+    label: 'Dress Code',
+    singular: 'Guideline',
+    emptyLabel: 'guidelines',
+    apiGet: () => adminApi.getDressCodeGuidelines(),
+    apiCreate: (b) => adminApi.createDressCodeGuideline(b),
+    apiUpdate: (id, b) => adminApi.updateDressCodeGuideline(id, b),
+    apiDelete: (id) => adminApi.deleteDressCodeGuideline(id),
+    hasPublished: false,
+    header: <DressCodeSettingsEditor />,
+    itemLabel: (item) => item.label as string,
+    itemSublabel: (item) => [item.text, item.note].filter(Boolean).join(' — ') as string,
+    fields: [
+      { key: 'label', label: 'Label', type: 'text', required: true, placeholder: 'e.g. For the Ladies' },
+      { key: 'displayOrder', label: 'Display Order', type: 'number' },
+      { key: 'text', label: 'Guidance', type: 'textarea', required: true, placeholder: 'e.g. Elegant maxi or midi dresses…' },
+      { key: 'note', label: 'Note (optional)', type: 'textarea', placeholder: 'e.g. Please avoid white and beige.' },
     ],
   },
   {
@@ -161,9 +184,16 @@ const SECTIONS: SectionConfig[] = [
   },
 ];
 
-function stripMeta(item: Record<string, unknown>) {
-  const { id, createdAt, updatedAt, ...rest } = item;
-  return rest;
+// Only send the fields the form edits, so extra fields returned by the API can't be echoed back.
+const DETAILS_PAGE_TAB = 'detailsPage';
+const TABS = [
+  { key: SECTIONS[0].key, label: SECTIONS[0].label },
+  { key: DETAILS_PAGE_TAB, label: 'Details Page' },
+  ...SECTIONS.slice(1).map(s => ({ key: s.key, label: s.label })),
+];
+
+function pickFields(item: Record<string, unknown>, fields: FieldConfig[]) {
+  return Object.fromEntries(fields.filter(f => f.key in item).map(f => [f.key, item[f.key]]));
 }
 
 const inputCls = 'w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent';
@@ -298,7 +328,7 @@ export default function ContentPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
-  const section = SECTIONS.find(s => s.key === activeTab)!;
+  const section = SECTIONS.find(s => s.key === activeTab) ?? SECTIONS[0];
   const items = allItems[activeTab] ?? [];
 
   const switchTab = (key: string) => {
@@ -340,10 +370,10 @@ export default function ContentPage() {
     setError(null);
     try {
       if (editingId === 'new') {
-        const created = await section.apiCreate(stripMeta(form)) as Item;
+        const created = await section.apiCreate(pickFields(form, section.fields)) as Item;
         setAllItems(prev => ({ ...prev, [activeTab]: [...(prev[activeTab] ?? []), created] }));
       } else {
-        const updated = await section.apiUpdate(editingId!, stripMeta(form)) as Item;
+        const updated = await section.apiUpdate(editingId!, pickFields(form, section.fields)) as Item;
         setAllItems(prev => ({
           ...prev,
           [activeTab]: prev[activeTab].map(it => it.id === editingId ? updated : it),
@@ -390,7 +420,7 @@ export default function ContentPage() {
     setSavingFaqId(id);
     setError(null);
     try {
-      const updated = await section.apiUpdate(id, stripMeta(faqForms[id])) as Item;
+      const updated = await section.apiUpdate(id, pickFields(faqForms[id], section.fields)) as Item;
       setAllItems(prev => ({
         ...prev,
         [activeTab]: prev[activeTab].map(it => it.id === id ? updated : it),
@@ -460,8 +490,8 @@ export default function ContentPage() {
     <div className="p-8 max-w-3xl">
       <h1 className="text-2xl font-semibold text-gray-900 mb-6">Content</h1>
 
-      <div className="flex border-b border-gray-200 mb-6">
-        {SECTIONS.map(s => (
+      <div className="flex border-b border-gray-200 mb-6 overflow-x-auto whitespace-nowrap">
+        {TABS.map(s => (
           <button
             key={s.key}
             onClick={() => switchTab(s.key)}
@@ -476,10 +506,13 @@ export default function ContentPage() {
         ))}
       </div>
 
-      {loading ? (
+      {activeTab === DETAILS_PAGE_TAB ? (
+        <DetailsPageEditor />
+      ) : loading ? (
         <p className="text-sm text-gray-400">Loading…</p>
       ) : (
         <>
+          {section.header}
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-gray-500">
               {items.length} {items.length === 1 ? 'item' : 'items'}
@@ -500,7 +533,7 @@ export default function ContentPage() {
 
           {items.length === 0 && editingId !== 'new' ? (
             <div className="text-center py-12 text-sm text-gray-400">
-              No {section.label.toLowerCase()} yet.{' '}
+              No {section.emptyLabel ?? section.label.toLowerCase()} yet.{' '}
               <button onClick={startNew} className="text-gray-900 underline">
                 Add the first one.
               </button>

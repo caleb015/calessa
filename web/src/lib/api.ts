@@ -1,6 +1,6 @@
 import type {
   WeddingSettings, WeddingEvent, ScheduleItem, FaqItem,
-  GalleryImage, StoryTimelineItem, ContactPerson, RsvpGuest,
+  GalleryImage, StoryTimelineItem, ContactPerson, RsvpGuest, DetailsPageContent,
 } from '@/types/api';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -34,6 +34,8 @@ export const publicApi = {
   getSettings: () => get<WeddingSettings>('/public/settings'),
   getStory: () => get<StoryTimelineItem[]>('/public/story'),
   getEvents: () => get<WeddingEvent[]>('/public/events'),
+  getDetailsPage: () => get<DetailsPageContent>('/public/details-page'),
+  calendarIcsUrl: `${BASE_URL}/public/calendar.ics`,
   getSchedule: () => get<ScheduleItem[]>('/public/schedule'),
   getFaqs: () => get<FaqItem[]>('/public/faqs'),
   getGallery: () => get<GalleryImage[]>('/public/gallery'),

@@ -122,7 +122,9 @@ enum RsvpStatus {
 
 model WeddingEvent {
   id           String    @id @default(uuid())
-  type         String
+  /// Deprecated: no longer read or written by the app. Kept so existing values are never lost (see CLAUDE.md).
+  type         String?
+  tagline      String?
   title        String
   venueName    String?
   address      String?
@@ -217,4 +219,44 @@ model SeatingAssignment {
   notes     String?
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+}
+
+/// Single row (id "singleton"): editable header + call-to-action copy for the /details page.
+/// Blank text fields fall back to defaults in src/details-page/details-page.defaults.ts.
+model DetailsPage {
+  id                String   @id @default(uuid())
+  headerEyebrow     String?
+  headerTitle       String?
+  location          String?
+  showAddToCalendar Boolean  @default(true)
+  ctaEnabled        Boolean  @default(true)
+  ctaHeading        String?
+  ctaSubtext        String?
+  ctaButtonLabel    String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+/// Single row (id "singleton"): Dress Code section settings on the /details page.
+model DressCode {
+  id        String   @id @default(uuid())
+  enabled   Boolean  @default(false)
+  eyebrow   String?
+  title     String?
+  intro     String?
+  /// Hex colors shown as brush swatches, in display order.
+  palette   String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// One guidance row in the Dress Code section, e.g. "For the Ladies".
+model DressCodeGuideline {
+  id           String   @id @default(uuid())
+  label        String
+  text         String
+  note         String?
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

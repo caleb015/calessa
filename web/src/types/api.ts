@@ -31,7 +31,7 @@ export interface WeddingSettings {
 
 export interface WeddingEvent {
   id: string;
-  type: string;
+  tagline: string | null;
   title: string;
   venueName: string | null;
   address: string | null;
@@ -110,4 +110,35 @@ export interface RsvpRecord {
   dietaryRestrictions: string | null;
   message: string | null;
   songRequest: string | null;
+}
+
+export interface CalendarInfo {
+  title: string;
+  location: string | null;
+  description: string;
+  allDay: boolean;
+  /** ISO timestamp, or YYYY-MM-DD when allDay. */
+  start: string;
+  /** Exclusive end: ISO timestamp, or the next day when allDay. */
+  end: string;
+}
+
+export interface DressCodeGuideline {
+  id: string;
+  label: string;
+  text: string;
+  note: string | null;
+}
+
+export interface DetailsPageContent {
+  header: { eyebrow: string; title: string; location: string | null };
+  calendar: CalendarInfo | null;
+  cta: { heading: string; subtext: string; buttonLabel: string } | null;
+  dressCode: {
+    eyebrow: string | null;
+    title: string | null;
+    intro: string | null;
+    palette: string[];
+    guidelines: DressCodeGuideline[];
+  } | null;
 }

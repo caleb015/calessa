@@ -142,13 +142,13 @@ describe('WeddingSettings (e2e)', () => {
       // Jan 1 2027 in Manila: ceremony 1:00–2:00 AM, reception 3:00 PM – 1:00 AM next day
       const ceremony = await prisma.weddingEvent.create({
         data: {
-          type: 'ceremony', title: `${TITLE_PREFIX} Ceremony`,
+          tagline: 'Ceremony', title: `${TITLE_PREFIX} Ceremony`,
           startTime: new Date('2026-12-31T17:00:00.000Z'), endTime: new Date('2026-12-31T18:00:00.000Z'),
         },
       });
       const reception = await prisma.weddingEvent.create({
         data: {
-          type: 'reception', title: `${TITLE_PREFIX} Reception`,
+          tagline: 'Reception', title: `${TITLE_PREFIX} Reception`,
           startTime: new Date('2027-01-01T07:00:00.000Z'), endTime: new Date('2027-01-01T17:00:00.000Z'),
         },
       });

@@ -168,7 +168,7 @@ export default async function HomePage() {
           >
             {homepageEvents.map(event => (
               <div key={event.id} className="bg-[var(--surface)] p-10 text-center">
-                <p className="text-[9px] tracking-[0.35em] uppercase text-[var(--accent)] mb-3">{event.type}</p>
+                {event.tagline && <p className="text-[9px] tracking-[0.35em] uppercase text-[var(--accent)] mb-3">{event.tagline}</p>}
                 <h3 className="font-serif text-2xl mb-3">{event.title}</h3>
                 {event.venueName && <p className="text-[var(--muted)] text-sm">{event.venueName}</p>}
                 {event.startTime && (

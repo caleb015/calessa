@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EVENT_SELECT } from './event-select';
 import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
 import { CreateScheduleItemDto, UpdateScheduleItemDto } from './dto/schedule.dto';
 import { CreateFaqItemDto, UpdateFaqItemDto } from './dto/faq.dto';
@@ -14,11 +15,11 @@ export class ContentService {
   // ── Events ─────────────────────────────────────────────────────────────────
 
   findAllEvents() {
-    return this.prisma.weddingEvent.findMany({ orderBy: { displayOrder: 'asc' } });
+    return this.prisma.weddingEvent.findMany({ orderBy: { displayOrder: 'asc' }, select: EVENT_SELECT });
   }
 
   async findOneEvent(id: string) {
-    const item = await this.prisma.weddingEvent.findUnique({ where: { id } });
+    const item = await this.prisma.weddingEvent.findUnique({ where: { id }, select: EVENT_SELECT });
     if (!item) throw new NotFoundException(`Event ${id} not found`);
     return item;
   }
@@ -27,7 +28,7 @@ export class ContentService {
     const data: any = { ...dto };
     if (dto.startTime) data.startTime = new Date(dto.startTime);
     if (dto.endTime) data.endTime = new Date(dto.endTime);
-    return this.prisma.weddingEvent.create({ data });
+    return this.prisma.weddingEvent.create({ data, select: EVENT_SELECT });
   }
 
   async updateEvent(id: string, dto: UpdateEventDto) {
@@ -35,12 +36,12 @@ export class ContentService {
     const data: any = { ...dto };
     if (dto.startTime) data.startTime = new Date(dto.startTime);
     if (dto.endTime) data.endTime = new Date(dto.endTime);
-    return this.prisma.weddingEvent.update({ where: { id }, data });
+    return this.prisma.weddingEvent.update({ where: { id }, data, select: EVENT_SELECT });
   }
 
   async removeEvent(id: string) {
     await this.findOneEvent(id);
-    return this.prisma.weddingEvent.delete({ where: { id } });
+    return this.prisma.weddingEvent.delete({ where: { id }, select: EVENT_SELECT });
   }
 
   // ── Schedule ───────────────────────────────────────────────────────────────

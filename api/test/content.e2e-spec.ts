@@ -34,7 +34,7 @@ describe('Content & Seating (e2e)', () => {
   // ── Content CRUD (test one representative per type) ──────────────────────
 
   const contentEndpoints = [
-    { path: '/admin/events', create: { type: 'ceremony', title: 'E2E Ceremony' }, update: { title: 'Updated Ceremony' }, updatedField: 'title', updatedValue: 'Updated Ceremony' },
+    { path: '/admin/events', create: { tagline: 'Where forever begins', title: 'E2E Ceremony' }, update: { title: 'Updated Ceremony' }, updatedField: 'title', updatedValue: 'Updated Ceremony' },
     { path: '/admin/schedule', create: { timeLabel: '5:00 PM', title: 'E2E Ceremony Start' }, update: { timeLabel: '5:30 PM' }, updatedField: 'timeLabel', updatedValue: '5:30 PM' },
     { path: '/admin/faqs', create: { question: 'E2E Q?', answer: 'E2E A.' }, update: { answer: 'Updated A.' }, updatedField: 'answer', updatedValue: 'Updated A.' },
     { path: '/admin/gallery', create: { imageUrl: 'https://example.com/e2e.jpg' }, update: { title: 'E2E Photo' }, updatedField: 'title', updatedValue: 'E2E Photo' },
@@ -125,6 +125,68 @@ describe('Content & Seating (e2e)', () => {
 
     it('DELETE /admin/seating/tables/:id removes table', async () => {
       await request(app.getHttpServer()).delete(`/admin/seating/tables/${tableId}`).set('Authorization', token).expect(204);
+    });
+  });
+
+  // ── Events: tagline + deprecated type ───────────────────────────────────────
+
+  describe('/admin/events tagline and legacy type', () => {
+    let legacyId: string;
+
+    beforeAll(async () => {
+      // An event created before the tagline migration: label only in `type`, migrated into `tagline`.
+      const legacy = await prisma.weddingEvent.create({
+        data: { type: 'Where forever begins', tagline: 'Where forever begins', title: 'E2E Legacy Event' },
+      });
+      legacyId = legacy.id;
+    });
+
+    afterAll(async () => {
+      await prisma.weddingEvent.deleteMany({ where: { title: { startsWith: 'E2E Legacy' } } });
+    });
+
+    it('never exposes the deprecated type field (admin or public)', async () => {
+      const admin = await request(app.getHttpServer()).get(`/admin/events/${legacyId}`).set('Authorization', token).expect(200);
+      expect(admin.body).not.toHaveProperty('type');
+      expect(admin.body.tagline).toBe('Where forever begins');
+
+      await prisma.weddingSettings.upsert({ where: { id: 'singleton' }, update: { isPublic: true }, create: { id: 'singleton' } });
+      const pub = await request(app.getHttpServer()).get('/public/events').expect(200);
+      for (const event of pub.body) expect(event).not.toHaveProperty('type');
+    });
+
+    it('accepts the GET response sent straight back, as the Content page does on edit', async () => {
+      const res = await request(app.getHttpServer()).get(`/admin/events/${legacyId}`).set('Authorization', token).expect(200);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, createdAt, updatedAt, ...payload } = res.body;
+      await request(app.getHttpServer())
+        .patch(`/admin/events/${legacyId}`)
+        .set('Authorization', token)
+        .send({ ...payload, tagline: 'Updated tagline' })
+        .expect(200);
+    });
+
+    it('keeps the legacy type value in the database when the event is edited', async () => {
+      const row = await prisma.weddingEvent.findUniqueOrThrow({ where: { id: legacyId } });
+      expect(row.type).toBe('Where forever begins');
+      expect(row.tagline).toBe('Updated tagline');
+    });
+
+    it('rejects type in new requests', async () => {
+      await request(app.getHttpServer())
+        .post('/admin/events')
+        .set('Authorization', token)
+        .send({ type: 'ceremony', title: 'E2E Legacy Rejected' })
+        .expect(400);
+    });
+
+    it('allows events without a tagline', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/admin/events')
+        .set('Authorization', token)
+        .send({ title: 'E2E Legacy No Tagline' })
+        .expect(201);
+      expect(res.body.tagline).toBeNull();
     });
   });
 });

@@ -1,5 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EVENT_SELECT } from '../content/event-select';
 
 const SINGLETON_SETTINGS_ID = 'singleton';
 
@@ -55,6 +56,7 @@ export class PublicService {
     await this.assertSitePublic();
     return this.prisma.weddingEvent.findMany({
       orderBy: { displayOrder: 'asc' },
+      select: EVENT_SELECT,
     });
   }
 
