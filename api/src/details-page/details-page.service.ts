@@ -20,7 +20,8 @@ export class DetailsPageService {
     return this.config.get<string>('FRONTEND_URL') ?? 'https://raissaandcaleb.com';
   }
 
-  private async assertSitePublic() {
+  private async assertSitePublic(preview = false) {
+    if (preview) return;
     const settings = await this.prisma.weddingSettings.findUnique({ where: { id: SINGLETON_ID }, select: { isPublic: true } });
     if (settings && !settings.isPublic) {
       throw new ServiceUnavailableException('The website is not currently available');
@@ -66,8 +67,8 @@ export class DetailsPageService {
     });
   }
 
-  async getPublic() {
-    await this.assertSitePublic();
+  async getPublic(preview = false) {
+    await this.assertSitePublic(preview);
     const row = await this.prisma.detailsPage.findUnique({ where: { id: SINGLETON_ID } });
     const text = (field: keyof typeof DETAILS_PAGE_DEFAULTS) => row?.[field] || DETAILS_PAGE_DEFAULTS[field];
     const location = row?.location || null;

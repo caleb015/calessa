@@ -8,7 +8,8 @@ const SINGLETON_SETTINGS_ID = 'singleton';
 export class PublicService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async assertSitePublic() {
+  private async assertSitePublic(preview = false) {
+    if (preview) return;
     const settings = await this.prisma.weddingSettings.findUnique({
       where: { id: SINGLETON_SETTINGS_ID },
       select: { isPublic: true },
@@ -44,48 +45,48 @@ export class PublicService {
     };
   }
 
-  async getStory() {
-    await this.assertSitePublic();
+  async getStory(preview = false) {
+    await this.assertSitePublic(preview);
     return this.prisma.storyTimelineItem.findMany({
       where: { isPublished: true },
       orderBy: { displayOrder: 'asc' },
     });
   }
 
-  async getEvents() {
-    await this.assertSitePublic();
+  async getEvents(preview = false) {
+    await this.assertSitePublic(preview);
     return this.prisma.weddingEvent.findMany({
       orderBy: { displayOrder: 'asc' },
       select: EVENT_SELECT,
     });
   }
 
-  async getSchedule() {
-    await this.assertSitePublic();
+  async getSchedule(preview = false) {
+    await this.assertSitePublic(preview);
     return this.prisma.scheduleItem.findMany({
       where: { isPublished: true },
       orderBy: { displayOrder: 'asc' },
     });
   }
 
-  async getFaqs() {
-    await this.assertSitePublic();
+  async getFaqs(preview = false) {
+    await this.assertSitePublic(preview);
     return this.prisma.faqItem.findMany({
       where: { isPublished: true },
       orderBy: { displayOrder: 'asc' },
     });
   }
 
-  async getGallery() {
-    await this.assertSitePublic();
+  async getGallery(preview = false) {
+    await this.assertSitePublic(preview);
     return this.prisma.galleryImage.findMany({
       where: { isPublished: true },
       orderBy: { displayOrder: 'asc' },
     });
   }
 
-  async getContact() {
-    await this.assertSitePublic();
+  async getContact(preview = false) {
+    await this.assertSitePublic(preview);
     return this.prisma.contactPerson.findMany({
       where: { isPublished: true },
       orderBy: { displayOrder: 'asc' },

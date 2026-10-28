@@ -3,6 +3,7 @@ import {
   Param, Body, UseGuards, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PreviewGuard, SitePreview } from '../preview/preview.guard';
 import { RsvpService } from './rsvp.service';
 import { SubmitRsvpDto } from './dto/submit-rsvp.dto';
 import { AdminUpdateRsvpDto } from './dto/admin-update-rsvp.dto';
@@ -13,9 +14,11 @@ import { AdminUpdateRsvpDto } from './dto/admin-update-rsvp.dto';
 export class PublicRsvpController {
   constructor(private readonly service: RsvpService) {}
 
+  // Preview lets an admin look up an invitation while the site is private; submitting stays blocked.
   @Get(':code')
-  getByCode(@Param('code') code: string) {
-    return this.service.getByCode(code);
+  @UseGuards(PreviewGuard)
+  getByCode(@Param('code') code: string, @SitePreview() preview: boolean) {
+    return this.service.getByCode(code, preview);
   }
 
   @Post(':code')

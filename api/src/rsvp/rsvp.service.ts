@@ -18,12 +18,12 @@ export class RsvpService {
 
   // ── Public ─────────────────────────────────────────────────────────────────
 
-  async getByCode(code: string) {
+  async getByCode(code: string, preview = false) {
     const settings = await this.prisma.weddingSettings.findUnique({
       where: { id: SINGLETON_SETTINGS_ID },
       select: { isPublic: true },
     });
-    if (settings && !settings.isPublic) {
+    if (settings && !settings.isPublic && !preview) {
       throw new ServiceUnavailableException('The website is not currently available');
     }
 

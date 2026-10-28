@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { appConfig } from '@/config/app';
+import { clearPreviewCookie } from '@/lib/preview';
 
 interface AuthUser {
   userId: string;
@@ -37,6 +38,7 @@ export function useAuth() {
       .catch(() => {
         localStorage.removeItem('access_token');
         document.cookie = 'logged_in=; Max-Age=0; path=/';
+        clearPreviewCookie();
         router.push('/login');
       });
   }, [router]);
@@ -45,6 +47,7 @@ export function useAuth() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user_email');
     document.cookie = 'logged_in=; Max-Age=0; path=/';
+    clearPreviewCookie();
     router.push('/login');
   };
 

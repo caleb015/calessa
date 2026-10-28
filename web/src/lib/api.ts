@@ -2,11 +2,17 @@ import type {
   WeddingSettings, WeddingEvent, ScheduleItem, FaqItem,
   GalleryImage, StoryTimelineItem, ContactPerson, RsvpGuest, DetailsPageContent,
 } from '@/types/api';
+import { PREVIEW_HEADER, getPreviewToken } from '@/lib/preview';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+async function previewHeaders(): Promise<Record<string, string>> {
+  const token = await getPreviewToken();
+  return token ? { [PREVIEW_HEADER]: token } : {};
+}
+
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, { cache: 'no-store' });
+  const res = await fetch(`${BASE_URL}${path}`, { cache: 'no-store', headers: await previewHeaders() });
   if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
   return res.json();
 }

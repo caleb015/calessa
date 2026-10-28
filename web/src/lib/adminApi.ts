@@ -32,6 +32,9 @@ const del = <T>(path: string) => request<T>(path, { method: 'DELETE' });
 export const adminApi = {
   // Settings
   getSettings: () => get('/admin/settings'),
+
+  // Preview (view the site while it is not public)
+  createPreviewToken: () => post<{ token: string }>('/admin/preview-token', {}),
   updateSettings: (body: unknown) => patch('/admin/settings', body),
 
   // Summary

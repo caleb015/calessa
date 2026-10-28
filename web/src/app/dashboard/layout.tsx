@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import {
   RxDashboard, RxGear, RxPerson, RxEnvelopeClosed,
-  RxTable, RxImage, RxCalendar, RxExit,
+  RxTable, RxImage, RxCalendar, RxExit, RxEyeOpen,
 } from 'react-icons/rx';
 
 const navItems = [
@@ -16,6 +16,7 @@ const navItems = [
   { href: '/dashboard/seating', label: 'Seating', icon: RxTable },
   { href: '/dashboard/content', label: 'Content', icon: RxImage },
   { href: '/dashboard/messages', label: 'Messages', icon: RxCalendar },
+  { href: '/dashboard/preview', label: 'Preview', icon: RxEyeOpen },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

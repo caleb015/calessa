@@ -27,6 +27,8 @@ export interface WeddingSettings {
   enableMealPreference: boolean;
   enableSongRequest: boolean;
   enableGuestbook: boolean;
+  /** True when the request carried a valid admin preview token. */
+  preview?: boolean;
 }
 
 export interface WeddingEvent {

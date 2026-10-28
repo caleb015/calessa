@@ -1,42 +1,46 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { PreviewGuard, SitePreview } from '../preview/preview.guard';
 import { PublicService } from './public.service';
 
 @Controller('public')
+@UseGuards(PreviewGuard)
 export class PublicController {
   constructor(private readonly service: PublicService) {}
 
+  // `preview` tells the site to render normally (with a preview banner) instead of the maintenance page.
   @Get('settings')
-  getSettings() {
-    return this.service.getSettings();
+  async getSettings(@SitePreview() preview: boolean) {
+    const settings = await this.service.getSettings();
+    return settings && { ...settings, preview };
   }
 
   @Get('story')
-  getStory() {
-    return this.service.getStory();
+  getStory(@SitePreview() preview: boolean) {
+    return this.service.getStory(preview);
   }
 
   @Get('events')
-  getEvents() {
-    return this.service.getEvents();
+  getEvents(@SitePreview() preview: boolean) {
+    return this.service.getEvents(preview);
   }
 
   @Get('schedule')
-  getSchedule() {
-    return this.service.getSchedule();
+  getSchedule(@SitePreview() preview: boolean) {
+    return this.service.getSchedule(preview);
   }
 
   @Get('faqs')
-  getFaqs() {
-    return this.service.getFaqs();
+  getFaqs(@SitePreview() preview: boolean) {
+    return this.service.getFaqs(preview);
   }
 
   @Get('gallery')
-  getGallery() {
-    return this.service.getGallery();
+  getGallery(@SitePreview() preview: boolean) {
+    return this.service.getGallery(preview);
   }
 
   @Get('contact')
-  getContact() {
-    return this.service.getContact();
+  getContact(@SitePreview() preview: boolean) {
+    return this.service.getContact(preview);
   }
 }

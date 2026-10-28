@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Header, Patch, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PreviewGuard, SitePreview } from '../preview/preview.guard';
 import { UpdateDetailsPageDto } from './dto/details-page.dto';
 import { DetailsPageService } from './details-page.service';
 
@@ -20,12 +21,13 @@ export class DetailsPageAdminController {
 }
 
 @Controller('public')
+@UseGuards(PreviewGuard)
 export class DetailsPagePublicController {
   constructor(private readonly service: DetailsPageService) {}
 
   @Get('details-page')
-  get() {
-    return this.service.getPublic();
+  get(@SitePreview() preview: boolean) {
+    return this.service.getPublic(preview);
   }
 
   @Get('calendar.ics')

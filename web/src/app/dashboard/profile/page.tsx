@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { appConfig } from '@/config/app';
+import { clearPreviewCookie } from '@/lib/preview';
 
 const OAUTH_PROVIDERS = ['google', 'facebook', 'x'] as const;
 
@@ -164,6 +165,7 @@ function ProfilePageContent() {
       localStorage.removeItem('access_token');
       localStorage.removeItem('user_email');
       document.cookie = 'logged_in=; Max-Age=0; path=/';
+      clearPreviewCookie();
       router.push('/login');
     } catch {
       setBanner({ type: 'error', message: 'Failed to delete account. Please try again.' });
