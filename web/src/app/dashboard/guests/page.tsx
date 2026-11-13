@@ -3,7 +3,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { adminApi } from '@/lib/adminApi';
+import { parseGuestRows, withoutBlanks } from '@/lib/guestImport';
 import { RxCopy, RxPencil1, RxTrash, RxPlus, RxMagnifyingGlass, RxEnvelopeClosed } from 'react-icons/rx';
+
+interface BulkResult {
+  created: number;
+  skipped: number;
+  errors: { row: number; name: string; reason: string }[];
+}
 
 interface Guest {
   id: string;
@@ -42,7 +49,9 @@ export default function GuestsPage() {
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [bulkText, setBulkText] = useState('');
   const [showBulk, setShowBulk] = useState(false);
-  const [bulkResult, setBulkResult] = useState<{ created: number; skipped: number } | null>(null);
+  const [bulkResult, setBulkResult] = useState<BulkResult | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [bulkError, setBulkError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     adminApi.getGuests()
@@ -104,25 +113,35 @@ export default function GuestsPage() {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    await adminApi.createGuest(addForm);
-    setSaving(false);
-    setShowAdd(false);
-    setAddForm({ primaryName: '', email: '', group: '', allowedPartySize: 1, plusOneAllowed: false, requiresMealSelection: false });
-    load();
+    setAddError(null);
+    try {
+      await adminApi.createGuest(withoutBlanks(addForm));
+      setShowAdd(false);
+      setAddForm({ primaryName: '', email: '', group: '', allowedPartySize: 1, plusOneAllowed: false, requiresMealSelection: false });
+      load();
+    } catch (err) {
+      setAddError((err as Error).message || 'Could not add the guest.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleBulkImport = async () => {
-    const lines = bulkText.trim().split('\n').filter(Boolean);
-    const guestList = lines.map(line => {
-      const [primaryName, email, group] = line.split('\t').map(s => s.trim());
-      return { primaryName, email: email || undefined, group: group || undefined };
-    });
     setSaving(true);
-    const result = await adminApi.bulkCreateGuests({ guests: guestList }) as { created: number; skipped: number };
-    setSaving(false);
-    setBulkResult(result);
-    setBulkText('');
-    load();
+    setBulkError(null);
+    setBulkResult(null);
+    try {
+      const result = await adminApi.bulkCreateGuests({ guests: parseGuestRows(bulkText) }) as BulkResult;
+      setBulkResult(result);
+      // Keep only the rows that failed so they can be fixed and re-imported.
+      const failed = new Set(result.errors.map(e => e.row));
+      setBulkText(bulkText.split(/\r?\n/).filter(l => l.trim()).filter((_, i) => failed.has(i + 1)).join('\n'));
+      load();
+    } catch (err) {
+      setBulkError((err as Error).message || 'Import failed.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const inputClass = 'border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900';
@@ -147,19 +166,36 @@ export default function GuestsPage() {
       {showBulk && (
         <div className="bg-white border border-gray-200 rounded-lg p-5 mb-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-2">Bulk Import</h2>
-          <p className="text-xs text-gray-500 mb-3">Paste rows with tab-separated columns: <code className="bg-gray-100 px-1 rounded">Name ⇥ Email ⇥ Group</code></p>
+          <p className="text-xs text-gray-500 mb-3">
+            One guest per line: <code className="bg-gray-100 px-1 rounded">Name, Email, Group, Phone</code>. Only the name is required.
+            Paste straight from a spreadsheet (columns in that order), or type the values separated by commas.
+          </p>
           <textarea
+            aria-label="Guest rows"
             className={`${inputClass} w-full resize-none mb-3`}
             rows={5}
-            placeholder={"Juan dela Cruz\tjuan@example.com\tFamily\nMaria Santos\tmaria@example.com\tFriends"}
+            placeholder={"Juan dela Cruz, juan@example.com, Family\nMaria Santos, maria@example.com, Friends, 0917 123 4567\nLola Nena"}
             value={bulkText}
             onChange={e => setBulkText(e.target.value)}
           />
           {bulkResult && (
-            <p className="text-sm text-green-600 mb-2">
-              ✓ {bulkResult.created} created, {bulkResult.skipped} skipped
-            </p>
+            <div className="text-sm mb-2">
+              <p className={bulkResult.created ? 'text-green-600' : 'text-gray-600'}>
+                ✓ {bulkResult.created} added{bulkResult.skipped > 0 && `, ${bulkResult.skipped} skipped`}
+              </p>
+              {bulkResult.errors.length > 0 && (
+                <>
+                  <ul className="mt-1 text-xs text-red-600 list-disc pl-5">
+                    {bulkResult.errors.map(e => (
+                      <li key={e.row}>Line {e.row}{e.name ? ` (${e.name})` : ''}: {e.reason}</li>
+                    ))}
+                  </ul>
+                  <p className="mt-1 text-xs text-gray-500">The skipped lines are left in the box so you can fix them and import again.</p>
+                </>
+              )}
+            </div>
           )}
+          {bulkError && <p className="text-sm text-red-600 mb-2">{bulkError}</p>}
           <button onClick={handleBulkImport} disabled={saving || !bulkText.trim()} className="bg-gray-900 text-white px-4 py-2 rounded-md text-sm hover:bg-gray-700 active:bg-gray-600 active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100">
             {saving ? 'Importing…' : 'Import'}
           </button>
@@ -186,6 +222,7 @@ export default function GuestsPage() {
               Requires meal selection
             </label>
           </div>
+          {addError && <p className="text-sm text-red-600 mb-3">{addError}</p>}
           <div className="flex gap-2">
             <button type="submit" disabled={saving} className="bg-gray-900 text-white px-4 py-2 rounded-md text-sm disabled:opacity-50">
               {saving ? 'Saving…' : 'Add Guest'}

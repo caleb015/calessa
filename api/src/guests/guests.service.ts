@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import { INVITE_SELECT } from '../email/invite-template';
@@ -117,16 +119,18 @@ export class GuestsService {
     };
 
     for (let i = 0; i < dto.guests.length; i++) {
+      const row = plainToInstance(CreateGuestDto, dto.guests[i]);
+      const name = typeof row.primaryName === 'string' ? row.primaryName : '';
       try {
-        await this.create(dto.guests[i]);
+        const problems = await validate(row, { whitelist: true, forbidNonWhitelisted: true });
+        if (problems.length) {
+          throw new BadRequestException(problems.flatMap(p => Object.values(p.constraints ?? {})).join('; '));
+        }
+        await this.create(row);
         results.created++;
       } catch (err: any) {
         results.skipped++;
-        results.errors.push({
-          row: i + 1,
-          name: dto.guests[i].primaryName,
-          reason: err?.message ?? 'Unknown error',
-        });
+        results.errors.push({ row: i + 1, name, reason: err?.message ?? 'Unknown error' });
       }
     }
 

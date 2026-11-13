@@ -1,11 +1,11 @@
-import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, ValidateNested } from 'class-validator';
-import { CreateGuestDto } from './create-guest.dto';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsObject } from 'class-validator';
 
 export class BulkCreateGuestsDto {
+  // Rows are validated one by one in the service, so a bad row is skipped (and reported)
+  // instead of rejecting the whole import.
   @IsArray()
   @ArrayMinSize(1)
-  @ValidateNested({ each: true })
-  @Type(() => CreateGuestDto)
-  guests!: CreateGuestDto[];
+  @ArrayMaxSize(1000)
+  @IsObject({ each: true })
+  guests!: Record<string, unknown>[];
 }

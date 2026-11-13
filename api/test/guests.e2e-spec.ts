@@ -127,6 +127,25 @@ describe('Guests (e2e)', () => {
         .send({ primaryName: 'E2E Test Guest', hackField: 'bad' })
         .expect(400);
     });
+
+    it('accepts the add-guest form with blank optional fields', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/admin/guests')
+        .set('Authorization', token)
+        .send({ primaryName: '  E2E Test Blank  ', email: '', phone: '', group: '', invitationCode: '', notes: '', allowedPartySize: 1, plusOneAllowed: false, requiresMealSelection: false })
+        .expect(201);
+      expect(res.body.primaryName).toBe('E2E Test Blank');
+      expect(res.body.email).toBeNull();
+      expect(res.body.group).toBeNull();
+      expect(res.body.invitationCode).toHaveLength(8);
+    });
+
+    it('still rejects an invalid email and a blank name', async () => {
+      await request(app.getHttpServer()).post('/admin/guests').set('Authorization', token)
+        .send({ primaryName: 'E2E Test Bad Email', email: 'not-an-email' }).expect(400);
+      await request(app.getHttpServer()).post('/admin/guests').set('Authorization', token)
+        .send({ primaryName: '   ' }).expect(400);
+    });
   });
 
   // ── POST /admin/guests/bulk ──────────────────────────────────────────────────
@@ -171,6 +190,27 @@ describe('Guests (e2e)', () => {
       expect(res.body.created).toBe(1);
       expect(res.body.skipped).toBe(1);
       expect(res.body.errors[0].name).toBe('E2E Test Bulk D');
+    });
+
+    it('skips invalid rows with a reason and imports the rest', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/admin/guests/bulk')
+        .set('Authorization', token)
+        .send({
+          guests: [
+            { primaryName: 'E2E Test Bulk E', email: 'e@example.com', group: 'Family' },
+            { primaryName: 'E2E Test Bulk F', email: '09171234567' }, // phone in the email column
+            { primaryName: '', email: 'g@example.com' },
+            { primaryName: 'E2E Test Bulk H', email: '', group: '' },
+          ],
+        })
+        .expect(201);
+
+      expect(res.body.created).toBe(2);
+      expect(res.body.skipped).toBe(2);
+      expect(res.body.errors.map((e: any) => e.row)).toEqual([2, 3]);
+      expect(res.body.errors[0].reason).toMatch(/email/);
+      expect(res.body.errors[1].reason).toMatch(/primaryName/);
     });
 
     it('returns 400 when guests array is empty', () => {
