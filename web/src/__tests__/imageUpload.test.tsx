@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import ImageUploadButton from '@/components/dashboard/ImageUploadButton';
 import { adminApi } from '@/lib/adminApi';
-import { optimizedImageUrl, uploadImage } from '@/lib/upload';
+import { optimizedImageUrl, thumbnailUrl, uploadImage } from '@/lib/upload';
 
 jest.mock('@/lib/adminApi', () => ({ adminApi: { getUploadSignature: jest.fn() } }));
 
@@ -59,6 +59,11 @@ describe('uploadImage', () => {
   it("surfaces Cloudinary's error message", async () => {
     mockFetch(false, { error: { message: 'Invalid Signature' } });
     await expect(uploadImage(image())).rejects.toThrow('Upload failed: Invalid Signature');
+  });
+
+  it('makes small square thumbnails of uploaded images only', () => {
+    expect(thumbnailUrl(OPTIMIZED)).toBe('https://res.cloudinary.com/demo-cloud/image/upload/f_auto,q_auto,c_fill,w_96,h_96/v1/calessa/photo.jpg');
+    expect(thumbnailUrl('https://example.com/a.jpg')).toBe('https://example.com/a.jpg');
   });
 
   it('leaves non-Cloudinary URLs alone when optimizing', () => {

@@ -21,7 +21,8 @@ export default function GalleryGrid({ images }: { images: GalleryImage[] }) {
           >
             <img
               src={img.imageUrl}
-              alt={img.title ?? `Photo ${i + 1}`}
+              alt={img.title ?? (img.sharedBy ? `Photo shared by ${img.sharedBy}` : `Photo ${i + 1}`)}
+              loading="lazy"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           </button>
@@ -61,9 +62,11 @@ export default function GalleryGrid({ images }: { images: GalleryImage[] }) {
           >
             <RxChevronRight size={36} />
           </button>
-          {images[lightboxIndex].title && (
-            <p className="absolute bottom-4 text-white/70 text-sm">
-              {images[lightboxIndex].title}
+          {(images[lightboxIndex].title || images[lightboxIndex].sharedBy) && (
+            <p className="absolute bottom-4 text-white/70 text-sm text-center px-4">
+              {[images[lightboxIndex].title, images[lightboxIndex].sharedBy && `Shared by ${images[lightboxIndex].sharedBy}`]
+                .filter(Boolean)
+                .join(' · ')}
             </p>
           )}
         </div>

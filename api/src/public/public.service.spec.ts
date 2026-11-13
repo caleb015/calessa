@@ -171,6 +171,18 @@ describe('PublicService', () => {
       mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: false });
       await expect(service.getGallery()).rejects.toThrow(ServiceUnavailableException);
     });
+
+    it('credits guest uploads by name only', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: true });
+      mockPrisma.galleryImage.findMany.mockResolvedValue([
+        { id: 'a', imageUrl: 'a.jpg', guest: { primaryName: 'Maria Santos' } },
+        { id: 'b', imageUrl: 'b.jpg', guest: null },
+      ]);
+      expect(await service.getGallery()).toEqual([
+        { id: 'a', imageUrl: 'a.jpg', sharedBy: 'Maria Santos' },
+        { id: 'b', imageUrl: 'b.jpg', sharedBy: null },
+      ]);
+    });
   });
 
   describe('getContact', () => {

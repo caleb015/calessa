@@ -79,10 +79,16 @@ export class PublicService {
 
   async getGallery(preview = false) {
     await this.assertSitePublic(preview);
-    return this.prisma.galleryImage.findMany({
+    const images = await this.prisma.galleryImage.findMany({
       where: { isPublished: true },
       orderBy: { displayOrder: 'asc' },
+      select: {
+        id: true, title: true, description: true, imageUrl: true, displayOrder: true,
+        guest: { select: { primaryName: true } },
+      },
     });
+    // Guest uploads are credited by name only; no guest ids or other details are exposed.
+    return images.map(({ guest, ...image }) => ({ ...image, sharedBy: guest?.primaryName ?? null }));
   }
 
   async getContact(preview = false) {

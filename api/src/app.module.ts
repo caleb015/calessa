@@ -15,9 +15,10 @@ import { SeatingModule } from './seating/seating.module';
 import { DetailsPageModule } from './details-page/details-page.module';
 import { PreviewModule } from './preview/preview.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { GalleryUploadsModule } from './gallery-uploads/gallery-uploads.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, UsersModule, AuthModule, WeddingSettingsModule, GuestsModule, RsvpModule, PublicModule, AdminModule, ContentModule, SeatingModule, DetailsPageModule, PreviewModule, UploadsModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, UsersModule, AuthModule, WeddingSettingsModule, GuestsModule, RsvpModule, PublicModule, AdminModule, ContentModule, SeatingModule, DetailsPageModule, PreviewModule, UploadsModule, GalleryUploadsModule],
   controllers: [AppController],
   providers: [AppService],
 })

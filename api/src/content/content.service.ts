@@ -8,6 +8,9 @@ import { CreateGalleryImageDto, UpdateGalleryImageDto } from './dto/gallery.dto'
 import { CreateStoryTimelineItemDto, UpdateStoryTimelineItemDto } from './dto/story.dto';
 import { CreateContactPersonDto, UpdateContactPersonDto } from './dto/contact.dto';
 
+/** Who shared a guest-uploaded photo (name only), shown in the dashboard. */
+const GALLERY_GUEST = { guest: { select: { primaryName: true } } } as const;
+
 @Injectable()
 export class ContentService {
   constructor(private readonly prisma: PrismaService) {}
@@ -99,7 +102,7 @@ export class ContentService {
   // ── Gallery ────────────────────────────────────────────────────────────────
 
   findAllGallery() {
-    return this.prisma.galleryImage.findMany({ orderBy: { displayOrder: 'asc' } });
+    return this.prisma.galleryImage.findMany({ orderBy: { displayOrder: 'asc' }, include: GALLERY_GUEST });
   }
 
   async findOneGalleryImage(id: string) {
@@ -109,12 +112,12 @@ export class ContentService {
   }
 
   createGalleryImage(dto: CreateGalleryImageDto) {
-    return this.prisma.galleryImage.create({ data: dto });
+    return this.prisma.galleryImage.create({ data: dto, include: GALLERY_GUEST });
   }
 
   async updateGalleryImage(id: string, dto: UpdateGalleryImageDto) {
     await this.findOneGalleryImage(id);
-    return this.prisma.galleryImage.update({ where: { id }, data: dto });
+    return this.prisma.galleryImage.update({ where: { id }, data: dto, include: GALLERY_GUEST });
   }
 
   async removeGalleryImage(id: string) {

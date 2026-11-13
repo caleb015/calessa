@@ -1,6 +1,7 @@
 import type {
   WeddingSettings, WeddingEvent, ScheduleItem, FaqItem,
   GalleryImage, StoryTimelineItem, ContactPerson, RsvpGuest, DetailsPageContent,
+  GallerySettings, UploadSignature,
 } from '@/types/api';
 import { PREVIEW_HEADER, getPreviewToken } from '@/lib/preview';
 
@@ -20,7 +21,7 @@ async function get<T>(path: string): Promise<T> {
 async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(await previewHeaders()) },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -28,6 +29,14 @@ async function post<T>(path: string, body: unknown): Promise<T> {
     throw new ApiError(res.status, data?.message ?? 'Request failed');
   }
   return res.json();
+}
+
+/** A finished Cloudinary upload, as the API needs it to verify and save the photo. */
+export interface UploadedImage {
+  publicId: string;
+  version: number;
+  signature: string;
+  format: string;
 }
 
 export class ApiError extends Error {
@@ -45,6 +54,11 @@ export const publicApi = {
   getSchedule: () => get<ScheduleItem[]>('/public/schedule'),
   getFaqs: () => get<FaqItem[]>('/public/faqs'),
   getGallery: () => get<GalleryImage[]>('/public/gallery'),
+  getGallerySettings: () => get<GallerySettings>('/public/gallery-settings'),
+  verifyGalleryCode: (code: string) => post<{ name: string }>('/public/gallery-uploads/verify', { code }),
+  getGalleryUploadSignature: (code: string) => post<UploadSignature>('/public/gallery-uploads/signature', { code }),
+  addGalleryUploads: (code: string, images: UploadedImage[]) =>
+    post<{ added: number; pendingApproval: boolean }>('/public/gallery-uploads', { code, images }),
   getContact: () => get<ContactPerson[]>('/public/contact'),
   getRsvpByCode: (code: string) => get<RsvpGuest>(`/public/rsvp/${code}`),
   submitRsvp: (code: string, body: unknown) => post<{ id: string; status: string }>(`/public/rsvp/${code}`, body),

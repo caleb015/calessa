@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback, useId } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import ImagePreview from '@/components/dashboard/ImagePreview';
 import ImageUploadButton from '@/components/dashboard/ImageUploadButton';
+import GallerySettingsEditor from '@/components/dashboard/GallerySettingsEditor';
+import { thumbnailUrl } from '@/lib/upload';
 import DetailsPageEditor from '@/components/dashboard/DetailsPageEditor';
 import DressCodeSettingsEditor from '@/components/dashboard/DressCodeSettingsEditor';
 import { toLocalDateTimeInput, fromLocalDateTimeInput } from '@/lib/datetime';
@@ -21,6 +23,9 @@ interface FieldConfig {
 
 type Item = Record<string, unknown> & { id: string };
 
+/** Name of the guest who uploaded a gallery photo, if a guest did. */
+const sharedBy = (item: Item) => (item.guest as { primaryName?: string } | null | undefined)?.primaryName ?? null;
+
 interface SectionConfig {
   key: string;
   label: string;
@@ -37,6 +42,10 @@ interface SectionConfig {
   header?: React.ReactNode;
   /** Wording for the empty state, defaults to the lowercased label. */
   emptyLabel?: string;
+  /** Small image shown at the start of each row. */
+  thumbnail?: (item: Item) => string | null;
+  /** Show a one-click Publish button on unpublished items. */
+  quickPublish?: boolean;
 }
 
 const SECTIONS: SectionConfig[] = [
@@ -132,8 +141,15 @@ const SECTIONS: SectionConfig[] = [
     apiUpdate: (id, b) => adminApi.updateGalleryImage(id, b),
     apiDelete: (id) => adminApi.deleteGalleryImage(id),
     hasPublished: true,
-    itemLabel: (item) => (item.title || item.imageUrl) as string,
-    itemSublabel: (item) => (item.title ? item.imageUrl as string : '') || '',
+    itemLabel: (item) => (item.title as string) || (sharedBy(item) ? `Photo from ${sharedBy(item)}` : item.imageUrl as string),
+    itemSublabel: (item) => [
+      sharedBy(item) && !item.isPublished ? 'Pending approval' : null,
+      sharedBy(item) && item.title ? `Shared by ${sharedBy(item)}` : null,
+    ].filter(Boolean).join(' · '),
+    thumbnail: (item) => item.imageUrl as string,
+    quickPublish: true,
+    header: <GallerySettingsEditor />,
+    emptyLabel: 'photos',
     fields: [
       { key: 'imageUrl', label: 'Image URL', type: 'image', required: true, placeholder: 'Upload an image or paste a link' },
       { key: 'title', label: 'Title', type: 'text' },
@@ -362,6 +378,20 @@ export default function ContentPage() {
     setEditingId(null);
     setFormState({});
     setError(null);
+  };
+
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+  const handleQuickPublish = async (id: string) => {
+    setPublishingId(id);
+    setError(null);
+    try {
+      const updated = await section.apiUpdate(id, { isPublished: true }) as Item;
+      setAllItems(prev => ({ ...prev, [activeTab]: prev[activeTab].map(it => (it.id === id ? updated : it)) }));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to publish.');
+    } finally {
+      setPublishingId(null);
+    }
   };
 
   const setField = (key: string, value: unknown) =>
@@ -633,6 +663,17 @@ export default function ContentPage() {
                     key={item.id}
                     className="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-4"
                   >
+                    {section.thumbnail?.(item) && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={thumbnailUrl(section.thumbnail(item)!)}
+                        alt=""
+                        loading="lazy"
+                        // Very large animations can't be resized on the free plan; fall back to the original.
+                        onError={e => { if (e.currentTarget.src !== section.thumbnail!(item)) e.currentTarget.src = section.thumbnail!(item)!; }}
+                        className="w-12 h-12 rounded object-cover border border-gray-100 shrink-0 bg-gray-50"
+                      />
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {section.itemLabel(item)}
@@ -649,6 +690,15 @@ export default function ContentPage() {
                           className={`w-2 h-2 rounded-full ${item.isPublished ? 'bg-green-400' : 'bg-gray-300'}`}
                           title={item.isPublished ? 'Published' : 'Draft'}
                         />
+                      )}
+                      {section.quickPublish && !item.isPublished && (
+                        <button
+                          onClick={() => handleQuickPublish(item.id)}
+                          disabled={publishingId === item.id}
+                          className="text-xs font-medium text-white bg-green-600 hover:bg-green-700 px-2.5 py-1 rounded transition-colors disabled:opacity-50"
+                        >
+                          {publishingId === item.id ? 'Publishing…' : 'Publish'}
+                        </button>
                       )}
                       <button
                         onClick={() => startEdit(item)}

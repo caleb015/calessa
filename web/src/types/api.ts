@@ -69,6 +69,27 @@ export interface GalleryImage {
   description: string | null;
   imageUrl: string;
   displayOrder: number;
+  /** Name of the guest who shared it (guest uploads only). */
+  sharedBy?: string | null;
+}
+
+/** Guest photo sharing on the Gallery page. */
+export interface GallerySettings {
+  uploadsEnabled: boolean;
+  requireApproval: boolean;
+  heading: string;
+  subtext: string;
+  buttonLabel: string;
+}
+
+/** Signed parameters for one direct-to-Cloudinary upload. */
+export interface UploadSignature {
+  cloudName: string;
+  apiKey: string;
+  signature: string;
+  timestamp: number;
+  folder: string;
+  allowed_formats: string;
 }
 
 export interface StoryTimelineItem {

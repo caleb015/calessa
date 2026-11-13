@@ -106,6 +106,8 @@ export const adminApi = {
   createGalleryImage: (body: unknown) => post('/admin/gallery', body),
   updateGalleryImage: (id: string, body: unknown) => patch(`/admin/gallery/${id}`, body),
   deleteGalleryImage: (id: string) => del(`/admin/gallery/${id}`),
+  getGallerySettings: () => get('/admin/gallery-settings'),
+  updateGallerySettings: (body: unknown) => patch('/admin/gallery-settings', body),
 
   // Story timeline
   getStoryTimeline: () => get('/admin/story-timeline'),
