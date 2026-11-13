@@ -59,6 +59,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  localStorage.clear(); // codes are remembered between visits
   mockSearchParams = new URLSearchParams();
   pub.verifyGalleryCode.mockResolvedValue({ name: 'Maria Santos' });
   pub.getGalleryUploadSignature.mockResolvedValue(SIG);

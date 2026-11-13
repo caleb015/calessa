@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { publicApi } from '@/lib/api';
 import RsvpInvitationView from './RsvpInvitationView';
+import { getRememberedInvitationCode, rememberInvitationCode } from '@/lib/invitationCode';
 import type { RsvpGuest, WeddingSettings } from '@/types/api';
 
 type Phase = 'closed' | 'happy' | 'opening' | 'open';
@@ -31,6 +32,12 @@ export default function RsvpEntryPage({
   const [settings, setSettings] = useState<WeddingSettings | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
 
+  // Fill in the code this guest used before (a code in the link takes priority).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!initialCode) setCode(c => c || getRememberedInvitationCode());
+  }, [initialCode]);
+
   const handleSubmit = (e: { preventDefault(): void }) => {
     e.preventDefault();
     if (phase !== 'closed') return;
@@ -47,6 +54,7 @@ export default function RsvpEntryPage({
         publicApi.getRsvpByCode(trimmed).catch(() => null),
         publicApi.getSettings().catch(() => null),
       ]).then(([g, s]) => {
+        if (g) rememberInvitationCode(trimmed);
         setGuest(g);
         setSettings(s);
         setDataLoaded(true);

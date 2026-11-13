@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { FiCheckCircle, FiImage, FiX } from 'react-icons/fi';
 import { ApiError, publicApi, type UploadedImage } from '@/lib/api';
 import { imageFileProblem, uploadToCloudinary } from '@/lib/upload';
+import { forgetInvitationCode, getRememberedInvitationCode, rememberInvitationCode } from '@/lib/invitationCode';
 
 export const MAX_FILES_PER_UPLOAD = 30;
 const PARALLEL_UPLOADS = 3;
@@ -47,12 +48,17 @@ export default function GuestPhotoUpload() {
   const itemsRef = useRef(items);
   useEffect(() => { itemsRef.current = items; }, [items]);
 
-  // A link like /gallery/upload?code=ABC123 signs the guest in straight away.
+  // A link like /gallery/upload?code=ABC123 signs the guest in straight away;
+  // otherwise the code they used before (RSVP or a previous upload) is filled in.
   useEffect(() => {
     const fromLink = params?.get('code');
-    if (!fromLink) return;
+    if (!fromLink) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCode(c => c || getRememberedInvitationCode());
+      return;
+    }
     publicApi.verifyGalleryCode(fromLink)
-      .then(({ name }) => setGuestName(name))
+      .then(({ name }) => { rememberInvitationCode(fromLink); setGuestName(name); })
       .catch(err => setError(codeError(err)));
   }, [params]);
 
@@ -65,7 +71,9 @@ export default function GuestPhotoUpload() {
     setError(null);
     try {
       setGuestName((await publicApi.verifyGalleryCode(code.trim())).name);
+      rememberInvitationCode(code);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 404) forgetInvitationCode(code);
       setError(codeError(err));
     } finally {
       setChecking(false);

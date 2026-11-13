@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import RsvpForm from './RsvpForm';
 import type { RsvpGuest, WeddingSettings } from '@/types/api';
+import { useEffect } from 'react';
+import { forgetInvitationCode, rememberInvitationCode } from '@/lib/invitationCode';
 
 interface Props {
   code: string;
@@ -13,6 +15,12 @@ interface Props {
 }
 
 export default function RsvpInvitationView({ code, guest, settings, onReset }: Props) {
+  // Remember a working code for next time (e.g. after opening the RSVP link from the email).
+  useEffect(() => {
+    if (guest) rememberInvitationCode(code);
+    else forgetInvitationCode(code);
+  }, [code, guest]);
+
   if (!guest) {
     return (
       <div className="max-w-md mx-auto px-4 py-24 text-center">
