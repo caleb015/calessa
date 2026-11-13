@@ -52,6 +52,8 @@ calessa-api → Heroku Postgres (essential-0)
 | `FACEBOOK_CLIENT_SECRET` | Facebook OAuth |
 | `TWITTER_CONSUMER_KEY` | X/Twitter OAuth (placeholder if not using) |
 | `TWITTER_CONSUMER_SECRET` | X/Twitter OAuth |
+| `RESEND_API_KEY`, `FROM_EMAIL` | Invitation emails (Resend) |
+| `CLOUDINARY_URL` | Image uploads: `cloudinary://<key>:<secret>@<cloud name>` from the Cloudinary dashboard. Without it, the dashboard's "Upload image" buttons show a "not configured" message |
 
 > **Note:** Heroku manages `DATABASE_URL` for the Postgres add-on and will not allow it to be overwritten. The Prisma schema uses `DATABASE_PRISMA_URL` instead, which must be set as a copy of the Heroku-managed `DATABASE_URL`.
 

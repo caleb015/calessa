@@ -33,6 +33,9 @@ export const adminApi = {
   // Settings
   getSettings: () => get('/admin/settings'),
 
+  // Image uploads (signature for a direct Cloudinary upload)
+  getUploadSignature: () => post('/admin/uploads/signature', {}),
+
   // Preview (view the site while it is not public)
   createPreviewToken: () => post<{ token: string }>('/admin/preview-token', {}),
   updateSettings: (body: unknown) => patch('/admin/settings', body),

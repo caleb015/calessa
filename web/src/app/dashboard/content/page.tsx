@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useId } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import ImagePreview from '@/components/dashboard/ImagePreview';
+import ImageUploadButton from '@/components/dashboard/ImageUploadButton';
 import DetailsPageEditor from '@/components/dashboard/DetailsPageEditor';
 import DressCodeSettingsEditor from '@/components/dashboard/DressCodeSettingsEditor';
 import { toLocalDateTimeInput, fromLocalDateTimeInput } from '@/lib/datetime';
@@ -134,7 +135,7 @@ const SECTIONS: SectionConfig[] = [
     itemLabel: (item) => (item.title || item.imageUrl) as string,
     itemSublabel: (item) => (item.title ? item.imageUrl as string : '') || '',
     fields: [
-      { key: 'imageUrl', label: 'Image URL', type: 'image', required: true, placeholder: '/images/photo.jpg or https://…' },
+      { key: 'imageUrl', label: 'Image URL', type: 'image', required: true, placeholder: 'Upload an image or paste a link' },
       { key: 'title', label: 'Title', type: 'text' },
       { key: 'description', label: 'Description', type: 'text' },
       { key: 'displayOrder', label: 'Display Order', type: 'number' },
@@ -156,7 +157,7 @@ const SECTIONS: SectionConfig[] = [
       { key: 'title', label: 'Title', type: 'text', required: true },
       { key: 'dateLabel', label: 'Date Label', type: 'text', placeholder: 'June 2019' },
       { key: 'description', label: 'Description', type: 'textarea' },
-      { key: 'imageUrl', label: 'Image URL', type: 'image', placeholder: '/images/story.jpg or https://…' },
+      { key: 'imageUrl', label: 'Image URL', type: 'image', placeholder: 'Upload an image or paste a link' },
       { key: 'displayOrder', label: 'Display Order', type: 'number' },
       { key: 'isPublished', label: 'Published', type: 'checkbox' },
     ],
@@ -271,6 +272,7 @@ function FormField({
           value={(value as string) ?? ''}
           onChange={e => onChange(field.key, e.target.value)}
         />
+        <ImageUploadButton onUploaded={url => onChange(field.key, url)} />
         <ImagePreview src={(value as string) ?? ''} />
       </div>
     );

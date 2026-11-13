@@ -39,7 +39,7 @@ A wedding website layered on top of the auth template. Three user types:
 - Admin API endpoints require `JwtAuthGuard`, public endpoints do not
 - NestJS pattern: module → controller → service → DTO, consistent with existing modules
 - Tailwind only — no additional component libraries
-- No email sending, file upload, or payment providers in MVP
+- Email via Resend; image uploads go straight from the browser to Cloudinary, signed by `POST /admin/uploads/signature` (secret stays in `CLOUDINARY_URL` on the API); no payment providers
 - Use placeholder image URLs until real assets are provided
 
 ## Build Phases

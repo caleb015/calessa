@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import ImagePreview from '@/components/dashboard/ImagePreview';
+import ImageUploadButton from '@/components/dashboard/ImageUploadButton';
 import InfoTooltip from '@/components/dashboard/InfoTooltip';
 import ColorInput from '@/components/dashboard/ColorInput';
 import { toLocalDateTimeInput, fromLocalDateTimeInput } from '@/lib/datetime';
@@ -135,7 +136,8 @@ export default function SettingsPage() {
             </div>
             <div>
               <label className={labelClass}>Hero Image URL</label>
-              <input className={inputClass} placeholder="/images/hero.png or https://..." value={(form.heroImageUrl as string) ?? ''} onChange={e => set('heroImageUrl', e.target.value)} />
+              <input className={inputClass} placeholder="Upload an image or paste a link" value={(form.heroImageUrl as string) ?? ''} onChange={e => set('heroImageUrl', e.target.value)} />
+              <ImageUploadButton onUploaded={url => set('heroImageUrl', url)} />
               <ImagePreview src={(form.heroImageUrl as string) ?? ''} />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -172,7 +174,8 @@ export default function SettingsPage() {
             </div>
             <div>
               <label className={labelClass}>Monogram URL</label>
-              <input className={inputClass} placeholder="/images/monogram.png or https://..." value={(form.monogramUrl as string) ?? ''} onChange={e => set('monogramUrl', e.target.value)} />
+              <input className={inputClass} placeholder="Upload an image or paste a link" value={(form.monogramUrl as string) ?? ''} onChange={e => set('monogramUrl', e.target.value)} />
+              <ImageUploadButton onUploaded={url => set('monogramUrl', url)} />
               <ImagePreview src={(form.monogramUrl as string) ?? ''} />
             </div>
             <div>
