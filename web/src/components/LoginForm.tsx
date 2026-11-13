@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { appConfig } from '@/config/app';
 import AuthProviderButtons from './AuthProviderButtons';
+import { SESSION_EXPIRED_MESSAGE, safeNextPath } from '@/lib/session';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -17,6 +18,8 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
+  const params = useSearchParams();
+  const sessionExpired = params?.get('expired') === '1';
 
   const submitAsync = async () => {
     if (isRegister && password !== confirmPassword) {
@@ -56,7 +59,8 @@ export default function LoginForm() {
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('user_email', email);
       document.cookie = 'logged_in=true; path=/; SameSite=Lax';
-      router.push('/dashboard');
+      // Back to the page they were on when their session expired, if any.
+      router.push(safeNextPath(params?.get('next')));
     } catch {
       setError('Unable to reach the server. Make sure the API is running.');
     } finally {
@@ -80,6 +84,11 @@ export default function LoginForm() {
     <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">{appConfig.name}</h1>
       <p className="text-gray-600 mb-6">{appConfig.subtitle}</p>
+      {sessionExpired && (
+        <p role="status" className="mb-4 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
+          {SESSION_EXPIRED_MESSAGE}
+        </p>
+      )}
       <AuthProviderButtons className="mb-4" />
 
       <form onSubmit={handleSubmit} className="space-y-4">

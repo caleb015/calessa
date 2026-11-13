@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { appConfig } from '@/config/app';
 import { clearPreviewCookie } from '@/lib/preview';
+import { authFetch } from '@/lib/session';
 
 const OAUTH_PROVIDERS = ['google', 'facebook', 'x'] as const;
 
@@ -81,7 +82,7 @@ function ProfilePageContent() {
     if (initialBanner) setBanner(initialBanner);
 
     const getJson = (path: string) =>
-      fetch(`${appConfig.apiUrl}${path}`, { headers: authHeaders }).then(r => {
+      authFetch(`${appConfig.apiUrl}${path}`, { headers: authHeaders }).then(r => {
         if (!r.ok) throw new Error(`Request failed: ${r.status}`);
         return r.json();
       });
@@ -104,7 +105,7 @@ function ProfilePageContent() {
     setNameLoading(true);
     setNameMsg(null);
     try {
-      const res = await fetch(`${appConfig.apiUrl}/auth/profile`, {
+      const res = await authFetch(`${appConfig.apiUrl}/auth/profile`, {
         method: 'PATCH',
         headers: authHeaders,
         body: JSON.stringify({ name: name.trim() || null }),
@@ -127,7 +128,7 @@ function ProfilePageContent() {
     setPasswordLoading(true);
     setPasswordMsg(null);
     try {
-      const res = await fetch(`${appConfig.apiUrl}/auth/password`, {
+      const res = await authFetch(`${appConfig.apiUrl}/auth/password`, {
         method: 'PATCH',
         headers: authHeaders,
         body: JSON.stringify({ currentPassword, newPassword }),
@@ -146,7 +147,7 @@ function ProfilePageContent() {
 
   const handleUnlink = async (provider: string) => {
     try {
-      const res = await fetch(`${appConfig.apiUrl}/auth/providers/${provider}`, {
+      const res = await authFetch(`${appConfig.apiUrl}/auth/providers/${provider}`, {
         method: 'DELETE',
         headers: authHeaders,
       });
@@ -161,7 +162,7 @@ function ProfilePageContent() {
   const handleDeleteAccount = async () => {
     setDeleteLoading(true);
     try {
-      await fetch(`${appConfig.apiUrl}/auth/profile`, { method: 'DELETE', headers: authHeaders });
+      await authFetch(`${appConfig.apiUrl}/auth/profile`, { method: 'DELETE', headers: authHeaders });
       localStorage.removeItem('access_token');
       localStorage.removeItem('user_email');
       document.cookie = 'logged_in=; Max-Age=0; path=/';
@@ -176,7 +177,7 @@ function ProfilePageContent() {
 
   const handleConnect = async (provider: string) => {
     try {
-      const res = await fetch(`${appConfig.apiUrl}/auth/link/${provider}`, { headers: authHeaders });
+      const res = await authFetch(`${appConfig.apiUrl}/auth/link/${provider}`, { headers: authHeaders });
       if (!res.ok) throw new Error('Failed to get link URL');
       const { url } = await res.json();
       window.location.href = url;

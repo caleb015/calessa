@@ -242,6 +242,17 @@ describe('Auth (e2e)', () => {
         .get('/auth/me')
         .set('Authorization', deleteToken)
         .expect(401);
+
+      // ...and admin endpoints reject it too, instead of working until the token expires
+      await request(app.getHttpServer())
+        .get('/admin/guests')
+        .set('Authorization', deleteToken)
+        .expect(401);
+      await request(app.getHttpServer())
+        .post('/admin/guests')
+        .set('Authorization', deleteToken)
+        .send({ primaryName: 'E2E Should Not Exist' })
+        .expect(401);
     });
   });
 });

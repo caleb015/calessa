@@ -1,17 +1,13 @@
+import { authFetch } from '@/lib/session';
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-function getToken() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('access_token');
-}
-
+// authFetch sends the login token and redirects to /login if the session has expired.
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken();
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await authFetch(`${BASE_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });
