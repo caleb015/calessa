@@ -1,5 +1,6 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { PreviewGuard, SitePreview } from '../preview/preview.guard';
+import { GalleryPageQueryDto } from './dto/gallery-page.dto';
 import { PublicService } from './public.service';
 
 @Controller('public')
@@ -37,6 +38,11 @@ export class PublicController {
   @Get('gallery')
   getGallery(@SitePreview() preview: boolean) {
     return this.service.getGallery(preview);
+  }
+
+  @Get('gallery/page')
+  getGalleryPage(@SitePreview() preview: boolean, @Query() query: GalleryPageQueryDto) {
+    return this.service.getGalleryPage(preview, query.offset, query.limit);
   }
 
   @Get('contact')

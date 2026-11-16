@@ -39,6 +39,7 @@ describe('Public endpoints (e2e)', () => {
     '/public/schedule',
     '/public/faqs',
     '/public/gallery',
+    '/public/gallery/page',
     '/public/contact',
   ];
 
@@ -67,7 +68,7 @@ describe('Public endpoints (e2e)', () => {
       return request(app.getHttpServer()).get('/public/settings').expect(200);
     });
 
-    const blockedRoutes = ['/public/story', '/public/events', '/public/schedule', '/public/faqs', '/public/gallery', '/public/contact'];
+    const blockedRoutes = ['/public/story', '/public/events', '/public/schedule', '/public/faqs', '/public/gallery', '/public/gallery/page', '/public/contact'];
     for (const route of blockedRoutes) {
       it(`GET ${route} returns 503`, () => {
         return request(app.getHttpServer()).get(route).expect(503);
@@ -123,6 +124,45 @@ describe('Public endpoints (e2e)', () => {
       const res = await request(app.getHttpServer()).get('/public/gallery').expect(200);
       expect(Array.isArray(res.body)).toBe(true);
     });
+  });
+
+  describe('GET /public/gallery/page', () => {
+    const URL_PREFIX = 'https://example.com/e2e-gallery-page-';
+    let ids: string[] = [];
+
+    beforeAll(async () => {
+      // Equal display orders, so paging has to rely on the tie-breakers.
+      const created: { id: string }[] = [];
+      for (let i = 0; i < 5; i++) {
+        created.push(await prisma.galleryImage.create({ data: { imageUrl: `${URL_PREFIX}${i}.jpg`, displayOrder: 100_000 } }));
+      }
+      await prisma.galleryImage.create({ data: { imageUrl: `${URL_PREFIX}hidden.jpg`, displayOrder: 100_000, isPublished: false } });
+      ids = created.map(c => c.id);
+    });
+
+    afterAll(async () => {
+      await prisma.galleryImage.deleteMany({ where: { imageUrl: { startsWith: URL_PREFIX } } });
+    });
+
+    it('pages through published photos without repeats or gaps', async () => {
+      const first = await request(app.getHttpServer()).get('/public/gallery/page?limit=1').expect(200);
+      const total = first.body.total as number;
+      const all = (await request(app.getHttpServer()).get('/public/gallery').expect(200)).body as { id: string }[];
+      expect(total).toBe(all.length);
+
+      const seen: string[] = [];
+      for (let offset = Math.max(0, total - 6); offset < total; offset += 2) {
+        const res = await request(app.getHttpServer()).get(`/public/gallery/page?offset=${offset}&limit=2`).expect(200);
+        seen.push(...res.body.images.map((img: { id: string }) => img.id));
+      }
+      const ours = seen.filter(id => ids.includes(id));
+      expect(ours).toEqual(ids); // all five, once each, oldest first
+      expect(first.body.images[0]).toHaveProperty('sharedBy');
+      expect(first.body.images[0]).not.toHaveProperty('guest');
+    });
+
+    it.each(['limit=0', 'limit=101', 'offset=-1', 'limit=abc', 'other=1'])('rejects %s', query =>
+      request(app.getHttpServer()).get(`/public/gallery/page?${query}`).expect(400));
   });
 
   describe('GET /public/contact', () => {

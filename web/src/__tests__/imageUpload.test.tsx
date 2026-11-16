@@ -91,7 +91,7 @@ describe('ImageUploadButton', () => {
     const onUploaded = jest.fn();
     render(<ImageUploadButton onUploaded={onUploaded} />);
     fireEvent.change(screen.getByLabelText('Choose image file'), { target: { files: [image()] } });
-    await waitFor(() => expect(onUploaded).toHaveBeenCalledWith(OPTIMIZED));
+    await waitFor(() => expect(onUploaded).toHaveBeenCalledWith(OPTIMIZED, 0));
     expect(screen.getByRole('button', { name: /Upload image/ })).not.toBeDisabled();
   });
 
@@ -133,6 +133,56 @@ describe('ImageUploadButton', () => {
     await waitFor(() => expect(pending).toHaveLength(2));
     pending[1]();
     expect(await screen.findByRole('button', { name: /Upload images/ })).toBeEnabled();
+  });
+
+  it('uploads several at once when asked, handing back where each file was in the selection', async () => {
+    let inFlight = 0;
+    let most = 0;
+    const finish: (() => void)[] = [];
+    global.fetch = jest.fn().mockImplementation((_url: string, init: { body: FormData }) => {
+      inFlight++;
+      most = Math.max(most, inFlight);
+      const name = (init.body.get('file') as File).name;
+      return new Promise(resolve => finish.push(() => {
+        inFlight--;
+        resolve({ ok: true, json: async () => ({ secure_url: `https://res.cloudinary.com/demo-cloud/image/upload/v1/calessa/${name}` }) });
+      }));
+    }) as jest.Mock;
+    const onUploaded = jest.fn();
+    render(<ImageUploadButton multiple concurrency={2} onUploaded={onUploaded} />);
+    fireEvent.change(screen.getByLabelText('Choose image files'), {
+      target: { files: ['a.jpg', 'b.jpg', 'c.jpg', 'd.jpg'].map(n => image(n)) },
+    });
+
+    for (let done = 0; done < 4; done++) {
+      await waitFor(() => expect(finish.length).toBeGreaterThan(done));
+      finish[done]();
+    }
+    await waitFor(() => expect(onUploaded).toHaveBeenCalledTimes(4));
+    expect(most).toBe(2);
+    const byIndex = Object.fromEntries(onUploaded.mock.calls.map(([url, i]) => [i, url.split('/').pop()]));
+    expect(byIndex).toEqual({ 0: 'a.jpg', 1: 'b.jpg', 2: 'c.jpg', 3: 'd.jpg' });
+    await waitFor(() => expect(screen.getByRole('button', { name: /Upload images/ })).not.toBeDisabled());
+  });
+
+  it('names the first few files that failed and counts the rest', async () => {
+    mockFetch(true, { secure_url: UPLOADED });
+    render(<ImageUploadButton multiple onUploaded={jest.fn()} />);
+    const huge = Array.from({ length: 8 }, (_, i) => image(`huge${i + 1}.jpg`, 'image/jpeg', 11 * 1024 * 1024));
+    fireEvent.change(screen.getByLabelText('Choose image files'), { target: { files: huge } });
+    const message = await screen.findByText(/couldn't be uploaded/);
+    expect(message.textContent).toMatch(/^huge1\.jpg: .*huge5\.jpg: .* …and 3 more couldn't be uploaded\.$/);
+    expect(message.textContent).not.toMatch(/huge6/);
+  });
+
+  it('asks before leaving the page while uploading', async () => {
+    global.fetch = jest.fn().mockReturnValue(new Promise(() => {})) as jest.Mock; // never finishes
+    render(<ImageUploadButton multiple onUploaded={jest.fn()} />);
+    fireEvent.change(screen.getByLabelText('Choose image files'), { target: { files: [image()] } });
+    await screen.findByRole('button', { name: /Uploading/ });
+    const leaving = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(leaving);
+    expect(leaving.defaultPrevented).toBe(true);
   });
 
   it('shows the error when uploads are not set up', async () => {

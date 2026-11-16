@@ -73,6 +73,13 @@ export interface GalleryImage {
   sharedBy?: string | null;
 }
 
+/** One page of the public gallery. */
+export interface GalleryPage {
+  images: GalleryImage[];
+  /** Number of published photos in the whole gallery. */
+  total: number;
+}
+
 /** Guest photo sharing on the Gallery page. */
 export interface GallerySettings {
   uploadsEnabled: boolean;

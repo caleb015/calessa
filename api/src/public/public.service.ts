@@ -1,8 +1,19 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EVENT_SELECT } from '../content/event-select';
+import { GALLERY_PAGE_SIZE } from './dto/gallery-page.dto';
 
 const SINGLETON_SETTINGS_ID = 'singleton';
+
+const GALLERY_PUBLIC_FIELDS = {
+  id: true, title: true, description: true, imageUrl: true, displayOrder: true,
+  guest: { select: { primaryName: true } },
+} as const;
+
+/** Guest uploads are credited by name only; no guest ids or other details are exposed. */
+function creditGuest<T extends { guest: { primaryName: string } | null }>({ guest, ...image }: T) {
+  return { ...image, sharedBy: guest?.primaryName ?? null };
+}
 
 @Injectable()
 export class PublicService {
@@ -82,13 +93,27 @@ export class PublicService {
     const images = await this.prisma.galleryImage.findMany({
       where: { isPublished: true },
       orderBy: { displayOrder: 'asc' },
-      select: {
-        id: true, title: true, description: true, imageUrl: true, displayOrder: true,
-        guest: { select: { primaryName: true } },
-      },
+      select: GALLERY_PUBLIC_FIELDS,
     });
-    // Guest uploads are credited by name only; no guest ids or other details are exposed.
-    return images.map(({ guest, ...image }) => ({ ...image, sharedBy: guest?.primaryName ?? null }));
+    return images.map(creditGuest);
+  }
+
+  /** One page of published photos plus the total, so the gallery can load more as visitors scroll. */
+  async getGalleryPage(preview = false, offset = 0, limit = GALLERY_PAGE_SIZE) {
+    await this.assertSitePublic(preview);
+    const where = { isPublished: true };
+    const [images, total] = await Promise.all([
+      this.prisma.galleryImage.findMany({
+        where,
+        // Ties broken by age and id so photos never repeat or go missing between pages.
+        orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
+        skip: offset,
+        take: limit,
+        select: GALLERY_PUBLIC_FIELDS,
+      }),
+      this.prisma.galleryImage.count({ where }),
+    ]);
+    return { images: images.map(creditGuest), total };
   }
 
   async getContact(preview = false) {

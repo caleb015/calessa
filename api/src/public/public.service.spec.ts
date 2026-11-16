@@ -44,7 +44,7 @@ const mockPrisma = {
   weddingEvent: { findMany: jest.fn() },
   scheduleItem: { findMany: jest.fn() },
   faqItem: { findMany: jest.fn() },
-  galleryImage: { findMany: jest.fn() },
+  galleryImage: { findMany: jest.fn(), count: jest.fn() },
   contactPerson: { findMany: jest.fn() },
 };
 
@@ -182,6 +182,38 @@ describe('PublicService', () => {
         { id: 'a', imageUrl: 'a.jpg', sharedBy: 'Maria Santos' },
         { id: 'b', imageUrl: 'b.jpg', sharedBy: null },
       ]);
+    });
+  });
+
+  describe('getGalleryPage', () => {
+    it('returns one page of published photos, in a stable order, with the total', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: true });
+      mockPrisma.galleryImage.findMany.mockResolvedValue([{ id: 'c', imageUrl: 'c.jpg', guest: { primaryName: 'Ana' } }]);
+      mockPrisma.galleryImage.count.mockResolvedValue(250);
+      expect(await service.getGalleryPage(false, 96, 48)).toEqual({
+        images: [{ id: 'c', imageUrl: 'c.jpg', sharedBy: 'Ana' }],
+        total: 250,
+      });
+      expect(mockPrisma.galleryImage.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: { isPublished: true },
+        orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
+        skip: 96,
+        take: 48,
+      }));
+      expect(mockPrisma.galleryImage.count).toHaveBeenCalledWith({ where: { isPublished: true } });
+    });
+
+    it('starts at the first page by default', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: true });
+      mockPrisma.galleryImage.findMany.mockResolvedValue([]);
+      mockPrisma.galleryImage.count.mockResolvedValue(0);
+      await service.getGalleryPage();
+      expect(mockPrisma.galleryImage.findMany).toHaveBeenCalledWith(expect.objectContaining({ skip: 0, take: 48 }));
+    });
+
+    it('throws ServiceUnavailableException when isPublic is false', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: false });
+      await expect(service.getGalleryPage()).rejects.toThrow(ServiceUnavailableException);
     });
   });
 

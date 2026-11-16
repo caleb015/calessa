@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useId } from 'react';
+import { useEffect, useState, useCallback, useId, useRef } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import ImagePreview from '@/components/dashboard/ImagePreview';
 import ImageUploadButton from '@/components/dashboard/ImageUploadButton';
@@ -47,6 +47,8 @@ interface SectionConfig {
   thumbnail?: (item: Item) => string | null;
   /** Photos shown in a strip under the row's text (whole, in order). */
   photos?: (item: Item) => string[];
+  /** Show an "Upload photos" button that adds one published item per chosen image. */
+  bulkImageUpload?: boolean;
   /** Show a one-click Publish button on unpublished items. */
   quickPublish?: boolean;
 }
@@ -153,6 +155,7 @@ const SECTIONS: SectionConfig[] = [
     ].filter(Boolean).join(' · '),
     thumbnail: (item) => item.imageUrl as string,
     quickPublish: true,
+    bulkImageUpload: true,
     header: <GallerySettingsEditor />,
     emptyLabel: 'photos',
     fields: [
@@ -208,6 +211,10 @@ const SECTIONS: SectionConfig[] = [
 
 // Only send the fields the form edits, so extra fields returned by the API can't be echoed back.
 const DETAILS_PAGE_TAB = 'detailsPage';
+/** Items listed per page, so a gallery of thousands stays quick to scroll and edit. */
+const PAGE_SIZE = 50;
+/** Photos uploaded at once by "Upload photos". */
+const BULK_UPLOAD_CONCURRENCY = 3;
 const TABS = [
   { key: SECTIONS[0].key, label: SECTIONS[0].label },
   { key: DETAILS_PAGE_TAB, label: 'Details Page' },
@@ -367,6 +374,15 @@ export default function ContentPage() {
   const section = SECTIONS.find(s => s.key === activeTab) ?? SECTIONS[0];
   const items = allItems[activeTab] ?? [];
 
+  // Paging, plus a filter for photos waiting for approval (they'd otherwise be spread across pages).
+  const [page, setPage] = useState(0);
+  const [pendingOnly, setPendingOnly] = useState(false);
+  const pendingCount = section.quickPublish ? items.filter(it => !it.isPublished).length : 0;
+  const listed = pendingOnly && pendingCount > 0 ? items.filter(it => !it.isPublished) : items;
+  const pageCount = Math.max(1, Math.ceil(listed.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const visibleItems = listed.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+
   const switchTab = (key: string) => {
     setActiveTab(key);
     setEditingId(null);
@@ -375,6 +391,10 @@ export default function ContentPage() {
     setConfirmDelete(null);
     setOpenFaqIds(new Set());
     setFaqForms({});
+    setBulkAdded(null);
+    setPage(0);
+    setPendingOnly(false);
+    bulkRunning.current = false;
   };
 
   const startNew = () => {
@@ -423,6 +443,37 @@ export default function ContentPage() {
       return next;
     });
   }, []);
+
+  // "Upload photos": each uploaded image becomes its own published item, added after the others
+  // in the order the files were chosen. Afterwards the list shows the last page, where they are.
+  const [bulkAdded, setBulkAdded] = useState<number | null>(null);
+  const bulkOrder = useRef(0);
+  const bulkRunning = useRef(false);
+  const startBulkUpload = (busy: boolean) => {
+    if (!busy) {
+      // The button also reports "not busy" when it goes away (e.g. on another tab); ignore that.
+      if (!bulkRunning.current) return;
+      bulkRunning.current = false;
+      setPendingOnly(false);
+      setPage(Number.MAX_SAFE_INTEGER);
+      return;
+    }
+    bulkRunning.current = true;
+    bulkOrder.current = items.reduce((max, it) => Math.max(max, Number(it.displayOrder) || 0), -1) + 1;
+    setBulkAdded(0);
+    setError(null);
+  };
+  const addUploadedImage = async (imageUrl: string, index: number) => {
+    const target = section;
+    const displayOrder = bulkOrder.current + index;
+    try {
+      const created = await target.apiCreate({ imageUrl, isPublished: true, displayOrder }) as Item;
+      setAllItems(prev => ({ ...prev, [target.key]: [...(prev[target.key] ?? []), created] }));
+      setBulkAdded(n => (n ?? 0) + 1);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? `Uploaded, but couldn't add a photo: ${err.message}` : "Uploaded, but couldn't add a photo.");
+    }
+  };
 
   const setField = (key: string, value: unknown) =>
     setFormState(prev => ({ ...prev, [key]: value }));
@@ -579,17 +630,54 @@ export default function ContentPage() {
             <p className="text-sm text-gray-500">
               {items.length} {items.length === 1 ? 'item' : 'items'}
             </p>
-            {editingId !== 'new' && (
-              <button
-                onClick={startNew}
-                className="bg-gray-900 text-white text-sm px-3 py-1.5 rounded-md hover:bg-gray-700 transition-colors"
-              >
-                + Add {section.singular.toLowerCase()}
-              </button>
-            )}
+            <div className="flex flex-wrap items-start justify-end gap-2">
+              {section.bulkImageUpload && (
+                <ImageUploadButton
+                  multiple
+                  concurrency={BULK_UPLOAD_CONCURRENCY}
+                  label="Upload photos"
+                  className="text-right"
+                  onBusyChange={startBulkUpload}
+                  onUploaded={addUploadedImage}
+                />
+              )}
+              {editingId !== 'new' && (
+                <button
+                  onClick={startNew}
+                  className="bg-gray-900 text-white text-sm px-3 py-1.5 rounded-md hover:bg-gray-700 transition-colors"
+                >
+                  + Add {section.singular.toLowerCase()}
+                </button>
+              )}
+            </div>
           </div>
+          {section.bulkImageUpload && bulkAdded != null && bulkAdded > 0 && (
+            <p role="status" className="text-sm text-green-600 -mt-2 mb-4">
+              {bulkAdded} {bulkAdded === 1 ? 'photo' : 'photos'} added to the gallery.
+            </p>
+          )}
 
           {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+
+          {pendingCount > 0 && (
+            <div className="flex gap-1 mb-3 text-xs" role="group" aria-label="Show">
+              {[
+                { pending: false, label: `All (${items.length})` },
+                { pending: true, label: `Pending approval (${pendingCount})` },
+              ].map(f => (
+                <button
+                  key={f.label}
+                  onClick={() => { setPendingOnly(f.pending); setPage(0); }}
+                  aria-pressed={pendingOnly === f.pending}
+                  className={`px-2.5 py-1 rounded-full border transition-colors ${
+                    pendingOnly === f.pending ? 'bg-gray-900 border-gray-900 text-white' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {editingId === 'new' && <div className="mb-3">{editForm}</div>}
 
@@ -602,7 +690,7 @@ export default function ContentPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {items.map(item => {
+              {visibleItems.map(item => {
                 // ── FAQ accordion ──────────────────────────────────────────
                 if (activeTab === 'faqs') {
                   const isOpen = openFaqIds.has(item.id);
@@ -771,6 +859,28 @@ export default function ContentPage() {
                 );
               })}
             </div>
+          )}
+
+          {pageCount > 1 && (
+            <nav className="flex items-center justify-between mt-4 text-sm" aria-label="Pages">
+              <button
+                onClick={() => setPage(currentPage - 1)}
+                disabled={currentPage === 0}
+                className="px-3 py-1.5 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+              >
+                ← Previous
+              </button>
+              <span className="text-gray-500">
+                {currentPage * PAGE_SIZE + 1}–{Math.min((currentPage + 1) * PAGE_SIZE, listed.length)} of {listed.length}
+              </span>
+              <button
+                onClick={() => setPage(currentPage + 1)}
+                disabled={currentPage >= pageCount - 1}
+                className="px-3 py-1.5 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+              >
+                Next →
+              </button>
+            </nav>
           )}
         </>
       )}

@@ -3,8 +3,9 @@ import GalleryGrid from '@/components/public/GalleryGrid';
 import GalleryShareCard from '@/components/public/GalleryShareCard';
 
 export default async function GalleryPage() {
-  const [images, settings] = await Promise.all([
-    publicApi.getGallery().catch(() => []),
+  // Only the first page is sent with the page; the grid fetches the rest as visitors scroll.
+  const [{ images, total }, settings] = await Promise.all([
+    publicApi.getGalleryPage().catch(() => ({ images: [], total: 0 })),
     publicApi.getGallerySettings().catch(() => null),
   ]);
 
@@ -21,7 +22,7 @@ export default async function GalleryPage() {
         <p className="text-center text-[var(--muted)]">Photos coming soon.</p>
       )}
 
-      <GalleryGrid images={images} />
+      <GalleryGrid images={images} total={total} />
     </div>
   );
 }
