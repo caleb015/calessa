@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import {
   RxDashboard, RxGear, RxPerson, RxEnvelopeClosed,
-  RxTable, RxImage, RxCalendar, RxExit, RxEyeOpen,
+  RxTable, RxImage, RxCalendar, RxExit, RxEyeOpen, RxPlay,
 } from 'react-icons/rx';
 
 const navItems = [
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/dashboard/rsvps', label: 'RSVPs', icon: RxEnvelopeClosed },
   { href: '/dashboard/seating', label: 'Seating', icon: RxTable },
   { href: '/dashboard/content', label: 'Content', icon: RxImage },
+  { href: '/dashboard/slideshow', label: 'Slideshow', icon: RxPlay },
   { href: '/dashboard/messages', label: 'Messages', icon: RxCalendar },
   { href: '/dashboard/preview', label: 'Preview', icon: RxEyeOpen },
 ];

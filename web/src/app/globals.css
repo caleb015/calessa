@@ -63,3 +63,34 @@ h1, h2, h3 {
   65% { transform: rotateX(180deg); opacity: 1; }
   100% { transform: rotateX(180deg); opacity: 0; }
 }
+
+/* Dashboard slideshow: crossfade plus a slow, gentle move. Photos stay fully in frame
+   (the stage has padding, and they never grow more than a few percent). */
+@keyframes slideFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideZoomIn {
+  from { transform: scale(0.95); }
+  to { transform: scale(1.03); }
+}
+
+@keyframes slideZoomOut {
+  from { transform: scale(1.03); }
+  to { transform: scale(0.95); }
+}
+
+@keyframes slideDriftLeft {
+  from { transform: translateX(1.5%) scale(0.98); }
+  to { transform: translateX(-1.5%) scale(1.01); }
+}
+
+@keyframes slideDriftRight {
+  from { transform: translateX(-1.5%) scale(0.98); }
+  to { transform: translateX(1.5%) scale(1.01); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-photo { animation: none !important; }
+}

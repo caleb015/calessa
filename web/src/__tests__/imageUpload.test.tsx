@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import ImageUploadButton from '@/components/dashboard/ImageUploadButton';
 import { adminApi } from '@/lib/adminApi';
-import { fitHeightUrl, fitWidthUrl, optimizedImageUrl, thumbnailUrl, uploadImage } from '@/lib/upload';
+import { backdropUrl, fitHeightUrl, fitWidthUrl, optimizedImageUrl, thumbnailUrl, uploadImage } from '@/lib/upload';
 
 jest.mock('@/lib/adminApi', () => ({ adminApi: { getUploadSignature: jest.fn() } }));
 
@@ -64,6 +64,11 @@ describe('uploadImage', () => {
   it('makes small square thumbnails of uploaded images only', () => {
     expect(thumbnailUrl(OPTIMIZED)).toBe('https://res.cloudinary.com/demo-cloud/image/upload/f_auto,q_auto,c_fill,w_96,h_96/v1/calessa/photo.jpg');
     expect(thumbnailUrl('https://example.com/a.jpg')).toBe('https://example.com/a.jpg');
+  });
+
+  it('makes a small blurred still for slideshow backgrounds', () => {
+    expect(backdropUrl(OPTIMIZED)).toBe('https://res.cloudinary.com/demo-cloud/image/upload/pg_1/f_auto,q_auto,w_400,e_blur:1200/v1/calessa/photo.jpg');
+    expect(backdropUrl('https://example.com/a.jpg')).toBe('https://example.com/a.jpg');
   });
 
   it('scales Cloudinary images to a width or height without cropping, and leaves other links alone', () => {

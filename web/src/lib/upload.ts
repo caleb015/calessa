@@ -27,6 +27,16 @@ export function thumbnailUrl(url: string, size = 96): string {
     : url;
 }
 
+/**
+ * A small, heavily blurred still of a Cloudinary image (first frame for GIFs), for soft
+ * backgrounds; other URLs are returned as-is.
+ */
+export function backdropUrl(url: string): string {
+  return url.includes('res.cloudinary.com') && url.includes('/image/upload/f_auto,q_auto,c_limit,w_2400/')
+    ? url.replace('/f_auto,q_auto,c_limit,w_2400/', '/pg_1/f_auto,q_auto,w_400,e_blur:1200/')
+    : url;
+}
+
 /** A Cloudinary image scaled down to at most `width` pixels wide (never cropped); other URLs as-is. */
 export function fitWidthUrl(url: string, width: number): string {
   return url.includes('res.cloudinary.com') && url.includes('/image/upload/f_auto,q_auto,c_limit,w_2400/')
