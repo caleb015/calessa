@@ -266,6 +266,8 @@ model DressCode {
   intro     String?
   /// Hex colors shown as brush swatches, in display order.
   palette   String[] @default([])
+  /// Photos shown with the section's intro (e.g. outfit inspiration), in display order.
+  imageUrls String[] @default([])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

@@ -138,7 +138,43 @@ describe('Details page + Dress Code (e2e)', () => {
       const res = await admin('patch', '/admin/dress-code')
         .send({ enabled: true, eyebrow: 'Come in color!', intro: 'Solid colors please.', palette: ['#9fb6cd', '#a8a060', '#e8b93f'] })
         .expect(200);
-      expect(res.body).toEqual({ enabled: true, eyebrow: 'Come in color!', title: 'The Dress Code', intro: 'Solid colors please.', palette: ['#9fb6cd', '#a8a060', '#e8b93f'] });
+      expect(res.body).toEqual({ enabled: true, eyebrow: 'Come in color!', title: 'The Dress Code', intro: 'Solid colors please.', palette: ['#9fb6cd', '#a8a060', '#e8b93f'], imageUrls: [] });
+    });
+
+    it('stores section photos in order, keeps them when other settings change, and shows them publicly', async () => {
+      const photos = ['https://res.cloudinary.com/demo/image/upload/v1/calessa/look.jpg', 'https://example.com/b.png'];
+      const res = await admin('patch', '/admin/dress-code').send({ imageUrls: photos }).expect(200);
+      expect(res.body.imageUrls).toEqual(photos);
+
+      await admin('patch', '/admin/dress-code').send({ intro: 'Solid colors please.' }).expect(200);
+      expect((await admin('get', '/admin/dress-code').expect(200)).body.imageUrls).toEqual(photos);
+      const pub = await request(server()).get('/public/details-page').expect(200);
+      expect(pub.body.dressCode.imageUrls).toEqual(photos);
+
+      await admin('patch', '/admin/dress-code').send({ imageUrls: [] }).expect(200);
+      expect((await request(server()).get('/public/details-page').expect(200)).body.dressCode.imageUrls).toEqual([]);
+    });
+
+    it('shows a section that has only photos (no text, colors or guidelines)', async () => {
+      const before = (await admin('get', '/admin/dress-code').expect(200)).body;
+      const guidelines = await prisma.dressCodeGuideline.count();
+      expect(guidelines).toBe(0); // guidelines are added by later tests
+
+      await admin('patch', '/admin/dress-code').send({ eyebrow: '', title: '', intro: '', palette: [], imageUrls: [] }).expect(200);
+      expect((await request(server()).get('/public/details-page').expect(200)).body.dressCode).toBeNull();
+
+      await admin('patch', '/admin/dress-code').send({ imageUrls: ['https://example.com/look.jpg'] }).expect(200);
+      const pub = await request(server()).get('/public/details-page').expect(200);
+      expect(pub.body.dressCode).toMatchObject({ title: null, intro: null, palette: [], imageUrls: ['https://example.com/look.jpg'], guidelines: [] });
+
+      const { enabled, eyebrow, title, intro, palette, imageUrls } = before;
+      await admin('patch', '/admin/dress-code').send({ enabled, eyebrow, title, intro, palette, imageUrls }).expect(200);
+    });
+
+    it('rejects section photos that are not web links, and too many photos', async () => {
+      await admin('patch', '/admin/dress-code').send({ imageUrls: ['javascript:alert(1)'] }).expect(400);
+      await admin('patch', '/admin/dress-code').send({ imageUrls: [1] }).expect(400);
+      await admin('patch', '/admin/dress-code').send({ imageUrls: Array(13).fill('https://example.com/a.jpg') }).expect(400);
     });
 
     it('rejects invalid palette colors and oversized palettes', async () => {

@@ -164,6 +164,8 @@ export interface DetailsPageContent {
     title: string | null;
     intro: string | null;
     palette: string[];
+    /** Section photos shown under the intro. */
+    imageUrls: string[];
     guidelines: DressCodeGuideline[];
   } | null;
 }

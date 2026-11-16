@@ -91,7 +91,7 @@ export default function ImageListField({
         </div>
       </div>
       <p className="mt-1 text-xs text-gray-400">
-        {value.length} of {max} photos{full ? ' — remove one to add more' : ''}. Save the guideline to keep changes.
+        {value.length} of {max} photos{full ? ' — remove one to add more' : ''}. Save to keep changes.
       </p>
     </div>
   );

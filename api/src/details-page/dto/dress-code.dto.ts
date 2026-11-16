@@ -1,6 +1,6 @@
 import { ArrayMaxSize, IsArray, IsBoolean, IsInt, IsOptional, IsString, Matches, MaxLength, Min } from 'class-validator';
 
-/** Most example photos one guideline can show. */
+/** Most photos the section, or one guideline, can show. */
 export const MAX_GUIDELINE_IMAGES = 12;
 const WEB_URL = /^https?:\/\/\S+$/;
 
@@ -17,6 +17,14 @@ export class UpdateDressCodeDto {
   @ArrayMaxSize(24)
   @Matches(HEX_COLOR, { each: true, message: 'each palette color must be a hex color (e.g. #c84b7a)' })
   palette?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_GUIDELINE_IMAGES)
+  @IsString({ each: true })
+  @MaxLength(2000, { each: true })
+  @Matches(WEB_URL, { each: true, message: 'each image must be a web link (http:// or https://)' })
+  imageUrls?: string[];
 }
 
 export class CreateDressCodeGuidelineDto {

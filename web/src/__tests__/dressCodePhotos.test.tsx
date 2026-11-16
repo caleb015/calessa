@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import DressCode from '@/components/public/details/DressCode';
 import ContentPage from '@/app/dashboard/content/page';
+import DressCodeSettingsEditor from '@/components/dashboard/DressCodeSettingsEditor';
 import { adminApi } from '@/lib/adminApi';
 import { fitHeightUrl, fitWidthUrl } from '@/lib/upload';
 
@@ -27,7 +28,7 @@ const CLD = (id: string) => `https://res.cloudinary.com/demo/image/upload/f_auto
 
 describe('Dress code outfit photos on the Details page', () => {
   const dressCode = (imageUrls: string[]) => ({
-    eyebrow: null, title: 'The Dress Code', intro: null, palette: [],
+    eyebrow: null, title: 'The Dress Code', intro: null, palette: [], imageUrls: [],
     guidelines: [{ id: 'g1', label: 'For the Ladies', text: 'Maxi dresses', note: null, imageUrls }],
   });
 
@@ -79,6 +80,9 @@ describe('Dress code guideline editor', () => {
     admin.getUploadSignature.mockResolvedValue({ cloudName: 'demo', apiKey: '1', signature: 's', timestamp: 1, folder: 'calessa', allowed_formats: 'jpg' });
   });
 
+  /** The open guideline form (the section settings above it have their own photo picker). */
+  const editForm = () => within(screen.getByRole('button', { name: /^(Save changes|Add guideline|Waiting for upload…)$/ }).closest('div.border-2') as HTMLElement);
+
   async function openGuideline() {
     render(<ContentPage />);
     await userEvent.click(await screen.findByRole('button', { name: 'Dress Code' }));
@@ -95,17 +99,17 @@ describe('Dress code guideline editor', () => {
     await openGuideline();
 
     const file = (name: string) => new File(['x'], name, { type: 'image/jpeg' });
-    fireEvent.change(screen.getByLabelText('Choose image files'), { target: { files: [file('a.jpg'), file('b.jpg')] } });
+    fireEvent.change(editForm().getByLabelText('Choose image files'), { target: { files: [file('a.jpg'), file('b.jpg')] } });
     await waitFor(() => expect(screen.getAllByRole('img', { name: /^Photo \d$/ })).toHaveLength(3));
 
-    await userEvent.type(screen.getByLabelText('Image link'), 'not a link');
-    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
-    expect(screen.getByText(/full web link/)).toBeInTheDocument();
-    await userEvent.clear(screen.getByLabelText('Image link'));
-    await userEvent.type(screen.getByLabelText('Image link'), 'https://example.com/look.png{Enter}');
+    await userEvent.type(editForm().getByLabelText('Image link'), 'not a link');
+    await userEvent.click(editForm().getByRole('button', { name: 'Add' }));
+    expect(editForm().getByText(/full web link/)).toBeInTheDocument();
+    await userEvent.clear(editForm().getByLabelText('Image link'));
+    await userEvent.type(editForm().getByLabelText('Image link'), 'https://example.com/look.png{Enter}');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Remove photo 1' })); // the old one
-    await userEvent.click(screen.getByRole('button', { name: 'Move photo 3 left' })); // the link before new2
+    await userEvent.click(editForm().getByRole('button', { name: 'Remove photo 1' })); // the old one
+    await userEvent.click(editForm().getByRole('button', { name: 'Move photo 3 left' })); // the link before new2
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
     await waitFor(() => expect(admin.updateDressCodeGuideline).toHaveBeenCalled());
@@ -128,7 +132,7 @@ describe('Dress code guideline editor', () => {
     })) as jest.Mock;
     await openGuideline();
 
-    fireEvent.change(screen.getByLabelText('Choose image files'), { target: { files: [new File(['x'], 'big.jpg', { type: 'image/jpeg' })] } });
+    fireEvent.change(editForm().getByLabelText('Choose image files'), { target: { files: [new File(['x'], 'big.jpg', { type: 'image/jpeg' })] } });
     const save = await screen.findByRole('button', { name: 'Waiting for upload…' });
     expect(save).toBeDisabled();
     await userEvent.click(save);
@@ -146,7 +150,7 @@ describe('Dress code guideline editor', () => {
       finish = () => resolve({ ok: true, json: async () => ({ secure_url: 'https://res.cloudinary.com/demo/image/upload/v1/calessa/late.jpg' }) });
     })) as jest.Mock;
     await openGuideline();
-    fireEvent.change(screen.getByLabelText('Choose image files'), { target: { files: [new File(['x'], 'late.jpg', { type: 'image/jpeg' })] } });
+    fireEvent.change(editForm().getByLabelText('Choose image files'), { target: { files: [new File(['x'], 'late.jpg', { type: 'image/jpeg' })] } });
     await screen.findByRole('button', { name: 'Waiting for upload…' });
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
@@ -158,7 +162,7 @@ describe('Dress code guideline editor', () => {
 
   it('ignores a photo that is already in the list', async () => {
     await openGuideline();
-    await userEvent.type(screen.getByLabelText('Image link'), `${CLD('old')}{Enter}`);
+    await userEvent.type(editForm().getByLabelText('Image link'), `${CLD('old')}{Enter}`);
     expect(screen.getAllByRole('img', { name: /^Photo \d$/ })).toHaveLength(1);
   });
 
@@ -173,8 +177,8 @@ describe('Dress code guideline editor', () => {
 
     await userEvent.type(screen.getByPlaceholderText('e.g. For the Ladies'), 'For the Kids');
     await userEvent.type(screen.getByPlaceholderText(/Elegant maxi/), 'Comfy and colorful');
-    fireEvent.change(screen.getByLabelText('Choose image files'), { target: { files: [new File(['x'], 'kids.jpg', { type: 'image/jpeg' })] } });
-    await screen.findByRole('img', { name: 'Photo 1' });
+    fireEvent.change(editForm().getByLabelText('Choose image files'), { target: { files: [new File(['x'], 'kids.jpg', { type: 'image/jpeg' })] } });
+    await editForm().findByRole('img', { name: 'Photo 1' });
     await userEvent.click(screen.getByRole('button', { name: 'Add guideline' }));
 
     await waitFor(() => expect(admin.createDressCodeGuideline).toHaveBeenCalledWith({
@@ -189,8 +193,8 @@ describe('Dress code guideline editor', () => {
     render(<ContentPage />);
     await userEvent.click(await screen.findByRole('button', { name: 'Dress Code' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Edit' }));
-    expect(screen.getByRole('button', { name: /Upload images/ })).toBeDisabled();
-    expect(screen.getByText(/12 of 12 photos — remove one to add more/)).toBeInTheDocument();
+    expect(editForm().getByRole('button', { name: /Upload images/ })).toBeDisabled();
+    expect(editForm().getByText(/12 of 12 photos — remove one to add more/)).toBeInTheDocument();
   });
 });
 
@@ -223,5 +227,69 @@ describe('Single image fields (Story)', () => {
     expect(await screen.findByDisplayValue(CLD('met'))).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     await waitFor(() => expect(admin.updateStoryItem).toHaveBeenCalledWith('s1', expect.objectContaining({ imageUrl: CLD('met') })));
+  });
+});
+
+describe('Dress code section photos', () => {
+  it('shows the section photos under the intro, before the guidelines, full width', async () => {
+    render(
+      <DressCode
+        dressCode={{
+          eyebrow: null, title: 'The Dress Code', intro: 'Come in color!', palette: [], imageUrls: [CLD('mood')],
+          guidelines: [{ id: 'g1', label: 'For the Ladies', text: 'Maxi dresses', note: null, imageUrls: [] }],
+        }}
+      />,
+    );
+    const photo = screen.getByRole('button', { name: 'The Dress Code outfit idea 1 of 1' });
+    expect(photo.querySelector('img')).toHaveAttribute('src', fitWidthUrl(CLD('mood'), 1600));
+    expect(photo.querySelector('img')).toHaveClass('w-full', 'h-auto');
+    // Order on the page: intro, then the photo, then the guidelines.
+    const intro = screen.getByText('Come in color!');
+    const ladies = screen.getByText('For the Ladies:');
+    expect(intro.compareDocumentPosition(photo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(photo.compareDocumentPosition(ladies) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    await userEvent.click(photo);
+    expect(within(screen.getByRole('dialog', { name: 'The Dress Code outfit ideas' })).getByRole('img')).toHaveAttribute('src', CLD('mood'));
+  });
+
+  describe('settings editor', () => {
+    const saved = { enabled: true, eyebrow: '', title: 'The Dress Code', intro: '', palette: [], imageUrls: [CLD('old')] };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      admin.getDressCode.mockResolvedValue(saved);
+      admin.updateDressCode.mockImplementation(async (body: object) => body);
+      admin.getUploadSignature.mockResolvedValue({ cloudName: 'demo', apiKey: '1', signature: 's', timestamp: 1, folder: 'calessa', allowed_formats: 'jpg' });
+    });
+
+    it('uploads section photos and saves them with the settings, waiting for the upload first', async () => {
+      let finish!: () => void;
+      global.fetch = jest.fn().mockImplementation(() => new Promise(resolve => {
+        finish = () => resolve({ ok: true, json: async () => ({ secure_url: 'https://res.cloudinary.com/demo/image/upload/v1/calessa/new.jpg' }) });
+      })) as jest.Mock;
+      render(<DressCodeSettingsEditor />);
+      expect(await screen.findByRole('img', { name: 'Photo 1' })).toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText('Choose image files'), { target: { files: [new File(['x'], 'new.jpg', { type: 'image/jpeg' })] } });
+      expect(await screen.findByRole('button', { name: 'Waiting for upload…' })).toBeDisabled();
+      finish();
+      await screen.findByRole('img', { name: 'Photo 2' });
+
+      await userEvent.click(screen.getByRole('button', { name: 'Remove photo 1' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+      await waitFor(() => expect(admin.updateDressCode).toHaveBeenCalledWith({ ...saved, imageUrls: [CLD('new')] }));
+      expect(await screen.findByText('Dress code saved.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Save settings' })).toBeDisabled(); // nothing left unsaved
+    });
+
+    it('works with settings saved before photos existed', async () => {
+      const { imageUrls: _ignored, ...older } = saved;
+      void _ignored;
+      admin.getDressCode.mockResolvedValue(older);
+      render(<DressCodeSettingsEditor />);
+      expect(await screen.findByText(/0 of 12 photos/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Save settings' })).toBeDisabled(); // not marked as changed
+    });
   });
 });

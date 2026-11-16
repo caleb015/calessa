@@ -68,7 +68,7 @@ describe('DressCodeSettingsEditor', () => {
     await userEvent.click(screen.getByLabelText('Show on the Details page'));
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }));
 
-    expect(api.updateDressCode).toHaveBeenCalledWith({ ...saved, enabled: true, palette: ['#222222', '#111111'] });
+    expect(api.updateDressCode).toHaveBeenCalledWith({ ...saved, enabled: true, palette: ['#222222', '#111111'], imageUrls: [] });
     expect(await screen.findByText('Dress code saved.')).toBeInTheDocument();
   });
 

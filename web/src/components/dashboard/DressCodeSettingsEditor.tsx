@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { RxArrowDown, RxArrowUp, RxCross2 } from 'react-icons/rx';
 import { adminApi } from '@/lib/adminApi';
+import ImageListField from '@/components/dashboard/ImageListField';
 
 interface DressCodeForm {
   enabled: boolean;
@@ -10,7 +11,13 @@ interface DressCodeForm {
   title: string;
   intro: string;
   palette: string[];
+  imageUrls: string[];
 }
+
+const withDefaults = (data: unknown): DressCodeForm => {
+  const d = data as Partial<DressCodeForm>;
+  return { ...(d as DressCodeForm), imageUrls: d.imageUrls ?? [] };
+};
 
 const HEX_COLOR = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
 const inputCls =
@@ -21,11 +28,12 @@ export default function DressCodeSettingsEditor() {
   const [saved, setSaved] = useState<DressCodeForm | null>(null);
   const [form, setForm] = useState<DressCodeForm | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     adminApi.getDressCode()
-      .then(data => { setSaved(data as DressCodeForm); setForm(data as DressCodeForm); })
+      .then(data => { setSaved(withDefaults(data)); setForm(withDefaults(data)); })
       .catch(err => setMsg({ type: 'error', text: (err as Error).message }));
   }, []);
 
@@ -47,7 +55,7 @@ export default function DressCodeSettingsEditor() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await adminApi.updateDressCode(form) as DressCodeForm;
+      const res = withDefaults(await adminApi.updateDressCode(form));
       setSaved(res);
       setForm(res);
       setMsg({ type: 'success', text: 'Dress code saved.' });
@@ -81,6 +89,12 @@ export default function DressCodeSettingsEditor() {
       <div>
         <label htmlFor="dc-intro" className={labelCls}>Intro</label>
         <textarea id="dc-intro" rows={3} className={`${inputCls} resize-y`} value={form.intro} onChange={e => update({ intro: e.target.value })} />
+      </div>
+
+      <div>
+        <p className={labelCls}>Photos (optional)</p>
+        <p className="text-xs text-gray-400 mb-2">Shown under the intro, e.g. outfit inspiration for everyone.</p>
+        <ImageListField value={form.imageUrls} onChange={imageUrls => update({ imageUrls })} onBusyChange={setUploading} />
       </div>
 
       <div>
@@ -120,10 +134,10 @@ export default function DressCodeSettingsEditor() {
       <div className="flex items-center gap-3">
         <button
           onClick={handleSave}
-          disabled={saving || !dirty || invalid.length > 0}
+          disabled={saving || uploading || !dirty || invalid.length > 0}
           className="bg-gray-900 text-white px-5 py-2 rounded-md text-sm hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? 'Saving…' : 'Save settings'}
+          {saving ? 'Saving…' : uploading ? 'Waiting for upload…' : 'Save settings'}
         </button>
         {invalid.length > 0 && <span className="text-xs text-red-500">Colors must be hex values like #c84b7a.</span>}
         {dirty && !msg && invalid.length === 0 && <span className="text-xs text-amber-600">Unsaved changes</span>}

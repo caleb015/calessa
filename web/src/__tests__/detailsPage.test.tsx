@@ -104,6 +104,7 @@ describe('DressCode', () => {
           title: 'The Dress Code',
           intro: 'Solid colors please.',
           palette: ['#9fb6cd', '#a8a060'],
+          imageUrls: [],
           guidelines: [
             { id: 'g1', label: 'For the Ladies', text: 'Maxi or midi dresses', note: 'Please avoid white and beige.', imageUrls: [] },
             { id: 'g2', label: 'For the Gentlemen', text: 'Barongs or suits', note: null, imageUrls: [] },

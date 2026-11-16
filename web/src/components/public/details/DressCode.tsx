@@ -8,6 +8,11 @@ export default function DressCode({ dressCode }: { dressCode: NonNullable<Detail
       {dressCode.eyebrow && <p className="text-xs uppercase tracking-[0.12em] text-[var(--accent)] mb-2">{dressCode.eyebrow}</p>}
       {dressCode.title && <h2 className="font-serif text-2xl md:text-3xl mb-3">{dressCode.title}</h2>}
       {dressCode.intro && <p className="text-sm text-[var(--muted)] mb-4 whitespace-pre-line">{dressCode.intro}</p>}
+      {dressCode.imageUrls?.length > 0 && (
+        <div className="mb-4">
+          <DressCodePhotos label={dressCode.title || 'Dress code'} urls={dressCode.imageUrls} />
+        </div>
+      )}
       {dressCode.guidelines.length > 0 && (
         <ul className="space-y-2 text-sm">
           {dressCode.guidelines.map(g => (

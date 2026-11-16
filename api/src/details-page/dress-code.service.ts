@@ -18,6 +18,7 @@ export class DressCodeService {
       title: row?.title ?? '',
       intro: row?.intro ?? '',
       palette: row?.palette ?? [],
+      imageUrls: row?.imageUrls ?? [],
     };
   }
 
@@ -61,13 +62,15 @@ export class DressCodeService {
       this.prisma.dressCodeGuideline.findMany({ orderBy: GUIDELINE_ORDER, select: { id: true, label: true, text: true, note: true, imageUrls: true } }),
     ]);
     if (!settings?.enabled) return null;
-    const hasContent = settings.title || settings.intro || settings.eyebrow || settings.palette.length > 0 || guidelines.length > 0;
+    const hasContent = settings.title || settings.intro || settings.eyebrow || settings.palette.length > 0
+      || settings.imageUrls.length > 0 || guidelines.length > 0;
     if (!hasContent) return null;
     return {
       eyebrow: settings.eyebrow || null,
       title: settings.title || null,
       intro: settings.intro || null,
       palette: settings.palette,
+      imageUrls: settings.imageUrls,
       guidelines,
     };
   }
