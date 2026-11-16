@@ -1,3 +1,4 @@
+import { FiMapPin } from 'react-icons/fi';
 import { publicApi } from '@/lib/api';
 
 export default async function SchedulePage() {
@@ -31,11 +32,15 @@ export default async function SchedulePage() {
             {/* Content */}
             <div className="pb-8">
               <h3 className="font-serif text-lg">{item.title}</h3>
+              {/* Location: a quiet line marked by a small pin, set apart from the description by size and style. */}
               {item.location && (
-                <p className="text-[var(--muted)] text-sm mt-0.5">{item.location}</p>
+                <p className="mt-0.5 inline-flex items-center gap-1 text-xs italic text-[var(--muted)]/80">
+                  <FiMapPin aria-hidden className="shrink-0 not-italic text-[var(--accent)]/60" size={11} />
+                  <span><span className="sr-only">Location: </span>{item.location}</span>
+                </p>
               )}
               {item.description && (
-                <p className="text-[var(--muted)] text-sm mt-1 leading-relaxed">{item.description}</p>
+                <p className="text-[var(--muted)] text-sm mt-0.5 leading-relaxed">{item.description}</p>
               )}
             </div>
           </div>
