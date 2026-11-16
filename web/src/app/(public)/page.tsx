@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { publicApi } from '@/lib/api';
 import Countdown from '@/components/public/Countdown';
+import { FiMapPin } from 'react-icons/fi';
 
 const leftNavLinks = [
   { href: '/story', label: 'Our Story' },
@@ -154,7 +155,7 @@ export default async function HomePage() {
       {/* ── Event highlights ─────────────────────────────────────────────── */}
       {homepageEvents.length > 0 && (
         <section className="py-20 px-6 bg-[var(--surface)]">
-          <p className="text-[9px] tracking-[0.45em] uppercase text-[var(--muted)] text-center mb-14">
+          <p className="text-[9px] tracking-[0.45em] uppercase text-[var(--muted)] text-center mb-8">
             The Celebration
           </p>
           <div
@@ -167,10 +168,30 @@ export default async function HomePage() {
             }`}
           >
             {homepageEvents.map(event => (
-              <div key={event.id} className="bg-[var(--surface)] p-10 text-center">
-                {event.tagline && <p className="text-[9px] tracking-[0.35em] uppercase text-[var(--accent)] mb-3">{event.tagline}</p>}
+              <div key={event.id} className="bg-[var(--surface)] px-10 py-6 text-center">
                 <h3 className="font-serif text-2xl mb-3">{event.title}</h3>
                 {event.venueName && <p className="text-[var(--muted)] text-sm">{event.venueName}</p>}
+                {event.address && (
+                  <p className="text-[var(--muted)] text-sm">
+                    {event.mapUrl && /^https?:\/\//i.test(event.mapUrl) ? (
+                      <a
+                        href={event.mapUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group inline-flex items-center gap-1 hover:text-[var(--accent)] transition-colors"
+                      >
+                        <FiMapPin aria-hidden className="shrink-0" size={13} />
+                        <span className="underline decoration-[var(--muted)]/40 underline-offset-4 group-hover:decoration-[var(--accent)]">{event.address}</span>
+                        <span className="sr-only"> (opens map in a new tab)</span>
+                      </a>
+                    ) : (
+                      <span className="inline-flex items-center gap-1">
+                        <FiMapPin aria-hidden className="shrink-0" size={13} />
+                        {event.address}
+                      </span>
+                    )}
+                  </p>
+                )}
                 {event.startTime && (
                   <>
                     <p className="text-[var(--muted)] text-sm mt-1">
@@ -188,7 +209,7 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
-          <div className="text-center mt-12">
+          <div className="text-center mt-8">
             <Link
               href="/details"
               className="group inline-block py-4 text-[10px] tracking-[0.35em] uppercase text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
