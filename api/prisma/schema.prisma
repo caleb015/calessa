@@ -276,6 +276,8 @@ model DressCodeGuideline {
   label        String
   text         String
   note         String?
+  /// Example outfit photos shown with this guideline, in display order.
+  imageUrls    String[] @default([])
   displayOrder Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

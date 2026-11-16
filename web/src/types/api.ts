@@ -151,6 +151,8 @@ export interface DressCodeGuideline {
   label: string;
   text: string;
   note: string | null;
+  /** Example outfit photos. */
+  imageUrls: string[];
 }
 
 export interface DetailsPageContent {

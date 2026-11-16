@@ -1,5 +1,6 @@
 import type { DetailsPageContent } from '@/types/api';
 import BrushSwatch from './BrushSwatch';
+import DressCodePhotos from './DressCodePhotos';
 
 export default function DressCode({ dressCode }: { dressCode: NonNullable<DetailsPageContent['dressCode']> }) {
   return (
@@ -13,6 +14,7 @@ export default function DressCode({ dressCode }: { dressCode: NonNullable<Detail
             <li key={g.id}>
               <p><span className="font-semibold">{g.label}:</span> {g.text}</p>
               {g.note && <p className="italic text-[var(--foreground)]/60 text-right">{g.note}</p>}
+              {g.imageUrls?.length > 0 && <DressCodePhotos label={g.label} urls={g.imageUrls} />}
             </li>
           ))}
         </ul>

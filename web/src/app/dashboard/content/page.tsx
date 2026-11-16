@@ -4,13 +4,14 @@ import { useEffect, useState, useCallback, useId } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import ImagePreview from '@/components/dashboard/ImagePreview';
 import ImageUploadButton from '@/components/dashboard/ImageUploadButton';
+import ImageListField from '@/components/dashboard/ImageListField';
 import GallerySettingsEditor from '@/components/dashboard/GallerySettingsEditor';
-import { thumbnailUrl } from '@/lib/upload';
+import { fitHeightUrl, thumbnailUrl } from '@/lib/upload';
 import DetailsPageEditor from '@/components/dashboard/DetailsPageEditor';
 import DressCodeSettingsEditor from '@/components/dashboard/DressCodeSettingsEditor';
 import { toLocalDateTimeInput, fromLocalDateTimeInput } from '@/lib/datetime';
 
-type FieldType = 'text' | 'textarea' | 'datetime' | 'number' | 'checkbox' | 'email' | 'image';
+type FieldType = 'text' | 'textarea' | 'datetime' | 'number' | 'checkbox' | 'email' | 'image' | 'images';
 
 interface FieldConfig {
   key: string;
@@ -44,6 +45,8 @@ interface SectionConfig {
   emptyLabel?: string;
   /** Small image shown at the start of each row. */
   thumbnail?: (item: Item) => string | null;
+  /** Photos shown in a strip under the row's text (whole, in order). */
+  photos?: (item: Item) => string[];
   /** Show a one-click Publish button on unpublished items. */
   quickPublish?: boolean;
 }
@@ -86,11 +89,13 @@ const SECTIONS: SectionConfig[] = [
     header: <DressCodeSettingsEditor />,
     itemLabel: (item) => item.label as string,
     itemSublabel: (item) => [item.text, item.note].filter(Boolean).join(' — ') as string,
+    photos: (item) => (item.imageUrls as string[] | undefined) ?? [],
     fields: [
       { key: 'label', label: 'Label', type: 'text', required: true, placeholder: 'e.g. For the Ladies' },
       { key: 'displayOrder', label: 'Display Order', type: 'number' },
       { key: 'text', label: 'Guidance', type: 'textarea', required: true, placeholder: 'e.g. Elegant maxi or midi dresses…' },
       { key: 'note', label: 'Note (optional)', type: 'textarea', placeholder: 'e.g. Please avoid white and beige.' },
+      { key: 'imageUrls', label: 'Example outfit photos (optional)', type: 'images' },
     ],
   },
   {
@@ -220,10 +225,13 @@ function FormField({
   field,
   form,
   onChange,
+  onUploadBusy,
 }: {
   field: FieldConfig;
   form: Record<string, unknown>;
   onChange: (key: string, value: unknown) => void;
+  /** Image fields report while an upload is running, so Save can wait for it. */
+  onUploadBusy?: (key: string, busy: boolean) => void;
 }) {
   const value = form[field.key];
   const listId = useId();
@@ -278,6 +286,16 @@ function FormField({
     );
   }
 
+  if (field.type === 'images') {
+    return (
+      <ImageListField
+        value={(value as string[] | undefined) ?? []}
+        onChange={urls => onChange(field.key, urls)}
+        onBusyChange={busy => onUploadBusy?.(field.key, busy)}
+      />
+    );
+  }
+
   if (field.type === 'image') {
     return (
       <div>
@@ -288,7 +306,7 @@ function FormField({
           value={(value as string) ?? ''}
           onChange={e => onChange(field.key, e.target.value)}
         />
-        <ImageUploadButton onUploaded={url => onChange(field.key, url)} />
+        <ImageUploadButton onUploaded={url => onChange(field.key, url)} onBusyChange={busy => onUploadBusy?.(field.key, busy)} />
         <ImagePreview src={(value as string) ?? ''} />
       </div>
     );
@@ -394,6 +412,18 @@ export default function ContentPage() {
     }
   };
 
+  // Image fields with an upload still running; saving waits until they finish.
+  const [uploadingFields, setUploadingFields] = useState<Set<string>>(new Set());
+  const setUploadBusy = useCallback((key: string, busy: boolean) => {
+    setUploadingFields(prev => {
+      if (prev.has(key) === busy) return prev;
+      const next = new Set(prev);
+      if (busy) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  }, []);
+
   const setField = (key: string, value: unknown) =>
     setFormState(prev => ({ ...prev, [key]: value }));
 
@@ -465,8 +495,8 @@ export default function ContentPage() {
     }
   };
 
-  const gridFields = section.fields.filter(f => f.type !== 'textarea' && f.type !== 'checkbox');
-  const textareaFields = section.fields.filter(f => f.type === 'textarea');
+  const gridFields = section.fields.filter(f => !['textarea', 'images', 'checkbox'].includes(f.type));
+  const textareaFields = section.fields.filter(f => f.type === 'textarea' || f.type === 'images');
   const checkboxFields = section.fields.filter(f => f.type === 'checkbox');
 
   const editForm = (
@@ -479,7 +509,7 @@ export default function ContentPage() {
                 {field.label}
                 {field.required && <span className="text-red-500 ml-0.5">*</span>}
               </label>
-              <FormField field={field} form={form} onChange={setField} />
+              <FormField field={field} form={form} onChange={setField} onUploadBusy={setUploadBusy} />
             </div>
           ))}
         </div>
@@ -490,23 +520,23 @@ export default function ContentPage() {
             {field.label}
             {field.required && <span className="text-red-500 ml-0.5">*</span>}
           </label>
-          <FormField field={field} form={form} onChange={setField} />
+          <FormField field={field} form={form} onChange={setField} onUploadBusy={setUploadBusy} />
         </div>
       ))}
       {checkboxFields.length > 0 && (
         <div className="flex flex-wrap gap-4">
           {checkboxFields.map(field => (
-            <FormField key={field.key} field={field} form={form} onChange={setField} />
+            <FormField key={field.key} field={field} form={form} onChange={setField} onUploadBusy={setUploadBusy} />
           ))}
         </div>
       )}
       <div className="flex items-center gap-3 pt-1">
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || uploadingFields.size > 0}
           className="bg-gray-900 text-white text-sm px-4 py-2 rounded-md hover:bg-gray-700 disabled:opacity-50 transition-colors"
         >
-          {saving ? 'Saving…' : editingId === 'new' ? `Add ${section.singular.toLowerCase()}` : 'Save changes'}
+          {saving ? 'Saving…' : uploadingFields.size > 0 ? 'Waiting for upload…' : editingId === 'new' ? `Add ${section.singular.toLowerCase()}` : 'Save changes'}
         </button>
         <button
           onClick={cancelEdit}
@@ -682,6 +712,22 @@ export default function ContentPage() {
                         <p className="text-xs text-gray-400 truncate mt-0.5">
                           {section.itemSublabel(item)}
                         </p>
+                      )}
+                      {(section.photos?.(item).length ?? 0) > 0 && (
+                        <ul className="flex flex-wrap gap-2 mt-2" aria-label={`Photos for ${section.itemLabel(item)}`}>
+                          {section.photos!(item).map((url, i) => (
+                            <li key={url}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={fitHeightUrl(url, 384)}
+                                alt={`${section.itemLabel(item)} photo ${i + 1}`}
+                                loading="lazy"
+                                onError={e => { if (e.currentTarget.src !== url) e.currentTarget.src = url; }}
+                                className="h-48 w-auto max-w-[20rem] object-contain rounded border border-gray-100 bg-gray-50"
+                              />
+                            </li>
+                          ))}
+                        </ul>
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

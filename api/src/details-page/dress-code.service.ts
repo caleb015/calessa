@@ -58,7 +58,7 @@ export class DressCodeService {
   async getPublic() {
     const [settings, guidelines] = await Promise.all([
       this.prisma.dressCode.findUnique({ where: { id: SINGLETON_ID } }),
-      this.prisma.dressCodeGuideline.findMany({ orderBy: GUIDELINE_ORDER, select: { id: true, label: true, text: true, note: true } }),
+      this.prisma.dressCodeGuideline.findMany({ orderBy: GUIDELINE_ORDER, select: { id: true, label: true, text: true, note: true, imageUrls: true } }),
     ]);
     if (!settings?.enabled) return null;
     const hasContent = settings.title || settings.intro || settings.eyebrow || settings.palette.length > 0 || guidelines.length > 0;

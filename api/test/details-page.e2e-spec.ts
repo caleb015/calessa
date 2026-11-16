@@ -157,8 +157,8 @@ describe('Details page + Dress Code (e2e)', () => {
 
       const pub = await request(server()).get('/public/details-page').expect(200);
       expect(pub.body.dressCode.guidelines).toEqual([
-        { id: ladies.body.id, label: 'For the Ladies', text: 'Maxi or midi dresses', note: 'Please avoid white and beige.' },
-        { id: gents.body.id, label: 'For the Gentlemen', text: 'Barongs or suits', note: null },
+        { id: ladies.body.id, label: 'For the Ladies', text: 'Maxi or midi dresses', note: 'Please avoid white and beige.', imageUrls: [] },
+        { id: gents.body.id, label: 'For the Gentlemen', text: 'Barongs or suits', note: null, imageUrls: [] },
       ]);
       expect(pub.body.dressCode.palette).toEqual(['#9fb6cd', '#a8a060', '#e8b93f']);
 
@@ -169,8 +169,37 @@ describe('Details page + Dress Code (e2e)', () => {
 
     it('accepts a guideline GET response sent straight back (dashboard save round trip)', async () => {
       const list = await admin('get', '/admin/dress-code-guidelines').expect(200);
-      const { label, text, note, displayOrder } = list.body[0];
-      await admin('patch', `/admin/dress-code-guidelines/${list.body[0].id}`).send({ label, text, note, displayOrder }).expect(200);
+      const { label, text, note, displayOrder, imageUrls } = list.body[0];
+      await admin('patch', `/admin/dress-code-guidelines/${list.body[0].id}`).send({ label, text, note, displayOrder, imageUrls }).expect(200);
+    });
+
+    it('stores example outfit photos per guideline, in order, and shows them publicly', async () => {
+      const photos = ['https://res.cloudinary.com/demo/image/upload/v1/calessa/a.jpg', 'https://example.com/b.png'];
+      const created = await admin('post', '/admin/dress-code-guidelines')
+        .send({ label: 'Photo ideas', text: 'Like these', imageUrls: photos, displayOrder: 9 })
+        .expect(201);
+      expect(created.body.imageUrls).toEqual(photos);
+
+      const reordered = [...photos].reverse();
+      await admin('patch', `/admin/dress-code-guidelines/${created.body.id}`).send({ imageUrls: reordered }).expect(200);
+      const pub = await request(server()).get('/public/details-page').expect(200);
+      const shown = pub.body.dressCode.guidelines.find((g: { id: string }) => g.id === created.body.id);
+      expect(shown.imageUrls).toEqual(reordered);
+
+      // Editing other fields leaves the photos alone; an empty list removes them.
+      await admin('patch', `/admin/dress-code-guidelines/${created.body.id}`).send({ text: 'Something like these' }).expect(200);
+      expect((await admin('get', `/admin/dress-code-guidelines/${created.body.id}`).expect(200)).body.imageUrls).toEqual(reordered);
+      await admin('patch', `/admin/dress-code-guidelines/${created.body.id}`).send({ imageUrls: [] }).expect(200);
+      expect((await admin('get', `/admin/dress-code-guidelines/${created.body.id}`).expect(200)).body.imageUrls).toEqual([]);
+      await admin('delete', `/admin/dress-code-guidelines/${created.body.id}`).expect(204);
+    });
+
+    it('rejects guideline photos that are not web links, and too many photos', async () => {
+      const list = await admin('get', '/admin/dress-code-guidelines').expect(200);
+      const id = list.body[0].id;
+      await admin('patch', `/admin/dress-code-guidelines/${id}`).send({ imageUrls: ['javascript:alert(1)'] }).expect(400);
+      await admin('patch', `/admin/dress-code-guidelines/${id}`).send({ imageUrls: [42] }).expect(400);
+      await admin('patch', `/admin/dress-code-guidelines/${id}`).send({ imageUrls: Array(13).fill('https://example.com/a.jpg') }).expect(400);
     });
 
     it('requires label and text for guidelines', async () => {

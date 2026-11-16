@@ -27,6 +27,20 @@ export function thumbnailUrl(url: string, size = 96): string {
     : url;
 }
 
+/** A Cloudinary image scaled down to at most `width` pixels wide (never cropped); other URLs as-is. */
+export function fitWidthUrl(url: string, width: number): string {
+  return url.includes('res.cloudinary.com') && url.includes('/image/upload/f_auto,q_auto,c_limit,w_2400/')
+    ? url.replace('/f_auto,q_auto,c_limit,w_2400/', `/f_auto,q_auto,c_limit,w_${width}/`)
+    : url;
+}
+
+/** A Cloudinary image scaled down to at most `height` pixels tall (never cropped); other URLs as-is. */
+export function fitHeightUrl(url: string, height: number): string {
+  return url.includes('res.cloudinary.com') && url.includes('/image/upload/f_auto,q_auto,c_limit,w_2400/')
+    ? url.replace('/f_auto,q_auto,c_limit,w_2400/', `/f_auto,q_auto,c_limit,h_${height}/`)
+    : url;
+}
+
 /** Why a file can't be uploaded, or null if it's fine. */
 export function imageFileProblem(file: File): string | null {
   if (!file.type.startsWith('image/') && !/\.(heic|heif)$/i.test(file.name)) return 'Please choose an image file.';
