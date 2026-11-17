@@ -43,12 +43,13 @@ export class RsvpService {
     return guest;
   }
 
-  async submitByCode(code: string, dto: SubmitRsvpDto) {
+  async submitByCode(code: string, dto: SubmitRsvpDto, preview = false) {
     const settings = await this.prisma.weddingSettings.findUnique({
       where: { id: SINGLETON_SETTINGS_ID },
     });
 
-    if (settings && !settings.isPublic) {
+    // While the site is private, only an admin previewing it can submit (to test the RSVP form).
+    if (settings && !settings.isPublic && !preview) {
       throw new ServiceUnavailableException('The website is not currently available');
     }
 

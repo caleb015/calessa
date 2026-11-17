@@ -118,6 +118,19 @@ describe('RsvpService', () => {
       expect(mockPrisma.guest.findUnique).not.toHaveBeenCalled();
     });
 
+    it('lets an admin previewing the private site submit, to test the form', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ ...mockSettings, isPublic: false });
+      mockPrisma.guest.findUnique.mockResolvedValue(mockGuest);
+      mockPrisma.rsvp.upsert.mockResolvedValue({ id: 'rsvp-1', status: RsvpStatus.ATTENDING });
+      await expect(service.submitByCode('TESTCODE', validDto, true)).resolves.toBeDefined();
+    });
+
+    it('still respects closed RSVPs in preview', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ ...mockSettings, isPublic: false, isRsvpEnabled: false });
+      mockPrisma.guest.findUnique.mockResolvedValue(mockGuest);
+      await expect(service.submitByCode('TESTCODE', validDto, true)).rejects.toThrow(UnprocessableEntityException);
+    });
+
     it('throws UnprocessableEntityException when RSVPs are disabled', async () => {
       mockPrisma.weddingSettings.findUnique.mockResolvedValue({ ...mockSettings, isRsvpEnabled: false });
       await expect(service.submitByCode('TESTCODE', validDto)).rejects.toThrow(UnprocessableEntityException);

@@ -14,7 +14,7 @@ import { AdminUpdateRsvpDto } from './dto/admin-update-rsvp.dto';
 export class PublicRsvpController {
   constructor(private readonly service: RsvpService) {}
 
-  // Preview lets an admin look up an invitation while the site is private; submitting stays blocked.
+  // Preview lets an admin look up an invitation and test-submit an RSVP while the site is private.
   @Get(':code')
   @UseGuards(PreviewGuard)
   getByCode(@Param('code') code: string, @SitePreview() preview: boolean) {
@@ -22,8 +22,9 @@ export class PublicRsvpController {
   }
 
   @Post(':code')
-  submitByCode(@Param('code') code: string, @Body() dto: SubmitRsvpDto) {
-    return this.service.submitByCode(code, dto);
+  @UseGuards(PreviewGuard)
+  submitByCode(@Param('code') code: string, @Body() dto: SubmitRsvpDto, @SitePreview() preview: boolean) {
+    return this.service.submitByCode(code, dto, preview);
   }
 }
 

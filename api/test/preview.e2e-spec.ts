@@ -75,13 +75,15 @@ describe('Site preview (e2e)', () => {
     expect(preview.body.preview).toBe(true);
   });
 
-  it('preview allows looking up an invitation but not submitting an RSVP', async () => {
+  it('preview allows looking up an invitation and submitting an RSVP; visitors can do neither', async () => {
+    const rsvp = { status: 'ATTENDING', attendeeCount: 1, email: 'preview@example.com' };
     await request(app.getHttpServer()).get(`/public/rsvp/${CODE}`).expect(503);
+    await request(app.getHttpServer()).post(`/public/rsvp/${CODE}`).send(rsvp).expect(503);
+    await request(app.getHttpServer()).post(`/public/rsvp/${CODE}`).set('X-Preview-Token', 'not-a-token').send(rsvp).expect(503);
+
     await request(app.getHttpServer()).get(`/public/rsvp/${CODE}`).set('X-Preview-Token', previewToken).expect(200);
-    await request(app.getHttpServer())
-      .post(`/public/rsvp/${CODE}`)
-      .set('X-Preview-Token', previewToken)
-      .send({ status: 'ATTENDING', attendeeCount: 1, email: 'preview@example.com' })
-      .expect(503);
+    await request(app.getHttpServer()).post(`/public/rsvp/${CODE}`).set('X-Preview-Token', previewToken).send(rsvp).expect(201);
+    const after = await request(app.getHttpServer()).get(`/public/rsvp/${CODE}`).set('X-Preview-Token', previewToken).expect(200);
+    expect(after.body.rsvp).toMatchObject({ status: 'ATTENDING', email: 'preview@example.com' });
   });
 });
