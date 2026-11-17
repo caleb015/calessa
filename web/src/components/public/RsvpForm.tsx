@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { publicApi, ApiError } from '@/lib/api';
 import type { RsvpGuest } from '@/types/api';
 
@@ -68,6 +69,21 @@ export default function RsvpForm({ code, guest, settings }: Props) {
             ? 'Your response has been recorded. Thank you for letting us know.'
             : 'Your RSVP has been submitted. We can\'t wait to celebrate with you!'}
         </p>
+
+        {/* Invite guests on to the rest of the site (details, schedule, FAQ…). */}
+        <div className="mt-10">
+          <p className="text-sm text-[var(--muted)] mb-4">
+            {status === 'DECLINED'
+              ? 'You\'re still welcome to look around our wedding website.'
+              : 'Find the details, schedule and more on our wedding website.'}
+          </p>
+          <Link
+            href="/"
+            className="inline-block border border-[var(--foreground)] text-[10px] tracking-[0.35em] uppercase px-10 py-4 hover:bg-[var(--foreground)] hover:text-[var(--background)] transition-colors duration-300"
+          >
+            Go to the homepage
+          </Link>
+        </div>
       </div>
     );
   }
