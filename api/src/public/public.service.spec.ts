@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ServiceUnavailableException } from '@nestjs/common';
-import { PublicService } from './public.service';
+import { PublicService, seededShuffle } from './public.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 const mockSettings = {
@@ -28,6 +28,8 @@ const mockSettings = {
   themeOverlayText: null,
   themeOverlayScrim: null,
   welcomeMessage: null,
+  welcomeImageUrl: null,
+  rsvpBannerImageUrl: null,
   isPublic: true,
   isRsvpEnabled: true,
   allowMaybe: false,
@@ -73,6 +75,8 @@ describe('PublicService', () => {
       expect(result).toHaveProperty('heroImageOffsetX');
       expect(result).toHaveProperty('heroImageOffsetY');
       expect(result).toHaveProperty('heroImageHeight');
+      expect(result).toHaveProperty('welcomeImageUrl');
+      expect(result).toHaveProperty('rsvpBannerImageUrl');
       expect(result).toHaveProperty('rsvpTagline');
       expect(result).toHaveProperty('rsvpSubtext');
       expect(result).toHaveProperty('themeAccent');
@@ -214,6 +218,75 @@ describe('PublicService', () => {
     it('throws ServiceUnavailableException when isPublic is false', async () => {
       mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: false });
       await expect(service.getGalleryPage()).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
+
+  describe('getHomepageGallery', () => {
+    it('returns one page of the published photos picked for the homepage, in order, with the total', async () => {
+      mockPrisma.weddingSettings.findUnique
+        .mockResolvedValueOnce({ isPublic: true })
+        .mockResolvedValueOnce({ homepageGalleryShuffle: false });
+      mockPrisma.galleryImage.findMany.mockResolvedValue([{ id: 'a', imageUrl: 'a.jpg', guest: { primaryName: 'Ana' } }]);
+      mockPrisma.galleryImage.count.mockResolvedValue(40);
+      expect(await service.getHomepageGallery(false, 12, 12)).toEqual({
+        images: [{ id: 'a', imageUrl: 'a.jpg', sharedBy: 'Ana' }], total: 40, seed: null,
+      });
+      expect(mockPrisma.galleryImage.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: { isPublished: true, showOnHomepage: true }, skip: 12, take: 12,
+      }));
+    });
+
+    it('in random order, loads only the page\'s photos and returns them in the shuffled order', async () => {
+      mockPrisma.weddingSettings.findUnique
+        .mockResolvedValueOnce({ isPublic: true })
+        .mockResolvedValueOnce({ homepageGalleryShuffle: true });
+      const ids = ['a', 'b', 'c', 'd', 'e', 'f'];
+      mockPrisma.galleryImage.findMany
+        .mockResolvedValueOnce(ids.map(id => ({ id })))
+        .mockImplementationOnce(async ({ where }: { where: { id: { in: string[] } } }) =>
+          [...where.id.in].reverse().map(id => ({ id, imageUrl: `${id}.jpg`, guest: null })));
+      const page = await service.getHomepageGallery(false, 2, 2, 42);
+      const expected = seededShuffle(ids, 42).slice(2, 4);
+      expect(page).toEqual({ images: expected.map(id => ({ id, imageUrl: `${id}.jpg`, sharedBy: null })), total: 6, seed: 42 });
+    });
+
+    it('ignores a seed while random order is off', async () => {
+      mockPrisma.weddingSettings.findUnique
+        .mockResolvedValueOnce({ isPublic: true })
+        .mockResolvedValueOnce({ homepageGalleryShuffle: false });
+      mockPrisma.galleryImage.findMany.mockResolvedValue([{ id: 'a', imageUrl: 'a.jpg', guest: null }]);
+      mockPrisma.galleryImage.count.mockResolvedValue(1);
+      const page = await service.getHomepageGallery(false, 0, 12, 42);
+      expect(page.seed).toBeNull();
+      expect(mockPrisma.galleryImage.findMany).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.galleryImage.findMany).toHaveBeenCalledWith(expect.objectContaining({ skip: 0, take: 12 }));
+    });
+
+    it('hands out a new seed when none is given in random order', async () => {
+      mockPrisma.weddingSettings.findUnique
+        .mockResolvedValueOnce({ isPublic: true })
+        .mockResolvedValueOnce({ homepageGalleryShuffle: true });
+      mockPrisma.galleryImage.findMany.mockResolvedValueOnce([]);
+      const page = await service.getHomepageGallery();
+      expect(page.seed).toEqual(expect.any(Number));
+      expect(page).toMatchObject({ images: [], total: 0 });
+    });
+
+    it('throws ServiceUnavailableException when isPublic is false', async () => {
+      mockPrisma.weddingSettings.findUnique.mockResolvedValue({ isPublic: false });
+      await expect(service.getHomepageGallery()).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
+
+  describe('seededShuffle', () => {
+    const items = Array.from({ length: 30 }, (_, i) => i);
+    it('gives the same order for the same seed, and keeps every item exactly once', () => {
+      expect(seededShuffle(items, 7)).toEqual(seededShuffle(items, 7));
+      expect([...seededShuffle(items, 7)].sort((a, b) => a - b)).toEqual(items);
+    });
+    it('gives different orders for different seeds, and leaves the original alone', () => {
+      expect(seededShuffle(items, 7)).not.toEqual(seededShuffle(items, 8));
+      expect(items[0]).toBe(0);
     });
   });
 

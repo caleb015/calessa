@@ -112,6 +112,8 @@ export class GalleryUploadsService {
         imageUrl,
         guestId: guest.id,
         isPublished: !requireApproval,
+        // Guest photos appear in the gallery only; the couple picks what goes on the homepage.
+        showOnHomepage: false,
         displayOrder: start + i,
       })),
     });

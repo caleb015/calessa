@@ -54,6 +54,12 @@ model WeddingSettings {
   themeOverlayText          String?
   themeOverlayScrim         String?
   welcomeMessage            String?
+  /// Photo beside the welcome message on the homepage (none = message only).
+  welcomeImageUrl           String?
+  /// Photo behind the homepage's "Will you join us?" banner (none = plain colour).
+  rsvpBannerImageUrl        String?
+  /// Show the homepage's Moments photos in a fresh random order on each visit.
+  homepageGalleryShuffle    Boolean   @default(false)
   inviteSubject             String?
   inviteHeading             String?
   inviteTagline             String?
@@ -163,18 +169,20 @@ model FaqItem {
 }
 
 model GalleryImage {
-  id           String   @id @default(uuid())
-  title        String?
-  description  String?
-  imageUrl     String
-  displayOrder Int      @default(0)
-  isPublished  Boolean  @default(true)
+  id             String   @id @default(uuid())
+  title          String?
+  description    String?
+  imageUrl       String
+  displayOrder   Int      @default(0)
+  isPublished    Boolean  @default(true)
+  /// Featured in the homepage's "Moments" section.
+  showOnHomepage Boolean  @default(false)
   /// Set when a guest uploaded the photo themselves (shown as "Shared by <name>").
   /// Deleting the guest keeps the photo.
-  guestId      String?
-  guest        Guest?   @relation(fields: [guestId], references: [id], onDelete: SetNull)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  guestId        String?
+  guest          Guest?   @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([guestId])
 }

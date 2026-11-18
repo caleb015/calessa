@@ -34,6 +34,9 @@ export class WeddingSettingsService {
     }
 
     const data: Record<string, unknown> = { ...dto };
+    // An emptied photo field removes the photo.
+    if (dto.welcomeImageUrl === '') data.welcomeImageUrl = null;
+    if (dto.rsvpBannerImageUrl === '') data.rsvpBannerImageUrl = null;
     if (dto.weddingDate) data.weddingDate = new Date(dto.weddingDate);
     if (dto.rsvpDeadline) data.rsvpDeadline = new Date(dto.rsvpDeadline);
     const weddingDate = dto.weddingDate ? new Date(dto.weddingDate) : null;

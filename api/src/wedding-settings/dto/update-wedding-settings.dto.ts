@@ -1,6 +1,8 @@
 import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 
 // Empty string is allowed — it means "clear this override and use the default".
+// For photo links, an empty string removes the photo.
+const PHOTO_URL = /^$|^https?:\/\/\S+$/;
 const HEX_COLOR = /^$|^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
 
 export class UpdateWeddingSettingsDto {
@@ -107,6 +109,22 @@ export class UpdateWeddingSettingsDto {
   @IsOptional()
   @IsString()
   welcomeMessage?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  @Matches(PHOTO_URL, { message: 'welcomeImageUrl must be a web link (https://…)' })
+  welcomeImageUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  @Matches(PHOTO_URL, { message: 'rsvpBannerImageUrl must be a web link (https://…)' })
+  rsvpBannerImageUrl?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  homepageGalleryShuffle?: boolean;
 
   @IsOptional()
   @IsBoolean()

@@ -37,6 +37,21 @@ export function backdropUrl(url: string): string {
     : url;
 }
 
+/** Frame used for a GIF's still: early frames are often blank or a fade-in. Shorter GIFs give their last frame. */
+const GIF_STILL_FRAME = 10;
+
+/**
+ * A Cloudinary image cropped to exactly `width`×`height` around its most interesting part; other URLs
+ * are returned as-is. A GIF becomes a light JPEG still: animations are heavy, and large ones can't be
+ * resized on the free plan at all.
+ */
+export function croppedUrl(url: string, width: number, height: number): string {
+  if (!url.includes('res.cloudinary.com') || !url.includes('/image/upload/f_auto,q_auto,c_limit,w_2400/')) return url;
+  const crop = `c_fill,g_auto,w_${width},h_${height}`;
+  const options = /\.gif$/i.test(url) ? `pg_${GIF_STILL_FRAME}/f_jpg,q_auto,${crop}` : `f_auto,q_auto,${crop}`;
+  return url.replace('/f_auto,q_auto,c_limit,w_2400/', `/${options}/`);
+}
+
 /** A Cloudinary image scaled down to at most `width` pixels wide (never cropped); other URLs as-is. */
 export function fitWidthUrl(url: string, width: number): string {
   return url.includes('res.cloudinary.com') && url.includes('/image/upload/f_auto,q_auto,c_limit,w_2400/')

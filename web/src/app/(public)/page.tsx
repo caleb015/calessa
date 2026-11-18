@@ -2,7 +2,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { publicApi } from '@/lib/api';
 import Countdown from '@/components/public/Countdown';
+import MomentsSlider from '@/components/public/MomentsSlider';
 import { FiMapPin } from 'react-icons/fi';
+import { croppedUrl, fitWidthUrl } from '@/lib/upload';
 
 const leftNavLinks = [
   { href: '/story', label: 'Our Story' },
@@ -18,8 +20,13 @@ const rightNavLinks = [
 ];
 
 export default async function HomePage() {
-  const settings = await publicApi.getSettings().catch(() => null);
-  const events = await publicApi.getEvents().catch(() => []);
+  const [settings, events, story, homepagePhotos] = await Promise.all([
+    publicApi.getSettings().catch(() => null),
+    publicApi.getEvents().catch(() => []),
+    publicApi.getStory().catch(() => []),
+    // Only the first few Moments photos come with the page; the slider fetches the rest as it's used.
+    publicApi.getHomepageGallery().catch(() => ({ images: [], total: 0, seed: null })),
+  ]);
 
   const coupleA = settings?.coupleNameA ?? 'Caleb';
   const coupleB = settings?.coupleNameB ?? 'Raissa';
@@ -44,6 +51,10 @@ export default async function HomePage() {
     : null;
 
   const homepageEvents = events.filter(e => e.showOnHomepage);
+  // A peek at the story: the first three milestones that have a photo.
+  const storyPeek = story.filter(item => item.imageUrl?.trim()).slice(0, 3);
+  const welcomePhoto = settings?.welcomeImageUrl?.trim() || null;
+  const rsvpPhoto = settings?.rsvpBannerImageUrl?.trim() || null;
 
   return (
     <div className="overflow-x-hidden">
@@ -143,14 +154,85 @@ export default async function HomePage() {
       </div>
 
       {/* ── Welcome ──────────────────────────────────────────────────────── */}
-      <section className="py-20 px-6 max-w-2xl mx-auto text-center">
-        <p className="font-serif text-xl md:text-2xl text-[var(--foreground)] leading-relaxed italic">
-          &ldquo;{settings?.welcomeMessage ?? 'We are so excited to celebrate this special day with our family and friends. Please join us!'}&rdquo;
-        </p>
-        <p className="mt-6 font-serif text-[var(--accent)] text-sm tracking-widest">
-          — {coupleA} &amp; {coupleB}
-        </p>
+      {/* With a welcome photo, the photo sits beside the message (above it on phones). */}
+      <section
+        className={welcomePhoto
+          ? 'py-20 px-6 max-w-5xl mx-auto grid gap-10 md:gap-16 md:grid-cols-[0.9fr_1.1fr] items-center'
+          : 'py-20 px-6 max-w-2xl mx-auto text-center'}
+      >
+        {welcomePhoto && (
+          <div className="aspect-[4/3] md:aspect-[4/5] overflow-hidden bg-[var(--surface)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={fitWidthUrl(welcomePhoto, 1000)} alt={`${coupleA} & ${coupleB}`} loading="lazy" className="w-full h-full object-cover" />
+          </div>
+        )}
+        <div>
+          <p className="font-serif text-xl md:text-2xl text-[var(--foreground)] leading-relaxed italic">
+            &ldquo;{settings?.welcomeMessage ?? 'We are so excited to celebrate this special day with our family and friends. Please join us!'}&rdquo;
+          </p>
+          <p className="mt-6 font-serif text-[var(--accent)] text-sm tracking-widest">
+            — {coupleA} &amp; {coupleB}
+          </p>
+        </div>
       </section>
+
+      {/* ── A peek at our story ──────────────────────────────────────────── */}
+      {storyPeek.length > 0 && (
+        <section className="pb-20 px-6 text-center">
+          <p className="text-[9px] tracking-[0.45em] uppercase text-[var(--muted)] mb-3">Our Story</p>
+          <h2 className="font-serif text-3xl md:text-4xl mb-10">How we got here</h2>
+          <div
+            className={`mx-auto grid gap-8 ${
+              storyPeek.length === 1 ? 'max-w-md' : storyPeek.length === 2 ? 'max-w-3xl sm:grid-cols-2' : 'max-w-5xl sm:grid-cols-3'
+            }`}
+          >
+            {storyPeek.map(item => (
+              <Link key={item.id} href="/story" className="group block">
+                <div className="aspect-[4/3] overflow-hidden bg-[var(--surface)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={croppedUrl(item.imageUrl!, 800, 600)}
+                    alt={item.title}
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+                {item.dateLabel && (
+                  <p className="mt-4 text-[10px] tracking-[0.3em] uppercase text-[var(--muted)]">{item.dateLabel}</p>
+                )}
+                <p className="mt-1 font-serif text-lg leading-snug">{item.title}</p>
+              </Link>
+            ))}
+          </div>
+          <Link
+            href="/story"
+            className="group inline-block mt-10 py-4 text-[10px] tracking-[0.35em] uppercase text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
+          >
+            <span className="border-b border-[var(--foreground)] pb-0.5 group-hover:border-[var(--accent)] transition-colors">Read our story →</span>
+          </Link>
+        </section>
+      )}
+
+      {/* ── Moments: a slider of the gallery photos picked for the homepage ── */}
+      {homepagePhotos.images.length > 0 && (
+        <section className="py-20 px-6 border-t border-[var(--border)]">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-wrap items-baseline justify-between gap-4 mb-8">
+              <div>
+                <p className="text-[9px] tracking-[0.45em] uppercase text-[var(--muted)] mb-3">Moments</p>
+                <h2 className="font-serif text-3xl md:text-4xl">With the people we love</h2>
+              </div>
+              <Link
+                href="/gallery"
+                className="group inline-block py-2 text-[10px] tracking-[0.35em] uppercase text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
+              >
+                <span className="border-b border-[var(--foreground)] pb-0.5 group-hover:border-[var(--accent)] transition-colors">See the gallery →</span>
+              </Link>
+            </div>
+            <MomentsSlider photos={homepagePhotos.images} total={homepagePhotos.total} seed={homepagePhotos.seed} />
+          </div>
+        </section>
+      )}
 
       {/* ── Event highlights ─────────────────────────────────────────────── */}
       {homepageEvents.length > 0 && (
@@ -221,15 +303,25 @@ export default async function HomePage() {
       )}
 
       {/* ── RSVP banner ──────────────────────────────────────────────────── */}
-      <section className="py-28 px-6 text-center bg-[var(--inverse-background)]">
-        <p className="text-[9px] tracking-[0.45em] uppercase text-white/30 mb-6">You&apos;re invited</p>
-        <h2 className="font-serif text-4xl md:text-6xl text-white mb-10">Will you join us?</h2>
-        <Link
-          href="/rsvp"
-          className="inline-block border border-white/30 text-white text-[10px] tracking-[0.35em] uppercase px-12 py-4 hover:bg-white hover:text-[var(--foreground)] transition-all duration-300"
-        >
-          RSVP Now
-        </Link>
+      <section className="relative overflow-hidden py-28 px-6 text-center bg-[var(--inverse-background)]">
+        {rsvpPhoto && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={fitWidthUrl(rsvpPhoto, 2000)} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+            {/* Softly darkened so the invitation stays readable over any photo. */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--inverse-background)]/85 to-[var(--inverse-background)]/35" />
+          </>
+        )}
+        <div className="relative">
+          <p className={`text-[9px] tracking-[0.45em] uppercase mb-6 ${rsvpPhoto ? 'text-white/70' : 'text-white/30'}`}>You&apos;re invited</p>
+          <h2 className="font-serif text-4xl md:text-6xl text-white mb-10">Will you join us?</h2>
+          <Link
+            href="/rsvp"
+            className={`inline-block border text-white text-[10px] tracking-[0.35em] uppercase px-12 py-4 hover:bg-white hover:text-[var(--foreground)] transition-all duration-300 ${rsvpPhoto ? 'border-white/60' : 'border-white/30'}`}
+          >
+            RSVP Now
+          </Link>
+        </div>
       </section>
 
     </div>

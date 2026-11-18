@@ -111,8 +111,11 @@ export class ContentService {
     return item;
   }
 
+  // Photos added here by the couple go on the homepage too, unless they say otherwise.
+  // (Guest uploads are created elsewhere and stay gallery-only.)
   createGalleryImage(dto: CreateGalleryImageDto) {
-    return this.prisma.galleryImage.create({ data: dto, include: GALLERY_GUEST });
+    // (The DTO carries every field, unset ones as undefined, so `??` rather than a spread default.)
+    return this.prisma.galleryImage.create({ data: { ...dto, showOnHomepage: dto.showOnHomepage ?? true }, include: GALLERY_GUEST });
   }
 
   async updateGalleryImage(id: string, dto: UpdateGalleryImageDto) {

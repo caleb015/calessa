@@ -6,6 +6,7 @@ export class CreateGalleryImageDto {
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsInt() @Min(0) displayOrder?: number;
   @IsOptional() @IsBoolean() isPublished?: boolean;
+  @IsOptional() @IsBoolean() showOnHomepage?: boolean;
 }
 
 export class UpdateGalleryImageDto {
@@ -14,4 +15,5 @@ export class UpdateGalleryImageDto {
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsInt() @Min(0) displayOrder?: number;
   @IsOptional() @IsBoolean() isPublished?: boolean;
+  @IsOptional() @IsBoolean() showOnHomepage?: boolean;
 }

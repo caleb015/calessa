@@ -103,10 +103,10 @@ describe('Dashboard gallery with many photos', () => {
     await openGallery();
     await userEvent.click(screen.getByRole('button', { name: 'Pending approval (3)' }));
     expect(rows()).toHaveLength(3);
-    expect(screen.getAllByRole('button', { name: 'Publish' })).toHaveLength(3);
+    expect(screen.getAllByRole('checkbox', { name: /^Published:/ }).filter(b => !(b as HTMLInputElement).checked)).toHaveLength(3);
     expect(screen.queryByRole('navigation', { name: 'Pages' })).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Publish' })[0]);
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Published: Photo 3' }));
     expect(await screen.findByRole('button', { name: 'Pending approval (2)' })).toBeInTheDocument();
     expect(rows()).toHaveLength(2);
 

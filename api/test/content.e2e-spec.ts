@@ -67,6 +67,30 @@ describe('Content & Seating (e2e)', () => {
     });
   }
 
+  describe('/admin/gallery "Show on homepage"', () => {
+    it('is on (and published) for photos added in the dashboard, and can be switched off and on', async () => {
+      const created = await request(app.getHttpServer()).post('/admin/gallery').set('Authorization', token)
+        .send({ imageUrl: 'https://example.com/e2e-homepage-toggle.jpg' }).expect(201);
+      expect(created.body).toMatchObject({ showOnHomepage: true, isPublished: true });
+      const off = await request(app.getHttpServer()).patch(`/admin/gallery/${created.body.id}`).set('Authorization', token)
+        .send({ showOnHomepage: false }).expect(200);
+      expect(off.body.showOnHomepage).toBe(false);
+      const on = await request(app.getHttpServer()).patch(`/admin/gallery/${created.body.id}`).set('Authorization', token)
+        .send({ showOnHomepage: true }).expect(200);
+      expect(on.body.showOnHomepage).toBe(true);
+      await request(app.getHttpServer()).patch(`/admin/gallery/${created.body.id}`).set('Authorization', token)
+        .send({ showOnHomepage: 'yes' }).expect(400);
+      await request(app.getHttpServer()).delete(`/admin/gallery/${created.body.id}`).set('Authorization', token).expect(204);
+    });
+
+    it('respects "not on the homepage" when a photo is added that way', async () => {
+      const created = await request(app.getHttpServer()).post('/admin/gallery').set('Authorization', token)
+        .send({ imageUrl: 'https://example.com/e2e-homepage-off.jpg', showOnHomepage: false }).expect(201);
+      expect(created.body.showOnHomepage).toBe(false);
+      await request(app.getHttpServer()).delete(`/admin/gallery/${created.body.id}`).set('Authorization', token).expect(204);
+    });
+  });
+
   // ── Seating ───────────────────────────────────────────────────────────────
 
   describe('/admin/seating', () => {

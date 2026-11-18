@@ -21,6 +21,8 @@ export interface WeddingSettings {
   themeOverlayText: string | null;
   themeOverlayScrim: string | null;
   welcomeMessage: string | null;
+  welcomeImageUrl?: string | null;
+  rsvpBannerImageUrl?: string | null;
   isPublic: boolean;
   isRsvpEnabled: boolean;
   allowMaybe: boolean;
@@ -71,6 +73,13 @@ export interface GalleryImage {
   displayOrder: number;
   /** Name of the guest who shared it (guest uploads only). */
   sharedBy?: string | null;
+}
+
+/** One page of the homepage's Moments photos. `seed` (when in random order) keeps later pages in the same shuffle. */
+export interface HomepageGalleryPage {
+  images: GalleryImage[];
+  total: number;
+  seed: number | null;
 }
 
 /** One page of the public gallery. */

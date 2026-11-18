@@ -51,7 +51,7 @@ async function openGallery() {
 }
 
 describe('Gallery: upload several photos at once', () => {
-  it('adds each photo as its own published item after the existing ones, in the order chosen, skipping files that fail', async () => {
+  it('adds each photo as its own item, published and on the homepage, after the existing ones, in the order chosen, skipping files that fail', async () => {
     await openGallery();
     fireEvent.change(screen.getByLabelText('Choose image files'), {
       target: { files: [file('one.jpg'), file('huge.jpg', 11 * 1024 * 1024), file('three.jpg')] },
@@ -61,8 +61,8 @@ describe('Gallery: upload several photos at once', () => {
     // Several upload at once, so they can finish in any order; each keeps its place in the selection.
     const created = admin.createGalleryImage.mock.calls.map(c => c[0]).sort((a, b) => a.displayOrder - b.displayOrder);
     expect(created).toEqual([
-      { imageUrl: CLD('one'), isPublished: true, displayOrder: 5 },
-      { imageUrl: CLD('three'), isPublished: true, displayOrder: 7 },
+      { imageUrl: CLD('one'), isPublished: true, showOnHomepage: true, displayOrder: 5 },
+      { imageUrl: CLD('three'), isPublished: true, showOnHomepage: true, displayOrder: 7 },
     ]);
     expect(screen.getByText(/huge\.jpg: Image is too large/)).toBeInTheDocument();
     expect(screen.getByText('4 items')).toBeInTheDocument();
@@ -74,7 +74,7 @@ describe('Gallery: upload several photos at once', () => {
     render(<ContentPage />);
     await userEvent.click(await screen.findByRole('button', { name: 'Gallery' }));
     fireEvent.change(await screen.findByLabelText('Choose image files'), { target: { files: [file('one.jpg')] } });
-    await waitFor(() => expect(admin.createGalleryImage).toHaveBeenCalledWith({ imageUrl: CLD('one'), isPublished: true, displayOrder: 0 }));
+    await waitFor(() => expect(admin.createGalleryImage).toHaveBeenCalledWith({ imageUrl: CLD('one'), isPublished: true, showOnHomepage: true, displayOrder: 0 }));
     expect(await screen.findByRole('status')).toHaveTextContent('1 photo added to the gallery.');
   });
 

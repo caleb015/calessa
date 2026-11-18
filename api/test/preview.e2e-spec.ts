@@ -56,7 +56,7 @@ describe('Site preview (e2e)', () => {
   it('a login token is not accepted as a preview token', () =>
     request(app.getHttpServer()).get('/public/events').set('X-Preview-Token', auth.slice(7)).expect(503));
 
-  const contentRoutes = ['/public/story', '/public/events', '/public/schedule', '/public/faqs', '/public/gallery', '/public/contact', '/public/details-page'];
+  const contentRoutes = ['/public/story', '/public/events', '/public/schedule', '/public/faqs', '/public/gallery', '/public/gallery/page', '/public/gallery/homepage', '/public/contact', '/public/details-page'];
 
   for (const route of contentRoutes) {
     it(`GET ${route} is blocked while private, but works with a preview token`, async () => {

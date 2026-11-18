@@ -14,6 +14,20 @@ afterEach(() => {
   document.cookie = `${PREVIEW_COOKIE}=; Max-Age=0; path=/`;
 });
 
+describe('Homepage photos while previewing', () => {
+  it('fetches the photos picked for the homepage, sending the preview token', async () => {
+    document.cookie = `${PREVIEW_COOKIE}=preview-abc; path=/`;
+    await publicApi.getHomepageGallery();
+    expect((global.fetch as jest.Mock).mock.calls[0][0]).toMatch(/\/public\/gallery\/homepage\?offset=0&limit=12$/);
+    expect(sentHeaders(0)[PREVIEW_HEADER]).toBe('preview-abc');
+  });
+
+  it('asks for later pages with the same shuffle', async () => {
+    await publicApi.getHomepageGallery(24, 99);
+    expect((global.fetch as jest.Mock).mock.calls[0][0]).toMatch(/\/public\/gallery\/homepage\?offset=24&limit=12&seed=99$/);
+  });
+});
+
 describe('RSVP requests while previewing', () => {
   it('send the preview token with the invitation lookup and the RSVP', async () => {
     document.cookie = `${PREVIEW_COOKIE}=preview-abc; path=/`;

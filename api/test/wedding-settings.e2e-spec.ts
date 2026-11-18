@@ -199,6 +199,39 @@ describe('WeddingSettings (e2e)', () => {
     });
   });
 
+  // ── Homepage photos ──────────────────────────────────────────────────────────
+
+  describe('homepage photos', () => {
+    const WELCOME = 'https://res.cloudinary.com/demo/image/upload/v1/calessa/welcome.jpg';
+    const BANNER = 'https://res.cloudinary.com/demo/image/upload/v1/calessa/banner.jpg';
+    const patch = (body: object) => request(app.getHttpServer()).patch('/admin/settings').set('Authorization', token).send(body);
+
+    afterAll(async () => {
+      await prisma.weddingSettings.update({ where: { id: 'singleton' }, data: { welcomeImageUrl: null, rsvpBannerImageUrl: null } });
+    });
+
+    it('saves the welcome and RSVP banner photos and shows them on the public site', async () => {
+      await patch({ welcomeImageUrl: WELCOME, rsvpBannerImageUrl: BANNER }).expect(200);
+      const pub = await request(app.getHttpServer()).get('/public/settings').expect(200);
+      expect(pub.body).toMatchObject({ welcomeImageUrl: WELCOME, rsvpBannerImageUrl: BANNER });
+    });
+
+    it('removes a photo when its field is emptied', async () => {
+      await patch({ welcomeImageUrl: WELCOME }).expect(200);
+      const res = await patch({ welcomeImageUrl: '' }).expect(200);
+      expect(res.body.welcomeImageUrl).toBeNull();
+    });
+
+    it.each(['not a link', 'javascript:alert(1)', 'ftp://example.com/a.jpg'])('rejects %s as a photo link', bad =>
+      patch({ rsvpBannerImageUrl: bad }).expect(400));
+
+    it('turns random order for the homepage photos on and off', async () => {
+      expect((await patch({ homepageGalleryShuffle: true }).expect(200)).body.homepageGalleryShuffle).toBe(true);
+      expect((await patch({ homepageGalleryShuffle: false }).expect(200)).body.homepageGalleryShuffle).toBe(false);
+      await patch({ homepageGalleryShuffle: 'yes' }).expect(400);
+    });
+  });
+
   // ── What the dashboard Settings page does on Save ────────────────────────────
 
   describe('GET → PATCH round trip', () => {

@@ -199,7 +199,7 @@ describe('Dashboard gallery', () => {
     expect(await screen.findByText('Settings saved.')).toBeInTheDocument();
   });
 
-  it('lists pending guest photos and publishes them in one click', async () => {
+  it('lists pending guest photos and publishes them with one tick', async () => {
     admin.getGallerySettings.mockResolvedValue(settings);
     admin.getGallery.mockResolvedValue([
       { id: 'g1', imageUrl: 'https://x/a.jpg', title: null, isPublished: false, guest: { primaryName: 'Maria Santos' } },
@@ -211,11 +211,12 @@ describe('Dashboard gallery', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Gallery' }));
     const row = (await screen.findByText('Photo from Maria Santos')).closest('div.bg-white') as HTMLElement;
     expect(within(row).getByText('Pending approval')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Publish' })).toHaveLength(1); // only the unpublished one
+    const publish = within(row).getByRole('checkbox', { name: /^Published:/ });
+    expect(publish).not.toBeChecked();
 
-    await userEvent.click(within(row).getByRole('button', { name: 'Publish' }));
+    await userEvent.click(publish);
     await waitFor(() => expect(admin.updateGalleryImage).toHaveBeenCalledWith('g1', { isPublished: true }));
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Publish' })).not.toBeInTheDocument());
-    expect(screen.queryByText('Pending approval')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Pending approval')).not.toBeInTheDocument());
+    expect(screen.getByRole('checkbox', { name: 'Published: Photo from Maria Santos' })).toBeChecked();
   });
 });

@@ -1,12 +1,14 @@
 import type {
   WeddingSettings, WeddingEvent, ScheduleItem, FaqItem,
   GalleryImage, StoryTimelineItem, ContactPerson, RsvpGuest, DetailsPageContent,
-  GalleryPage, GallerySettings, UploadSignature,
+  GalleryPage, GallerySettings, HomepageGalleryPage, UploadSignature,
 } from '@/types/api';
 import { PREVIEW_HEADER, getPreviewToken } from '@/lib/preview';
 
 /** Photos fetched at a time on the Gallery page. */
 export const GALLERY_PAGE_SIZE = 48;
+/** Photos fetched at a time for the homepage's Moments slider. */
+export const HOMEPAGE_GALLERY_PAGE_SIZE = 12;
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -57,6 +59,8 @@ export const publicApi = {
   getSchedule: () => get<ScheduleItem[]>('/public/schedule'),
   getFaqs: () => get<FaqItem[]>('/public/faqs'),
   getGallery: () => get<GalleryImage[]>('/public/gallery'),
+  getHomepageGallery: (offset = 0, seed?: number | null) =>
+    get<HomepageGalleryPage>(`/public/gallery/homepage?offset=${offset}&limit=${HOMEPAGE_GALLERY_PAGE_SIZE}${seed ? `&seed=${seed}` : ''}`),
   getGalleryPage: (offset = 0, limit = GALLERY_PAGE_SIZE) =>
     get<GalleryPage>(`/public/gallery/page?offset=${offset}&limit=${limit}`),
   getGallerySettings: () => get<GallerySettings>('/public/gallery-settings'),

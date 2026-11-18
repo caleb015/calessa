@@ -54,6 +54,17 @@ export default function SettingsPage() {
 
   const set = (key: string, value: unknown) => setForm(prev => ({ ...prev, [key]: value }));
 
+  // Photo fields with an upload still running; saving waits until they finish.
+  const [uploading, setUploading] = useState<Set<string>>(new Set());
+  const setUploadBusy = (key: string, busy: boolean) =>
+    setUploading(prev => {
+      if (prev.has(key) === busy) return prev;
+      const next = new Set(prev);
+      if (busy) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -190,6 +201,24 @@ export default function SettingsPage() {
               <label className={labelClass}>Welcome Message</label>
               <textarea className={`${inputClass} resize-none`} rows={3} value={(form.welcomeMessage as string) ?? ''} onChange={e => set('welcomeMessage', e.target.value)} />
             </div>
+            <div>
+              <label htmlFor="welcomeImageUrl" className={labelClass}>
+                Welcome Photo (optional)
+                <InfoTooltip text="Shown beside the welcome message on the homepage. Leave empty to show the message on its own." />
+              </label>
+              <input id="welcomeImageUrl" className={inputClass} placeholder="Upload an image or paste a link" value={(form.welcomeImageUrl as string) ?? ''} onChange={e => set('welcomeImageUrl', e.target.value)} />
+              <ImageUploadButton onUploaded={url => set('welcomeImageUrl', url)} onBusyChange={busy => setUploadBusy('welcomeImageUrl', busy)} />
+              <ImagePreview src={(form.welcomeImageUrl as string) ?? ''} />
+            </div>
+            <div>
+              <label htmlFor="rsvpBannerImageUrl" className={labelClass}>
+                RSVP Banner Photo (optional)
+                <InfoTooltip text="Shown behind “Will you join us?” near the bottom of the homepage. Leave empty for a plain colour." />
+              </label>
+              <input id="rsvpBannerImageUrl" className={inputClass} placeholder="Upload an image or paste a link" value={(form.rsvpBannerImageUrl as string) ?? ''} onChange={e => set('rsvpBannerImageUrl', e.target.value)} />
+              <ImageUploadButton onUploaded={url => set('rsvpBannerImageUrl', url)} onBusyChange={busy => setUploadBusy('rsvpBannerImageUrl', busy)} />
+              <ImagePreview src={(form.rsvpBannerImageUrl as string) ?? ''} />
+            </div>
           </div>
         </div>
 
@@ -225,6 +254,7 @@ export default function SettingsPage() {
               { key: 'enableMealPreference', label: 'Enable meal preference' },
               { key: 'enableSongRequest', label: 'Enable song requests' },
               { key: 'enableGuestbook', label: 'Enable guestbook' },
+              { key: 'homepageGalleryShuffle', label: 'Show homepage Moments photos in random order (a fresh order on each visit)' },
             ].map(({ key, label }) => (
               <label key={key} className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -247,10 +277,10 @@ export default function SettingsPage() {
 
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || uploading.size > 0}
           className="bg-gray-900 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-700 disabled:opacity-50 transition-colors"
         >
-          {saving ? 'Saving…' : 'Save Settings'}
+          {saving ? 'Saving…' : uploading.size > 0 ? 'Waiting for upload…' : 'Save Settings'}
         </button>
       </form>
     </div>

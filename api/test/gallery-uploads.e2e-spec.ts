@@ -147,6 +147,15 @@ describe('Guest gallery uploads (e2e)', () => {
       expect(pub.body.some((i: any) => i.imageUrl.includes('guest-uploads/three'))).toBe(true);
     });
 
+    it('puts guest photos in the gallery only, never on the homepage', async () => {
+      const admin = await request(server()).get('/admin/gallery').set('Authorization', token).expect(200);
+      const guestPhotos = admin.body.filter((i: any) => i.imageUrl.includes('guest-uploads/'));
+      expect(guestPhotos.length).toBeGreaterThan(0);
+      guestPhotos.forEach((p: any) => expect(p.showOnHomepage).toBe(false));
+      const home = await request(server()).get('/public/gallery/homepage?limit=48').expect(200);
+      expect(home.body.images.some((i: any) => i.imageUrl.includes('guest-uploads/'))).toBe(false);
+    });
+
     it('ignores photos submitted twice', async () => {
       const res = await request(server()).post('/public/gallery-uploads').send({ code: CODE, images: [uploaded('three')] }).expect(201);
       expect(res.body.added).toBe(0);

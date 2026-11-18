@@ -49,8 +49,19 @@ interface SectionConfig {
   photos?: (item: Item) => string[];
   /** Show an "Upload photos" button that adds one published item per chosen image. */
   bulkImageUpload?: boolean;
-  /** Show a one-click Publish button on unpublished items. */
-  quickPublish?: boolean;
+  /** Tick boxes on each row that save straight away (e.g. Published), without opening the editor. */
+  quickToggles?: {
+    key: string;
+    label: string;
+    hint?: string;
+    /** What didn't happen when saving fails, for ticking and unticking (e.g. "Couldn't publish this photo."). */
+    failedOn: string;
+    failedOff: string;
+  }[];
+  /** Offer an "All / Pending approval" filter when some items are unpublished. */
+  pendingFilter?: boolean;
+  /** Starting values for a new item (and for each photo added by "Upload photos"). */
+  newDefaults?: Record<string, unknown>;
 }
 
 const SECTIONS: SectionConfig[] = [
@@ -154,7 +165,19 @@ const SECTIONS: SectionConfig[] = [
       sharedBy(item) && item.title ? `Shared by ${sharedBy(item)}` : null,
     ].filter(Boolean).join(' · '),
     thumbnail: (item) => item.imageUrl as string,
-    quickPublish: true,
+    quickToggles: [
+      {
+        key: 'isPublished', label: 'Published', hint: 'Shown in the public gallery',
+        failedOn: "Couldn't publish this photo.", failedOff: "Couldn't unpublish this photo.",
+      },
+      {
+        key: 'showOnHomepage', label: 'On homepage', hint: 'Shown in the homepage’s Moments slider once published',
+        failedOn: "Couldn't add this photo to the homepage.", failedOff: "Couldn't remove this photo from the homepage.",
+      },
+    ],
+    pendingFilter: true,
+    // Photos the couple adds are published and on the homepage straight away (guest uploads are not).
+    newDefaults: { isPublished: true, showOnHomepage: true },
     bulkImageUpload: true,
     header: <GallerySettingsEditor />,
     emptyLabel: 'photos',
@@ -164,6 +187,7 @@ const SECTIONS: SectionConfig[] = [
       { key: 'description', label: 'Description', type: 'text' },
       { key: 'displayOrder', label: 'Display Order', type: 'number' },
       { key: 'isPublished', label: 'Published', type: 'checkbox' },
+      { key: 'showOnHomepage', label: 'Show on homepage', type: 'checkbox' },
     ],
   },
   {
@@ -220,6 +244,15 @@ const TABS = [
   { key: DETAILS_PAGE_TAB, label: 'Details Page' },
   ...SECTIONS.slice(1).map(s => ({ key: s.key, label: s.label })),
 ];
+
+/** Why a save failed, in plain words: lost connections get advice, server messages are passed on. */
+function failureReason(err: unknown): string {
+  const message = err instanceof Error ? err.message : '';
+  if (err instanceof TypeError || /failed to fetch|networkerror|load failed|network request failed/i.test(message)) {
+    return 'Check your connection and try again.';
+  }
+  return message ? `${message.replace(/\.?$/, '.')} Please try again.` : 'Please try again.';
+}
 
 function pickFields(item: Record<string, unknown>, fields: FieldConfig[]) {
   return Object.fromEntries(fields.filter(f => f.key in item).map(f => [f.key, item[f.key]]));
@@ -377,7 +410,7 @@ export default function ContentPage() {
   // Paging, plus a filter for photos waiting for approval (they'd otherwise be spread across pages).
   const [page, setPage] = useState(0);
   const [pendingOnly, setPendingOnly] = useState(false);
-  const pendingCount = section.quickPublish ? items.filter(it => !it.isPublished).length : 0;
+  const pendingCount = section.pendingFilter ? items.filter(it => !it.isPublished).length : 0;
   const listed = pendingOnly && pendingCount > 0 ? items.filter(it => !it.isPublished) : items;
   const pageCount = Math.max(1, Math.ceil(listed.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount - 1);
@@ -392,13 +425,14 @@ export default function ContentPage() {
     setOpenFaqIds(new Set());
     setFaqForms({});
     setBulkAdded(null);
+    setRowErrors({});
     setPage(0);
     setPendingOnly(false);
     bulkRunning.current = false;
   };
 
   const startNew = () => {
-    const defaults: Record<string, unknown> = section.hasPublished ? { isPublished: true } : {};
+    const defaults: Record<string, unknown> = section.newDefaults ?? (section.hasPublished ? { isPublished: true } : {});
     setEditingId('new');
     setFormState(defaults);
     setError(null);
@@ -418,17 +452,30 @@ export default function ContentPage() {
     setError(null);
   };
 
-  const [publishingId, setPublishingId] = useState<string | null>(null);
-  const handleQuickPublish = async (id: string) => {
-    setPublishingId(id);
-    setError(null);
+  // Row tick boxes save one field straight away. A failure is explained on that photo's own row,
+  // where the click happened (the list can be long, so a message at the top may be off-screen).
+  const [togglingKeys, setTogglingKeys] = useState<Set<string>>(new Set());
+  const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
+  const setRowError = (id: string, message: string | null) =>
+    setRowErrors(prev => {
+      const next = { ...prev };
+      if (message) next[id] = message;
+      else delete next[id];
+      return next;
+    });
+  const handleQuickToggle = async (item: Item, toggle: NonNullable<SectionConfig['quickToggles']>[number]) => {
+    const target = section;
+    const turningOn = !item[toggle.key];
+    const busyKey = `${item.id}:${toggle.key}`;
+    setTogglingKeys(prev => new Set(prev).add(busyKey));
+    setRowError(item.id, null);
     try {
-      const updated = await section.apiUpdate(id, { isPublished: true }) as Item;
-      setAllItems(prev => ({ ...prev, [activeTab]: prev[activeTab].map(it => (it.id === id ? updated : it)) }));
+      const updated = await target.apiUpdate(item.id, { [toggle.key]: turningOn }) as Item;
+      setAllItems(prev => ({ ...prev, [target.key]: (prev[target.key] ?? []).map(it => (it.id === item.id ? updated : it)) }));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to publish.');
+      setRowError(item.id, `${turningOn ? toggle.failedOn : toggle.failedOff} ${failureReason(err)}`);
     } finally {
-      setPublishingId(null);
+      setTogglingKeys(prev => { const next = new Set(prev); next.delete(busyKey); return next; });
     }
   };
 
@@ -467,7 +514,7 @@ export default function ContentPage() {
     const target = section;
     const displayOrder = bulkOrder.current + index;
     try {
-      const created = await target.apiCreate({ imageUrl, isPublished: true, displayOrder }) as Item;
+      const created = await target.apiCreate({ isPublished: true, ...target.newDefaults, imageUrl, displayOrder }) as Item;
       setAllItems(prev => ({ ...prev, [target.key]: [...(prev[target.key] ?? []), created] }));
       setBulkAdded(n => (n ?? 0) + 1);
     } catch (err: unknown) {
@@ -779,7 +826,7 @@ export default function ContentPage() {
                 ) : (
                   <div
                     key={item.id}
-                    className="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-4"
+                    className="bg-white border border-gray-200 rounded-lg px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2"
                   >
                     {section.thumbnail?.(item) && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -792,7 +839,7 @@ export default function ContentPage() {
                         className="w-12 h-12 rounded object-cover border border-gray-100 shrink-0 bg-gray-50"
                       />
                     )}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-[10rem]">
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {section.itemLabel(item)}
                       </p>
@@ -818,22 +865,30 @@ export default function ContentPage() {
                         </ul>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {section.hasPublished && (
+                    <div className="flex flex-wrap items-center justify-end gap-2 ml-auto">
+                      {section.hasPublished && !section.quickToggles?.some(t => t.key === 'isPublished') && (
                         <span
                           className={`w-2 h-2 rounded-full ${item.isPublished ? 'bg-green-400' : 'bg-gray-300'}`}
                           title={item.isPublished ? 'Published' : 'Draft'}
                         />
                       )}
-                      {section.quickPublish && !item.isPublished && (
-                        <button
-                          onClick={() => handleQuickPublish(item.id)}
-                          disabled={publishingId === item.id}
-                          className="text-xs font-medium text-white bg-green-600 hover:bg-green-700 px-2.5 py-1 rounded transition-colors disabled:opacity-50"
+                      {section.quickToggles?.map(toggle => (
+                        <label
+                          key={toggle.key}
+                          title={toggle.hint}
+                          className="flex items-center gap-1.5 text-xs text-gray-600 px-1.5 py-1 rounded hover:bg-gray-50 cursor-pointer select-none"
                         >
-                          {publishingId === item.id ? 'Publishing…' : 'Publish'}
-                        </button>
-                      )}
+                          <input
+                            type="checkbox"
+                            className="cursor-pointer disabled:cursor-wait"
+                            checked={!!item[toggle.key]}
+                            disabled={togglingKeys.has(`${item.id}:${toggle.key}`)}
+                            onChange={() => handleQuickToggle(item, toggle)}
+                            aria-label={`${toggle.label}: ${section.itemLabel(item)}`}
+                          />
+                          {toggle.label}
+                        </label>
+                      ))}
                       <button
                         onClick={() => startEdit(item)}
                         className="text-xs text-gray-600 hover:text-gray-900 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
@@ -855,6 +910,9 @@ export default function ContentPage() {
                         </button>
                       )}
                     </div>
+                    {rowErrors[item.id] && (
+                      <p role="alert" className="basis-full text-xs text-red-600">{rowErrors[item.id]}</p>
+                    )}
                   </div>
                 );
               })}
