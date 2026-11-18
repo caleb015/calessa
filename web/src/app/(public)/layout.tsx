@@ -29,7 +29,7 @@ export default async function PublicLayout({ children }: { children: React.React
   if (hidden && !settings?.preview) {
     return (
       <div style={themeVars as React.CSSProperties}>
-        <Maintenance coupleNames={coupleNames} />
+        <Maintenance coupleNames={coupleNames} weddingDate={settings?.weddingDate} />
       </div>
     );
   }

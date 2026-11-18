@@ -1,5 +1,7 @@
 // Shown instead of the public site while "Site is public" is off.
 
+import Countdown from '@/components/public/Countdown';
+
 function SetupIllustration() {
   const ink = 'var(--foreground)';
   const accent = 'var(--accent)';
@@ -57,7 +59,7 @@ function SetupIllustration() {
   );
 }
 
-export default function Maintenance({ coupleNames }: { coupleNames: string }) {
+export default function Maintenance({ coupleNames, weddingDate }: { coupleNames: string; weddingDate?: string | null }) {
   return (
     <main className="min-h-screen flex items-center justify-center px-6 py-16">
       <div className="text-center max-w-md">
@@ -67,6 +69,17 @@ export default function Maintenance({ coupleNames }: { coupleNames: string }) {
         <p className="mt-4 text-[var(--muted)]">
           We&apos;re busy setting things up. Please check back soon!
         </p>
+        {weddingDate && (
+          <div className="mt-12">
+            <div className="flex items-center gap-4 max-w-[12rem] mx-auto mb-8" aria-hidden>
+              <div className="flex-1 h-px bg-[var(--border)]" />
+              <span className="text-[var(--accent)] text-xs">✦</span>
+              <div className="flex-1 h-px bg-[var(--border)]" />
+            </div>
+            <p className="text-[9px] tracking-[0.45em] uppercase text-[var(--muted)] mb-6">Until we say I do</p>
+            <Countdown date={weddingDate} />
+          </div>
+        )}
       </div>
     </main>
   );
