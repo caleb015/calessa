@@ -13,7 +13,7 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 jest.mock('next/image', () => ({ __esModule: true, default: () => null }));
-jest.mock('@/lib/api', () => ({ ...jest.requireActual('@/lib/api'), publicApi: { getSettings: jest.fn() } }));
+jest.mock('@/lib/api', () => ({ ...jest.requireActual('@/lib/api'), publicApi: { getSettings: jest.fn(), getEvents: jest.fn().mockResolvedValue([]) } }));
 jest.mock('@/lib/adminApi', () => ({ adminApi: { getSettings: jest.fn(), updateSettings: jest.fn() } }));
 
 const settings = (over: object) => ({ coupleNameA: 'Caleb', coupleNameB: 'Raissa', rsvpTagline: null, rsvpSubtext: null, ...over });

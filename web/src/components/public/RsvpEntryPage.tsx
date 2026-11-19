@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { publicApi } from '@/lib/api';
 import RsvpInvitationView from './RsvpInvitationView';
+import WeddingAtAGlance from './WeddingAtAGlance';
+import type { WeddingDetails } from '@/lib/weddingDetails';
 import { getRememberedInvitationCode, rememberInvitationCode } from '@/lib/invitationCode';
 import type { RsvpGuest, WeddingSettings } from '@/types/api';
 
@@ -18,6 +20,8 @@ interface Props {
   heading?: string;
   tagline?: string;
   subtext?: string;
+  /** When and where, shown under the names and again above the RSVP form. */
+  details?: WeddingDetails | null;
 }
 
 export default function RsvpEntryPage({
@@ -26,9 +30,17 @@ export default function RsvpEntryPage({
   heading = "You're Invited",
   tagline = "We can't wait to celebrate with you.",
   subtext = 'My Hoomans are tying the knot!!',
+  details = null,
 }: Props) {
   const [code, setCode] = useState(initialCode);
   const [error, setError] = useState('');
+  // Enter doesn't open the invitation (booping Odie's nose does); pressing it lights up the hint instead.
+  const [nudge, setNudge] = useState(false);
+  useEffect(() => {
+    if (!nudge) return;
+    const id = window.setTimeout(() => setNudge(false), 1500);
+    return () => window.clearTimeout(id);
+  }, [nudge]);
   const [phase, setPhase] = useState<Phase>('closed');
   const [revealCode, setRevealCode] = useState('');
   const [guest, setGuest] = useState<RsvpGuest | null>(null);
@@ -89,7 +101,7 @@ export default function RsvpEntryPage({
       {phase === 'opening' || phase === 'open' ? (
         <div className={`transition-transform duration-700 ease-out ${phase === 'open' ? 'translate-y-0 delay-[700ms]' : 'translate-y-[100vh]'}`}>
           {dataLoaded ? (
-            <RsvpInvitationView code={revealCode} guest={guest} settings={settings} onReset={reset} />
+            <RsvpInvitationView code={revealCode} guest={guest} settings={settings} details={details} onReset={reset} />
           ) : (
             <p className="text-center text-xs uppercase tracking-[0.3em] text-[var(--muted)] py-32">
               Opening your invitation…
@@ -114,6 +126,11 @@ export default function RsvpEntryPage({
           <h1 className={`text-3xl md:text-4xl font-serif mb-0 transition-opacity duration-300 ${phase === 'opening' ? 'opacity-0' : ''}`}>
             RSVP
           </h1>
+          {details && (
+            <div className={`mt-2 transition-opacity duration-300 ${phase === 'opening' ? 'opacity-0' : ''}`}>
+              <WeddingAtAGlance details={details} variant="line" />
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             {/* Bob wrapper — hover-triggered when closed, always on when happy */}
@@ -155,12 +172,22 @@ export default function RsvpEntryPage({
                 type="text"
                 value={code}
                 onChange={e => { setCode(e.target.value); setError(''); }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    setNudge(true);
+                  }
+                }}
+                enterKeyHint="done"
                 placeholder="Your invitation code"
                 aria-label="Invitation code"
                 className="w-full bg-transparent border-b border-[var(--border)] text-center uppercase tracking-[0.3em] text-sm py-2 focus:outline-none focus:border-[var(--accent)] placeholder:normal-case placeholder:tracking-normal placeholder:text-[var(--muted)] transition-colors"
               />
               {error && <p className="text-red-500 text-xs mt-3">{error}</p>}
-              <p className="text-xs text-[var(--muted)] mt-3 tracking-wide">
+              <p
+                data-nudge={nudge || undefined}
+                className={`text-xs mt-3 tracking-wide transition-colors duration-300 ${nudge ? 'text-[var(--accent)] font-medium' : 'text-[var(--muted)]'}`}
+              >
                 Boop Odie&apos;s nose to open your invitation
               </p>
             </div>

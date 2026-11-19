@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import RsvpForm from './RsvpForm';
+import WeddingAtAGlance from './WeddingAtAGlance';
+import type { WeddingDetails } from '@/lib/weddingDetails';
 import type { RsvpGuest, WeddingSettings } from '@/types/api';
 import { useEffect } from 'react';
 import { forgetInvitationCode, rememberInvitationCode } from '@/lib/invitationCode';
@@ -12,9 +14,11 @@ interface Props {
   settings: WeddingSettings | null;
   /** When provided, "Try another code" calls this instead of linking to /rsvp */
   onReset?: () => void;
+  /** When and where, shown above the form so guests have it while deciding. */
+  details?: WeddingDetails | null;
 }
 
-export default function RsvpInvitationView({ code, guest, settings, onReset }: Props) {
+export default function RsvpInvitationView({ code, guest, settings, onReset, details = null }: Props) {
   // Remember a working code for next time (e.g. after opening the RSVP link from the email).
   useEffect(() => {
     if (guest) rememberInvitationCode(code);
@@ -63,6 +67,12 @@ export default function RsvpInvitationView({ code, guest, settings, onReset }: P
           </p>
         )}
       </div>
+
+      {details && (
+        <div className="mb-10">
+          <WeddingAtAGlance details={details} variant="panel" />
+        </div>
+      )}
 
       <RsvpForm
         code={code}

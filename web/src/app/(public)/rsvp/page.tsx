@@ -1,9 +1,13 @@
 import RsvpEntryPage from '@/components/public/RsvpEntryPage';
 import { publicApi } from '@/lib/api';
+import { weddingDetails } from '@/lib/weddingDetails';
 
 export default async function RsvpPage({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
   const { code } = await searchParams;
-  const settings = await publicApi.getSettings().catch(() => null);
+  const [settings, events] = await Promise.all([
+    publicApi.getSettings().catch(() => null),
+    publicApi.getEvents().catch(() => []),
+  ]);
 
   return (
     <RsvpEntryPage
@@ -12,6 +16,7 @@ export default async function RsvpPage({ searchParams }: { searchParams: Promise
       heading={settings?.rsvpHeading?.trim() || undefined}
       tagline={settings?.rsvpTagline ?? undefined}
       subtext={settings?.rsvpSubtext ?? undefined}
+      details={weddingDetails(settings, events)}
     />
   );
 }
