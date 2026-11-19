@@ -207,7 +207,7 @@ describe('WeddingSettings (e2e)', () => {
     const patch = (body: object) => request(app.getHttpServer()).patch('/admin/settings').set('Authorization', token).send(body);
 
     afterAll(async () => {
-      await prisma.weddingSettings.update({ where: { id: 'singleton' }, data: { welcomeImageUrl: null, rsvpBannerImageUrl: null, rsvpHeading: null, fontHeading: null, fontHeadingUrl: null, fontBody: null, fontBodyUrl: null, fontAccent: null, fontAccentUrl: null } });
+      await prisma.weddingSettings.update({ where: { id: 'singleton' }, data: { welcomeImageUrl: null, rsvpBannerImageUrl: null, rsvpHeading: null, fontHeading: null, fontHeadingUrl: null, fontBody: null, fontBodyUrl: null, fontAccent: null, fontAccentUrl: null, fontHero: null, fontHeroUrl: null, heroTextAlign: null, heroTextOffset: null, heroMobileImageUrl: null, heroMobileImageOffsetY: null, heroTextOffsetY: null, heroMobileTextOffsetY: null } });
     });
 
     it('saves the welcome and RSVP banner photos and shows them on the public site', async () => {
@@ -239,6 +239,17 @@ describe('WeddingSettings (e2e)', () => {
       expect(pub).toMatchObject({ fontHeading: 'Cormorant Garamond', fontHeadingUrl: null, fontAccent: 'Slopes', fontAccentUrl: file, fontBody: null });
     });
 
+    it('saves a font just for the names on the homepage photo, and goes back to the headings font when emptied', async () => {
+      await patch({ fontHeading: '', fontHero: 'WindSong' }).expect(200);
+      expect((await request(app.getHttpServer()).get('/public/settings').expect(200)).body)
+        .toMatchObject({ fontHeading: null, fontHero: 'WindSong', fontHeroUrl: null });
+      const file = 'https://res.cloudinary.com/demo/raw/upload/v1/calessa/fonts/windsong.woff2';
+      expect((await patch({ fontHeroUrl: file }).expect(200)).body.fontHeroUrl).toBe(file);
+      expect((await patch({ fontHero: '', fontHeroUrl: '' }).expect(200)).body).toMatchObject({ fontHero: null, fontHeroUrl: null });
+      await patch({ fontHero: 'WindSong; color: red' }).expect(400);
+      await patch({ fontHeroUrl: 'https://example.com/font.exe' }).expect(400);
+    });
+
     it('goes back to the default font when a font field is emptied', async () => {
       await patch({ fontBody: 'Jost' }).expect(200);
       const res = await patch({ fontBody: '', fontAccent: '', fontAccentUrl: '' }).expect(200);
@@ -252,6 +263,61 @@ describe('WeddingSettings (e2e)', () => {
       ['fontAccentUrl', 'http://example.com/font.ttf'],
       ['fontAccentUrl', 'https://example.com/font.exe'],
       ['fontAccentUrl', 'https://example.com/a.ttf") ; x(url'],
+    ])('rejects %s = %s', (key, value) => patch({ [key]: value }).expect(400));
+
+    it('saves where the hero text sits and shows it on the public site', async () => {
+      await patch({ heroTextAlign: 'left', heroTextOffset: '120px' }).expect(200);
+      expect((await request(app.getHttpServer()).get('/public/settings').expect(200)).body)
+        .toMatchObject({ heroTextAlign: 'left', heroTextOffset: '120px' });
+      for (const offset of ['-10%', '12.5%', '0', '80']) await patch({ heroTextOffset: offset }).expect(200);
+      for (const align of ['center', 'right', 'justify']) await patch({ heroTextAlign: align }).expect(200);
+    });
+
+    it('saves a separate hero photo for phones, shows it on the public site, and removes it when emptied', async () => {
+      const phone = 'https://res.cloudinary.com/demo/image/upload/f_auto,q_auto,c_limit,w_2400/v1/calessa/phone-hero.jpg';
+      await patch({ heroMobileImageUrl: phone }).expect(200);
+      expect((await request(app.getHttpServer()).get('/public/settings').expect(200)).body).toMatchObject({ heroMobileImageUrl: phone });
+      expect((await patch({ heroMobileImageUrl: '' }).expect(200)).body.heroMobileImageUrl).toBeNull();
+      await patch({ heroMobileImageUrl: 'not a link' }).expect(400);
+    });
+
+    it('saves a vertical photo offset for phones, and clears it', async () => {
+      await patch({ heroMobileImageOffsetY: 20 }).expect(200);
+      expect((await request(app.getHttpServer()).get('/public/settings').expect(200)).body).toMatchObject({ heroMobileImageOffsetY: 20 });
+      for (const edge of [-50, 50]) await patch({ heroMobileImageOffsetY: edge }).expect(200);
+      expect((await patch({ heroMobileImageOffsetY: null }).expect(200)).body.heroMobileImageOffsetY).toBeNull();
+      for (const bad of [51, -51, 2.5]) await patch({ heroMobileImageOffsetY: bad }).expect(400);
+    });
+
+    it('saves a phone-only vertical position for the hero text, and clears it', async () => {
+      await patch({ heroTextOffsetY: '10%', heroMobileTextOffsetY: '-60px' }).expect(200);
+      expect((await request(app.getHttpServer()).get('/public/settings').expect(200)).body)
+        .toMatchObject({ heroTextOffsetY: '10%', heroMobileTextOffsetY: '-60px' });
+      expect((await patch({ heroMobileTextOffsetY: '' }).expect(200)).body).toMatchObject({ heroMobileTextOffsetY: null, heroTextOffsetY: '10%' });
+      for (const bad of ['10vh', '10px; top: 0']) await patch({ heroMobileTextOffsetY: bad }).expect(400);
+    });
+
+    it('saves a vertical position for the hero text, and clears it', async () => {
+      for (const offset of ['40px', '-10%', '0', '12.5%']) await patch({ heroTextOffsetY: offset }).expect(200);
+      expect((await request(app.getHttpServer()).get('/public/settings').expect(200)).body).toMatchObject({ heroTextOffsetY: '12.5%' });
+      expect((await patch({ heroTextOffsetY: '' }).expect(200)).body.heroTextOffsetY).toBeNull();
+      for (const bad of ['10vh', '10px; top: 0', 'calc(10%)']) await patch({ heroTextOffsetY: bad }).expect(400);
+    });
+
+    it('goes back to the default hero text placement when emptied', async () => {
+      await patch({ heroTextAlign: 'right', heroTextOffset: '5%' }).expect(200);
+      const res = await patch({ heroTextAlign: '', heroTextOffset: '' }).expect(200);
+      expect(res.body).toMatchObject({ heroTextAlign: null, heroTextOffset: null });
+    });
+
+    it.each([
+      ['heroTextAlign', 'middle'],
+      ['heroTextAlign', 'LEFT'],
+      ['heroTextOffset', '10em'],
+      ['heroTextOffset', '10 px'],
+      ['heroTextOffset', 'calc(100% - 10px)'],
+      ['heroTextOffset', '10px; color: red'],
+      ['heroTextOffset', '99999px'],
     ])('rejects %s = %s', (key, value) => patch({ [key]: value }).expect(400));
 
     it('turns random order for the homepage photos on and off', async () => {

@@ -1,7 +1,7 @@
 // The public site's fonts. Each role (headings, body text, handwritten accent) uses its default font
 // unless one is chosen in Dashboard → Settings: either a Google Fonts family, or an uploaded font file.
 
-export type FontRoleKey = 'heading' | 'body' | 'accent';
+export type FontRoleKey = 'heading' | 'body' | 'accent' | 'hero';
 
 export interface FontRole {
   key: FontRoleKey;
@@ -9,13 +9,15 @@ export interface FontRole {
   /** Where visitors see it. */
   usedFor: string;
   /** Settings fields: the font's name, and (for uploads) the file's link. */
-  nameField: 'fontHeading' | 'fontBody' | 'fontAccent';
-  urlField: 'fontHeadingUrl' | 'fontBodyUrl' | 'fontAccentUrl';
+  nameField: 'fontHeading' | 'fontBody' | 'fontAccent' | 'fontHero';
+  urlField: 'fontHeadingUrl' | 'fontBodyUrl' | 'fontAccentUrl' | 'fontHeroUrl';
   /** The CSS variable the site's styles read for this role. */
-  cssVar: '--font-serif' | '--font-sans' | '--font-accent';
+  cssVar: '--font-serif' | '--font-sans' | '--font-accent' | '--font-hero';
   /** Fallbacks while the font loads, or if it can't. */
   fallback: string;
   defaultName: string;
+  /** How the default looks in the dashboard's preview, when it isn't simply this role's own CSS variable. */
+  defaultPreview?: string;
   /** Sample text for the preview. */
   sample: string;
   /** Google Fonts that suit this role (any other Google Fonts name can be typed in too). */
@@ -24,7 +26,14 @@ export interface FontRole {
 
 export const FONT_ROLES: FontRole[] = [
   {
-    key: 'heading', label: 'Headings', usedFor: 'Your names, page titles and section headings',
+    key: 'hero', label: 'Hero names', usedFor: 'Your names and the “&” on the homepage’s big photo',
+    // Falls back to the headings font (whatever it is set to) while loading, or if it can't load.
+    nameField: 'fontHero', urlField: 'fontHeroUrl', cssVar: '--font-hero', fallback: 'var(--font-serif)',
+    defaultName: 'the Headings font', defaultPreview: 'var(--font-serif), Georgia, serif', sample: 'Raissa & Caleb',
+    suggestions: ['WindSong', 'Great Vibes', 'Pinyon Script', 'Parisienne', 'Allura', 'Alex Brush', 'Italianno', 'Playfair Display', 'Cormorant Garamond', 'Cinzel'],
+  },
+  {
+    key: 'heading', label: 'Headings', usedFor: 'Page titles and section headings, and your names on the homepage photo unless Hero names has its own font',
     nameField: 'fontHeading', urlField: 'fontHeadingUrl', cssVar: '--font-serif', fallback: 'Georgia, serif',
     defaultName: 'Playfair Display', sample: 'Raissa & Caleb',
     suggestions: ['Playfair Display', 'Cormorant Garamond', 'Lora', 'Libre Baskerville', 'EB Garamond', 'Cinzel', 'Marcellus', 'Bodoni Moda', 'DM Serif Display', 'Prata', 'Gilda Display', 'Italiana'],
@@ -38,7 +47,7 @@ export const FONT_ROLES: FontRole[] = [
   {
     key: 'accent', label: 'Handwritten accent', usedFor: 'The handwritten line in the RSVP page’s invitation code box',
     nameField: 'fontAccent', urlField: 'fontAccentUrl', cssVar: '--font-accent', fallback: 'cursive',
-    defaultName: 'Slopes', sample: 'My Hoomans are tying the knot!!',
+    defaultName: 'Slopes', defaultPreview: "'Slopes', cursive", sample: 'My Hoomans are tying the knot!!',
     suggestions: ['Great Vibes', 'Dancing Script', 'Parisienne', 'Allura', 'Sacramento', 'Alex Brush', 'Pinyon Script', 'Caveat', 'Homemade Apple', 'Satisfy'],
   },
 ];

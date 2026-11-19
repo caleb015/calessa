@@ -1,4 +1,4 @@
-import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
+import { IsBoolean, IsDateString, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 
 // Empty string is allowed — it means "clear this override and use the default".
 // For photo links, an empty string removes the photo.
@@ -7,6 +7,9 @@ const PHOTO_URL = /^$|^https?:\/\/\S+$/;
 const FONT_NAME = /^$|^[A-Za-z0-9][A-Za-z0-9 -]{0,59}$/;
 // Uploaded font files: a secure web link to a font file.
 const FONT_URL = /^$|^https:\/\/[^\s"'()<>]+\.(woff2|woff|ttf|otf)$/i;
+// Hero text placement: how it lines up, and a sideways shift in pixels or percent (a plain number is pixels).
+const HERO_TEXT_ALIGNS = ['', 'left', 'center', 'right', 'justify'];
+const HERO_TEXT_OFFSET = /^$|^-?\d{1,4}(\.\d{1,2})?(px|%)?$/;
 const HEX_COLOR = /^$|^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
 
 export class UpdateWeddingSettingsDto {
@@ -59,6 +62,36 @@ export class UpdateWeddingSettingsDto {
   @Min(20)
   @Max(200)
   heroImageHeight?: number;
+
+  @IsOptional()
+  @IsString()
+  @Matches(PHOTO_URL)
+  heroMobileImageUrl?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(-50)
+  @Max(50)
+  heroMobileImageOffsetY?: number;
+
+  @IsOptional()
+  @IsIn(HERO_TEXT_ALIGNS)
+  heroTextAlign?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(HERO_TEXT_OFFSET, { message: 'heroTextOffset must be a number of pixels or a percentage, e.g. 120px or 10%' })
+  heroTextOffset?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(HERO_TEXT_OFFSET, { message: 'heroTextOffsetY must be a number of pixels or a percentage, e.g. 40px or -10%' })
+  heroTextOffsetY?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(HERO_TEXT_OFFSET, { message: 'heroMobileTextOffsetY must be a number of pixels or a percentage, e.g. 40px or -10%' })
+  heroMobileTextOffsetY?: string;
 
   @IsOptional()
   @IsString()
@@ -146,6 +179,17 @@ export class UpdateWeddingSettingsDto {
   @MaxLength(2000)
   @Matches(FONT_URL, { message: 'fontAccentUrl must be an https link to a .woff2, .woff, .ttf or .otf file' })
   fontAccentUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(FONT_NAME, { message: 'fontHero must be a font name (letters, numbers, spaces and hyphens)' })
+  fontHero?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  @Matches(FONT_URL, { message: 'fontHeroUrl must be an https link to a .woff2, .woff, .ttf or .otf file' })
+  fontHeroUrl?: string;
 
   @IsOptional()
   @IsString()

@@ -1,4 +1,6 @@
 import React from 'react';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FONT_ROLES, fontChoice, googleFontUrl, siteFonts } from '@/lib/fonts';
@@ -59,6 +61,15 @@ describe('Choosing fonts', () => {
     expect(fonts.vars['--font-accent']).toBe('"X", cursive');
   });
 
+  it('gives the names on the homepage photo their own font, falling back to the headings font', () => {
+    const fonts = siteFonts({ fontHero: 'WindSong' });
+    expect(fonts.stylesheets).toEqual([googleFontUrl('WindSong')]);
+    expect(fonts.vars).toEqual({ '--font-hero': '"WindSong", var(--font-serif)' }); // headings keep their default
+    const uploaded = siteFonts({ fontHero: 'Mine', fontHeroUrl: 'https://x.test/names.woff2' });
+    expect(uploaded.fontFaceCss).toContain('@font-face{font-family:"Calessa Hero";src:url("https://x.test/names.woff2") format("woff2")');
+    expect(uploaded.vars['--font-hero']).toBe('"Calessa Hero", var(--font-serif)');
+  });
+
   it('makes body text follow a chosen body font', () => {
     expect(siteFontStyle({ fontBody: 'Jost' })).toMatchObject({ fontFamily: 'var(--font-sans)' });
     expect(siteFontStyle({ fontHeading: 'Lora' })).not.toHaveProperty('fontFamily');
@@ -89,6 +100,15 @@ describe('On the public site', () => {
     const { container } = render(await PublicLayout({ children: <p>Page</p> }));
     expect(document.querySelector('link[href*="fonts.googleapis"]')).toBeNull();
     expect(container.querySelector('style[data-site-fonts]')).toBeNull();
+  });
+
+  it('sets the Hero names font on every page, beside a separate headings font', async () => {
+    (publicApi.getSettings as jest.Mock).mockResolvedValue({ coupleNameA: 'R', coupleNameB: 'C', isPublic: true, fontHero: 'WindSong' });
+    render(await PublicLayout({ children: <p>Page</p> }));
+    const wrapper = screen.getByText('Page').closest('div[style]') as HTMLElement;
+    expect(wrapper.style.getPropertyValue('--font-hero')).toBe('"WindSong", var(--font-serif)');
+    expect(wrapper.style.getPropertyValue('--font-serif')).toBe('');
+    expect(document.querySelector(`link[href="${googleFontUrl('WindSong')}"]`)).not.toBeNull();
   });
 
   it('writes the RSVP code box line in the accent font', () => {
@@ -238,5 +258,43 @@ describe('Fonts in Dashboard → Settings', () => {
     await userEvent.click(within(c).getByLabelText('Upload a font file'));
     fireEvent.change(within(c).getByLabelText(/Choose a headings font file/), { target: { files: [new File(['x'], 'Mine.woff2')] } });
     expect(await screen.findByRole('button', { name: 'Waiting for upload…' })).toBeDisabled();
+  });
+});
+
+describe('Hero names font in Dashboard → Settings', () => {
+  it('has its own card at the top, defaulting to the headings font', () => {
+    render(<FontSettings form={{}} set={() => {}} />);
+    const card = screen.getByRole('group', { name: 'Hero names' });
+    expect(screen.getAllByRole('group')[0]).toBe(card);
+    expect(within(card).getByLabelText('Default (the Headings font)')).toBeChecked();
+    expect(within(card).getByText(/Your names and the “&” on the homepage’s big photo/)).toBeInTheDocument();
+    expect(within(card).getByTestId('font-preview-hero').style.fontFamily).toContain('var(--font-serif)');
+  });
+
+  it('picks WindSong for the names only', async () => {
+    const set = jest.fn();
+    render(<FontSettings form={{}} set={set} />);
+    const card = screen.getByRole('group', { name: 'Hero names' });
+    await userEvent.click(within(card).getByLabelText('Google font'));
+    fireEvent.change(within(card).getByLabelText('Font name'), { target: { value: 'WindSong' } });
+    expect(set).toHaveBeenCalledWith('fontHero', 'WindSong');
+    expect(set).not.toHaveBeenCalledWith('fontHeading', expect.anything());
+  });
+});
+
+describe('Hero names font in the stylesheet', () => {
+  // jsdom doesn't apply the site's CSS, so check the rule itself: it must be a plain top-level rule, not a
+  // Tailwind utility or anything inside @layer, which the global `h1, h2, h3` rule would override.
+  const css = readFileSync(join(__dirname, '../app/globals.css'), 'utf8');
+
+  it('falls back to the headings font, then the usual serif fonts', () => {
+    expect(css).toMatch(/^\.font-hero \{\s*font-family: var\(--font-hero, var\(--font-serif\)\), Georgia, serif;\s*\}/m);
+  });
+
+  it('is not a layered rule that the heading styles would override', () => {
+    expect(css).not.toMatch(/@utility font-hero/);
+    const before = css.slice(0, css.indexOf('.font-hero {'));
+    const opened = (before.match(/@layer[^{]*\{/g) ?? []).length;
+    expect(opened).toBe(0);
   });
 });

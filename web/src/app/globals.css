@@ -50,6 +50,12 @@ h1, h2, h3 {
   font-family: var(--font-serif), Georgia, serif;
 }
 
+/* Your names on the homepage photo: the Hero names font (Dashboard → Settings → Fonts), else the headings font.
+   A plain rule rather than a Tailwind utility, which would lose to the h1 rule above (layered styles always do). */
+.font-hero {
+  font-family: var(--font-hero, var(--font-serif)), Georgia, serif;
+}
+
 @keyframes scrollDot {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(300%); }

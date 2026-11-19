@@ -85,7 +85,7 @@ function FontRoleField({ role, form, set, onUploadBusy }: {
   const previewFamily =
     choice.kind === 'google' ? `"${choice.name}", ${role.fallback}`
       : choice.kind === 'upload' ? `"Preview ${role.label}", ${role.fallback}`
-      : role.key === 'accent' ? `'Slopes', ${role.fallback}` : `var(${role.cssVar}), ${role.fallback}`;
+      : role.defaultPreview ?? `var(${role.cssVar}), ${role.fallback}`;
 
   return (
     <fieldset className="border border-gray-200 rounded-md p-4" aria-describedby={`${ids}-where`}>

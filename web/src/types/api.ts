@@ -8,6 +8,12 @@ export interface WeddingSettings {
   heroImageOffsetX: number | null;
   heroImageOffsetY: number | null;
   heroImageHeight: number | null;
+  heroMobileImageUrl?: string | null;
+  heroMobileImageOffsetY?: number | null;
+  heroTextAlign?: string | null;
+  heroTextOffset?: string | null;
+  heroTextOffsetY?: string | null;
+  heroMobileTextOffsetY?: string | null;
   monogramUrl: string | null;
   rsvpTagline: string | null;
   rsvpSubtext: string | null;
@@ -28,6 +34,8 @@ export interface WeddingSettings {
   fontBodyUrl?: string | null;
   fontAccent?: string | null;
   fontAccentUrl?: string | null;
+  fontHero?: string | null;
+  fontHeroUrl?: string | null;
   welcomeImageUrl?: string | null;
   rsvpBannerImageUrl?: string | null;
   isPublic: boolean;

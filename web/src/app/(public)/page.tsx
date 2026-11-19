@@ -1,10 +1,11 @@
 import Link from 'next/link';
-import Image from 'next/image';
+import Image, { getImageProps } from 'next/image';
 import { publicApi } from '@/lib/api';
 import Countdown from '@/components/public/Countdown';
 import MomentsSlider from '@/components/public/MomentsSlider';
 import { FiMapPin } from 'react-icons/fi';
 import { croppedUrl, fitWidthUrl } from '@/lib/upload';
+import { HERO_ALIGN_CLASSES, heroTextPlacement } from '@/lib/heroText';
 
 const leftNavLinks = [
   { href: '/story', label: 'Our Story' },
@@ -38,8 +39,18 @@ export default async function HomePage() {
   const heroOffsetX = settings?.heroImageOffsetX ?? 0;
   const heroOffsetY = settings?.heroImageOffsetY ?? 0;
   const heroHeight = settings?.heroImageHeight ?? 100;
+  // A separate photo for phones (a tall screen crops a landscape photo hard). Phones download only theirs.
+  const heroPhoneSrc = settings?.heroMobileImageUrl?.trim() || null;
+  const heroImage = heroImageLayout(heroOffsetX, heroOffsetY, settings?.heroMobileImageOffsetY ?? 0, !!heroPhoneSrc);
+  // How the names line up within their block, and how far the block moves from the centre of the photo.
+  // The sideways shift applies from tablet width up (on phones the names already fill the width); the
+  // vertical shift applies everywhere, with phones able to have their own.
+  const heroText = heroTextPlacement(settings);
+  const heroAlign = HERO_ALIGN_CLASSES[heroText.align];
   const monogramSrc = settings?.monogramUrl ?? '/images/rc-monogram-floral-green.png';
   const hasImage = true; // always has hero
+  // Your names use the Hero names font from Settings → Fonts, or the headings font when that's left on its default.
+  const heroFont = 'font-hero';
   const textColor = 'text-[var(--overlay-text)]';
   const mutedColor = 'text-[var(--overlay-text)]/60';
   const btnClass = 'border-[var(--overlay-text)]/50 text-[var(--overlay-text)] hover:bg-white hover:text-[var(--foreground)]';
@@ -60,17 +71,13 @@ export default async function HomePage() {
     <div className="overflow-x-hidden">
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden flex flex-col items-center justify-center text-center px-6" style={{ height: `${heroHeight}vh` }}>
+      <section className="relative overflow-hidden flex flex-col justify-center px-6" style={{ height: `${heroHeight}vh` }}>
         {/* Hero image */}
-        <Image
-          src={heroSrc}
-          alt="Hero"
-          fill
-          priority
-          className="object-cover"
-          style={{ transform: `translate(${heroOffsetX}%, ${-heroOffsetY}%)` }}
-          sizes="100vw"
-        />
+        {heroPhoneSrc ? (
+          <HeroPicture desktopSrc={heroSrc} phoneSrc={heroPhoneSrc} {...heroImage} />
+        ) : (
+          <Image src={heroSrc} alt="Hero" fill priority sizes="100vw" {...heroImage} />
+        )}
 
         {/* Gradient scrim — dark at bottom so text is legible, transparent at top so photo breathes */}
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--overlay-scrim)]/80 via-[var(--overlay-scrim)]/20 to-transparent" />
@@ -104,26 +111,38 @@ export default async function HomePage() {
           </div>
         </nav>
 
-        {/* Text centered in hero */}
-        <div className="relative z-10 px-8 flex flex-col items-center text-center">
-          <p className={`text-[10px] tracking-[0.45em] uppercase mb-5 ${mutedColor}`}>
-            {weddingDateFormatted ?? 'Save the Date'}
-          </p>
-          <div className="flex flex-col items-center leading-none">
-            <h1 className={`font-serif text-[clamp(3rem,11vw,8rem)] ${textColor} leading-[0.85] tracking-tight drop-shadow-lg`}>
-              {coupleA}
-            </h1>
-            <span className={`font-serif text-[clamp(1rem,2.5vw,2rem)] ${mutedColor} tracking-[0.5em] my-2`}>&</span>
-            <h1 className={`font-serif text-[clamp(3rem,11vw,8rem)] ${textColor} leading-[0.85] tracking-tight drop-shadow-lg`}>
-              {coupleB}
-            </h1>
-          </div>
-          <Link
-            href="/rsvp"
-            className={`mt-8 border text-[10px] tracking-[0.35em] uppercase px-10 py-4 transition-all duration-300 backdrop-blur-sm ${btnClass}`}
+        {/* Text on the hero: a centred block, moved by the offset; its lines aligned as set in Settings */}
+        <div className="absolute inset-0 z-10 px-6 flex items-center justify-center">
+          <div
+            data-testid="hero-text"
+            data-align={heroText.align}
+            className={`relative px-8 flex flex-col ${heroAlign.items} ${heroAlign.text} md:left-[var(--hero-text-offset,0px)] top-[var(--hero-text-top-phone,0px)] md:top-[var(--hero-text-top,0px)]`}
+            style={{
+              ...(heroText.offset && { '--hero-text-offset': heroText.offset }),
+              // A percentage moves it by that share of the hero's height.
+              ...(heroText.offsetY && { '--hero-text-top': heroText.offsetY }),
+              ...(heroText.phoneOffsetY && { '--hero-text-top-phone': heroText.phoneOffsetY }),
+            } as React.CSSProperties}
           >
-            RSVP
-          </Link>
+            <p className={`text-[10px] tracking-[0.45em] uppercase mb-5 ${mutedColor}`}>
+              {weddingDateFormatted ?? 'Save the Date'}
+            </p>
+            <div className={`flex flex-col ${heroAlign.items} leading-none`}>
+              <h1 className={`${heroFont} text-[clamp(3rem,11vw,8rem)] ${textColor} leading-[0.85] tracking-tight drop-shadow-lg`}>
+                {coupleA}
+              </h1>
+              <span className={`${heroFont} text-[clamp(1rem,2.5vw,2rem)] ${mutedColor} tracking-[0.5em] my-2`}>&</span>
+              <h1 className={`${heroFont} text-[clamp(3rem,11vw,8rem)] ${textColor} leading-[0.85] tracking-tight drop-shadow-lg`}>
+                {coupleB}
+              </h1>
+            </div>
+            <Link
+              href="/rsvp"
+              className={`mt-8 border text-center [text-align-last:center] text-[10px] tracking-[0.35em] uppercase px-10 py-4 transition-all duration-300 backdrop-blur-sm ${btnClass}`}
+            >
+              RSVP
+            </Link>
+          </div>
         </div>
 
         {/* Scroll indicator */}
@@ -325,5 +344,52 @@ export default async function HomePage() {
       </section>
 
     </div>
+  );
+}
+
+/**
+ * How the hero photo is moved. The computer offsets slide the photo by a share of its own size. Phones
+ * use their own vertical offset once it's set (or once they have their own photo): the photo's box is made
+ * taller by that much and moved, so the photo shifts (zooming in a little) without leaving a gap.
+ * Without either, phones follow the computer offsets, as they always have.
+ */
+function heroImageLayout(offsetX: number, offsetY: number, phoneOffsetY: number, hasPhonePhoto: boolean) {
+  const shift = `translate(${offsetX}%, ${-offsetY}%)`;
+  if (!phoneOffsetY && !hasPhonePhoto) return { className: 'object-cover', style: { transform: shift } as React.CSSProperties };
+  return {
+    className: [
+      'object-cover md:[transform:var(--hero-shift)]',
+      phoneOffsetY ? 'max-md:top-[var(--hero-phone-top)]! max-md:h-[var(--hero-phone-height)]!' : '',
+    ].join(' ').trim(),
+    style: {
+      '--hero-shift': shift,
+      ...(phoneOffsetY && {
+        '--hero-phone-top': `${phoneOffsetY > 0 ? -phoneOffsetY : 0}%`, // positive moves the photo up
+        '--hero-phone-height': `${100 + Math.abs(phoneOffsetY)}%`,
+      }),
+    } as React.CSSProperties,
+  };
+}
+
+/**
+ * The hero photo with a separate version for phones: the browser picks one by screen width and downloads
+ * only that.
+ */
+function HeroPicture({ desktopSrc, phoneSrc, className, style: layout }: {
+  desktopSrc: string; phoneSrc: string; className: string; style: React.CSSProperties;
+}) {
+  const common = { alt: 'Hero', fill: true, priority: true, sizes: '100vw' } as const;
+  const desktop = getImageProps({ ...common, src: desktopSrc }).props;
+  const { style, ...phone } = getImageProps({ ...common, src: phoneSrc }).props;
+  return (
+    <picture>
+      <source media="(min-width: 768px)" srcSet={desktop.srcSet ?? desktop.src} />
+      <img
+        {...phone}
+        alt="Hero"
+        className={className}
+        style={{ ...style, ...layout }}
+      />
+    </picture>
   );
 }

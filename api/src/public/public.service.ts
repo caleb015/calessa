@@ -63,22 +63,22 @@ export class PublicService {
     // Only expose fields safe for public consumption
     const {
       coupleNameA, coupleNameB, weddingDate, siteTitle,
-      siteDescription, heroImageUrl, heroImageOffsetX, heroImageOffsetY, heroImageHeight, monogramUrl, rsvpHeading, rsvpTagline, rsvpSubtext, welcomeMessage,
+      siteDescription, heroImageUrl, heroImageOffsetX, heroImageOffsetY, heroImageHeight, heroMobileImageUrl, heroMobileImageOffsetY, heroTextAlign, heroTextOffset, heroTextOffsetY, heroMobileTextOffsetY, monogramUrl, rsvpHeading, rsvpTagline, rsvpSubtext, welcomeMessage,
       welcomeImageUrl, rsvpBannerImageUrl,
       themeBackground, themeForeground, themeMuted, themeAccent, themeBorder,
       themeSurface, themeInverseBackground, themeOverlayText, themeOverlayScrim,
-      fontHeading, fontHeadingUrl, fontBody, fontBodyUrl, fontAccent, fontAccentUrl,
+      fontHeading, fontHeadingUrl, fontBody, fontBodyUrl, fontAccent, fontAccentUrl, fontHero, fontHeroUrl,
       isPublic, isRsvpEnabled, allowMaybe,
       enableMealPreference, enableSongRequest, enableGuestbook,
     } = settings;
 
     return {
       coupleNameA, coupleNameB, weddingDate, siteTitle,
-      siteDescription, heroImageUrl, heroImageOffsetX, heroImageOffsetY, heroImageHeight, monogramUrl, rsvpHeading, rsvpTagline, rsvpSubtext, welcomeMessage,
+      siteDescription, heroImageUrl, heroImageOffsetX, heroImageOffsetY, heroImageHeight, heroMobileImageUrl, heroMobileImageOffsetY, heroTextAlign, heroTextOffset, heroTextOffsetY, heroMobileTextOffsetY, monogramUrl, rsvpHeading, rsvpTagline, rsvpSubtext, welcomeMessage,
       welcomeImageUrl, rsvpBannerImageUrl,
       themeBackground, themeForeground, themeMuted, themeAccent, themeBorder,
       themeSurface, themeInverseBackground, themeOverlayText, themeOverlayScrim,
-      fontHeading, fontHeadingUrl, fontBody, fontBodyUrl, fontAccent, fontAccentUrl,
+      fontHeading, fontHeadingUrl, fontBody, fontBodyUrl, fontAccent, fontAccentUrl, fontHero, fontHeroUrl,
       isPublic, isRsvpEnabled, allowMaybe,
       enableMealPreference, enableSongRequest, enableGuestbook,
     };

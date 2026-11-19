@@ -36,6 +36,14 @@ const mockSettings = {
   fontBodyUrl: null,
   fontAccent: null,
   fontAccentUrl: null,
+  fontHero: null,
+  fontHeroUrl: null,
+  heroTextAlign: null,
+  heroMobileImageUrl: null,
+  heroMobileImageOffsetY: null,
+  heroTextOffsetY: null,
+  heroMobileTextOffsetY: null,
+  heroTextOffset: null,
   rsvpBannerImageUrl: null,
   isPublic: true,
   isRsvpEnabled: true,
@@ -84,7 +92,7 @@ describe('PublicService', () => {
       expect(result).toHaveProperty('heroImageHeight');
       expect(result).toHaveProperty('welcomeImageUrl');
       expect(result).toHaveProperty('rsvpHeading');
-      ['fontHeading', 'fontHeadingUrl', 'fontBody', 'fontBodyUrl', 'fontAccent', 'fontAccentUrl'].forEach(k => expect(result).toHaveProperty(k));
+      ['fontHeading', 'fontHeadingUrl', 'fontBody', 'fontBodyUrl', 'fontAccent', 'fontAccentUrl', 'fontHero', 'fontHeroUrl', 'heroTextAlign', 'heroTextOffset', 'heroMobileImageUrl', 'heroMobileImageOffsetY', 'heroTextOffsetY', 'heroMobileTextOffsetY'].forEach(k => expect(result).toHaveProperty(k));
       expect(result).toHaveProperty('rsvpBannerImageUrl');
       expect(result).toHaveProperty('rsvpTagline');
       expect(result).toHaveProperty('rsvpSubtext');

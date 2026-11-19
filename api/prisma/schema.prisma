@@ -41,6 +41,18 @@ model WeddingSettings {
   heroImageOffsetX          Int?
   heroImageOffsetY          Int?
   heroImageHeight           Int?
+  /// A separate hero photo for phones (empty = phones use heroImageUrl too).
+  heroMobileImageUrl        String?
+  /// Moves the hero photo up or down on phones, as a % of the hero's height (positive = up; empty = no shift).
+  heroMobileImageOffsetY    Int?
+  /// How the names and date line up on the hero photo: left, center, right or justify (empty = center).
+  heroTextAlign             String?
+  /// Moves the hero text sideways, e.g. "120px" or "10%" (negative = left; empty = no shift).
+  heroTextOffset            String?
+  /// Moves the hero text up or down, e.g. "40px" or "-10%" (positive = up, as for the photo; empty = no shift).
+  heroTextOffsetY           String?
+  /// The same for phones only (empty = phones follow heroTextOffsetY).
+  heroMobileTextOffsetY     String?
   monogramUrl               String?
   /// Heading on the RSVP page (empty = "You're Invited").
   rsvpHeading               String?
@@ -63,6 +75,9 @@ model WeddingSettings {
   fontBodyUrl               String?
   fontAccent                String?
   fontAccentUrl             String?
+  /// Your names on the homepage photo (empty = the headings font).
+  fontHero                  String?
+  fontHeroUrl               String?
   welcomeMessage            String?
   /// Photo beside the welcome message on the homepage (none = message only).
   welcomeImageUrl           String?

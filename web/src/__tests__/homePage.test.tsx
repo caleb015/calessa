@@ -1,9 +1,18 @@
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import HomePage from '@/app/(public)/page';
 import EventCard from '@/components/public/details/EventCard';
 import { publicApi } from '@/lib/api';
 
-jest.mock('next/image', () => ({ __esModule: true, default: () => null }));
+// Only the hero photo is drawn (as a plain img carrying its class and style); other images are left out.
+// getImageProps (the phone/computer hero pair) hands back a recognisable srcSet for each photo.
+jest.mock('next/image', () => ({
+  __esModule: true,
+  // eslint-disable-next-line @next/next/no-img-element
+  default: ({ alt, src, className, style }: { alt: string; src: string; className?: string; style?: object }) => (alt === 'Hero' ? <img alt={alt} src={src} className={className} style={style} /> : null),
+  getImageProps: ({ src, alt }: { src: string; alt: string }) => ({
+    props: { src: `/_next/image?url=${src}`, srcSet: `/_next/image?url=${src} 1x`, alt, style: { position: 'absolute' } },
+  }),
+}));
 jest.mock('@/components/public/Countdown', () => ({ __esModule: true, default: () => null }));
 jest.mock('@/lib/api', () => ({
   publicApi: { getSettings: jest.fn(), getEvents: jest.fn(), getStory: jest.fn(), getHomepageGallery: jest.fn() },
@@ -121,5 +130,169 @@ describe('Homepage event cards', () => {
   it('still show the tagline on the Details page cards', () => {
     render(<EventCard event={event as never} />);
     expect(screen.getByText('Where forever begins')).toBeInTheDocument();
+  });
+});
+
+describe('Hero text placement', () => {
+  const heroText = async (over: object) => {
+    (publicApi.getSettings as jest.Mock).mockResolvedValue(settings(over));
+    render(await HomePage());
+    return screen.getByTestId('hero-text');
+  };
+
+  it('centres the names by default, with no shift', async () => {
+    const block = await heroText({});
+    expect(block).toHaveAttribute('data-align', 'center');
+    expect(block).toHaveClass('items-center', 'text-center');
+    expect(block.parentElement).toHaveClass('justify-center');
+    expect(block.style.getPropertyValue('--hero-text-offset')).toBe('');
+    expect(within(block).getAllByRole('heading').map(h => h.textContent)).toEqual(['Caleb', 'Raissa']);
+  });
+
+  it('lines the text up on the left within its own width, and moves it only by the offset, from tablet width up', async () => {
+    const block = await heroText({ heroTextAlign: 'left', heroTextOffset: '-120px' });
+    expect(block).toHaveClass('items-start', 'text-left', 'md:left-[var(--hero-text-offset,0px)]');
+    expect(block.parentElement).toHaveClass('justify-center'); // the block stays centred on the photo
+    expect(block.style.getPropertyValue('--hero-text-offset')).toBe('-120px');
+    expect(within(block).getByRole('link', { name: 'RSVP' })).toHaveAttribute('href', '/rsvp');
+  });
+
+  it.each([
+    ['right', 'items-end', 'text-right'],
+    ['justify', 'items-stretch', 'text-justify'],
+  ])('lines it up %s within its own width', async (align, items, text) => {
+    const block = await heroText({ heroTextAlign: align });
+    expect(block).toHaveClass(items, text);
+    expect(block.parentElement).toHaveClass('justify-center');
+    expect(within(block).getByRole('link', { name: 'RSVP' })).toHaveClass('[text-align-last:center]'); // the label stays centred
+  });
+
+  it.each([
+    ['10%', '10%'],
+    ['-40px', '-40px'],
+    ['80', '80px'], // a plain number is pixels
+    ['0', ''],
+    ['10em', ''], // not pixels or percent: ignored
+    ['1px; color: red', ''],
+  ])('turns an offset of %s into %s', async (offset, css) => {
+    const block = await heroText({ heroTextOffset: offset });
+    expect(block.style.getPropertyValue('--hero-text-offset')).toBe(css);
+  });
+
+  it.each([
+    ['40px', '-40px'], // positive moves it up, like the photo's own offset
+    ['-15%', '15%'],
+    ['30', '-30px'],
+    ['0', ''],
+    ['10vh', ''],
+  ])('moves it vertically for an offset of %s (top: %s), on phones too', async (offset, top) => {
+    const block = await heroText({ heroTextOffsetY: offset });
+    expect(block).toHaveClass('md:top-[var(--hero-text-top,0px)]', 'top-[var(--hero-text-top-phone,0px)]');
+    expect(block.style.getPropertyValue('--hero-text-top')).toBe(top);
+    expect(block.style.getPropertyValue('--hero-text-top-phone')).toBe(top);
+  });
+
+  it('gives phones their own vertical offset when set, leaving computers on theirs', async () => {
+    const block = await heroText({ heroTextOffsetY: '10%', heroMobileTextOffsetY: '-60px' });
+    expect(block.style.getPropertyValue('--hero-text-top')).toBe('-10%');
+    expect(block.style.getPropertyValue('--hero-text-top-phone')).toBe('60px');
+  });
+
+  it('can move the text on phones only', async () => {
+    const block = await heroText({ heroMobileTextOffsetY: '25%' });
+    expect(block.style.getPropertyValue('--hero-text-top')).toBe('');
+    expect(block.style.getPropertyValue('--hero-text-top-phone')).toBe('-25%');
+  });
+
+  it('keeps phones still with a phone offset of 0, whatever computers do', async () => {
+    const block = await heroText({ heroTextOffsetY: '10%', heroMobileTextOffsetY: '0' });
+    expect(block.style.getPropertyValue('--hero-text-top-phone')).toBe('');
+  });
+
+  it('lets phones follow the computer offset when the phone one is empty or unusable', async () => {
+    for (const phone of ['', '  ', '10vh']) {
+      const block = await heroText({ heroTextOffsetY: '10%', heroMobileTextOffsetY: phone });
+      expect(block.style.getPropertyValue('--hero-text-top-phone')).toBe('-10%');
+      cleanup();
+    }
+  });
+
+  it('keeps the text over the whole photo, centred until moved', async () => {
+    const block = await heroText({});
+    expect(block.parentElement).toHaveClass('absolute', 'inset-0', 'items-center', 'justify-center');
+    expect(block.style.getPropertyValue('--hero-text-top')).toBe('');
+    expect(block.style.getPropertyValue('--hero-text-top-phone')).toBe('');
+  });
+
+  it('writes the names and "&" in the Hero names font, or the headings font by default', async () => {
+    const block = await heroText({});
+    [...within(block).getAllByRole('heading'), within(block).getByText('&')].forEach(el =>
+      expect(el).toHaveClass('font-hero'));
+  });
+
+  it('falls back to centred for an unknown alignment', async () => {
+    expect(await heroText({ heroTextAlign: 'middle' })).toHaveAttribute('data-align', 'center');
+  });
+});
+
+describe('Hero photo for phones', () => {
+  const PHONE = CLD('phone-hero');
+  const hero = async (over: object) => {
+    (publicApi.getSettings as jest.Mock).mockResolvedValue(settings({ heroImageUrl: CLD('wide-hero'), ...over }));
+    const { container } = render(await HomePage());
+    return { img: screen.getByAltText('Hero'), picture: container.querySelector('picture') };
+  };
+
+  it('uses one photo everywhere when no phone photo is set, offsets and all', async () => {
+    const { img, picture } = await hero({ heroImageOffsetX: 10, heroImageOffsetY: 5 });
+    expect(picture).toBeNull();
+    expect(img).toHaveAttribute('src', CLD('wide-hero'));
+    expect(img.style.transform).toBe('translate(10%, -5%)');
+  });
+
+  it('gives phones their own photo and computers the main one, so each downloads only its own', async () => {
+    const { img, picture } = await hero({ heroMobileImageUrl: PHONE });
+    const source = picture!.querySelector('source')!;
+    expect(source).toHaveAttribute('media', '(min-width: 768px)');
+    expect(source).toHaveAttribute('srcset', expect.stringContaining('wide-hero'));
+    expect(img).toHaveAttribute('src', expect.stringContaining('phone-hero'));
+    expect(img).toHaveAttribute('srcset', expect.stringContaining('phone-hero'));
+    expect(img).toHaveClass('object-cover');
+  });
+
+  it('applies the photo offsets to the computer photo only', async () => {
+    const { img } = await hero({ heroMobileImageUrl: PHONE, heroImageOffsetX: 10, heroImageOffsetY: 5 });
+    expect(img).toHaveClass('md:[transform:var(--hero-shift)]');
+    expect(img.style.transform).toBe('');
+    expect(img.style.getPropertyValue('--hero-shift')).toBe('translate(10%, -5%)');
+  });
+
+  it.each([
+    [20, '-20%', '120%'], // up: a taller box reaching above the hero, so its lower part shows
+    [-10, '0%', '110%'], // down: a taller box reaching below, so its upper part shows
+  ])('moves the phone photo by its own vertical offset (%s) without leaving a gap', async (offset, top, height) => {
+    const { img } = await hero({ heroMobileImageUrl: PHONE, heroMobileImageOffsetY: offset });
+    expect(img).toHaveClass('max-md:top-[var(--hero-phone-top)]!', 'max-md:h-[var(--hero-phone-height)]!');
+    expect(img.style.getPropertyValue('--hero-phone-top')).toBe(top);
+    expect(img.style.getPropertyValue('--hero-phone-height')).toBe(height);
+  });
+
+  it('moves the main photo on phones too when there is no phone photo, leaving computers to their own offsets', async () => {
+    const { img, picture } = await hero({ heroMobileImageOffsetY: 15, heroImageOffsetY: 5 });
+    expect(picture).toBeNull();
+    expect(img).toHaveClass('md:[transform:var(--hero-shift)]', 'max-md:top-[var(--hero-phone-top)]!');
+    expect(img.style.transform).toBe('');
+    expect(img.style.getPropertyValue('--hero-shift')).toBe('translate(0%, -5%)');
+    expect(img.style.getPropertyValue('--hero-phone-top')).toBe('-15%');
+  });
+
+  it('leaves the phone photo unmoved when its offset is not set', async () => {
+    const { img } = await hero({ heroMobileImageUrl: PHONE });
+    expect(img.className).not.toContain('hero-phone-top');
+  });
+
+  it('ignores a blank phone photo', async () => {
+    const { picture } = await hero({ heroMobileImageUrl: '  ' });
+    expect(picture).toBeNull();
   });
 });

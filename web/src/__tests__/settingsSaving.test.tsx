@@ -329,3 +329,101 @@ describe('Leaving with unsaved changes', () => {
     expect(confirmDiscard()).toBe(true);
   });
 });
+
+describe('Settings: hero text placement', () => {
+  beforeEach(() => {
+    admin.getSettings.mockResolvedValue({ ...SETTINGS, heroTextAlign: null, heroTextOffset: null });
+    admin.updateSettings.mockImplementation(async (body: object) => ({ ...SETTINGS, ...body, updatedAt: 'later' }));
+  });
+
+  it('sits under Homepage, centred with no offset by default', async () => {
+    render(<SettingsPage />);
+    await screen.findByLabelText('Name A');
+    const homepage = screen.getByRole('region', { name: 'Homepage' });
+    expect(within(homepage).getByLabelText(/Hero Text Alignment/)).toHaveValue('center');
+    expect(within(homepage).getByLabelText(/^Hero Text Horizontal Offset/)).toHaveValue('');
+    expect(within(homepage).getAllByRole('option').map(o => o.textContent)).toEqual(['Left', 'Centre (default)', 'Right', 'Justify']);
+  });
+
+  it('saves an alignment and an offset in pixels or percent', async () => {
+    render(<SettingsPage />);
+    await screen.findByLabelText('Name A');
+    await userEvent.selectOptions(screen.getByLabelText(/Hero Text Alignment/), 'left');
+    await userEvent.type(screen.getByLabelText(/^Hero Text Horizontal Offset/), '10%');
+    await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
+    await waitFor(() => expect(admin.updateSettings).toHaveBeenCalledWith(expect.objectContaining({ heroTextAlign: 'left', heroTextOffset: '10%' })));
+  });
+
+  it('goes back to centred by choosing Centre', async () => {
+    admin.getSettings.mockResolvedValue({ ...SETTINGS, heroTextAlign: 'right', heroTextOffset: '40px' });
+    render(<SettingsPage />);
+    await screen.findByLabelText('Name A');
+    expect(screen.getByLabelText(/Hero Text Alignment/)).toHaveValue('right');
+    await userEvent.selectOptions(screen.getByLabelText(/Hero Text Alignment/), 'center');
+    await userEvent.clear(screen.getByLabelText(/^Hero Text Horizontal Offset/));
+    await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
+    await waitFor(() => expect(admin.updateSettings).toHaveBeenCalledWith(expect.objectContaining({ heroTextAlign: '', heroTextOffset: '' })));
+  });
+
+  it('explains an offset it can\'t use', async () => {
+    render(<SettingsPage />);
+    await screen.findByLabelText('Name A');
+    await userEvent.type(screen.getByLabelText(/^Hero Text Horizontal Offset/), '10em');
+    expect(screen.getByRole('alert')).toHaveTextContent('Use pixels or a percentage');
+    await userEvent.clear(screen.getByLabelText(/^Hero Text Horizontal Offset/));
+    await userEvent.type(screen.getByLabelText(/^Hero Text Horizontal Offset/), '-40px');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+});
+
+describe('Settings: hero photo for phones and vertical text position', () => {
+  beforeEach(() => {
+    admin.getSettings.mockResolvedValue({ ...SETTINGS, heroMobileImageUrl: null, heroTextOffsetY: null });
+    admin.updateSettings.mockImplementation(async (body: object) => ({ ...SETTINGS, ...body, updatedAt: 'later' }));
+  });
+
+  it('has a phone photo with its own upload box, under Homepage', async () => {
+    render(<SettingsPage />);
+    await screen.findByLabelText('Name A');
+    const homepage = screen.getByRole('region', { name: 'Homepage' });
+    const field = within(homepage).getByLabelText(/Phone Hero Image/).closest('[data-field]') as HTMLElement;
+    expect(within(field).getByLabelText('Choose image file')).toBeInTheDocument();
+    expect(within(homepage).getByLabelText(/^Hero Text Vertical Offset/)).toBeInTheDocument();
+    expect(within(homepage).getByLabelText(/^Phone Hero Vertical Offset/)).toHaveAttribute('min', '-50');
+  });
+
+  it('saves a phone-only vertical offset for the text', async () => {
+    render(<SettingsPage />);
+    await screen.findByLabelText('Name A');
+    const field = within(screen.getByRole('region', { name: 'Homepage' })).getByLabelText(/^Phone Hero Text Vertical Offset/);
+    await userEvent.type(field, '-60px');
+    await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
+    await waitFor(() => expect(admin.updateSettings).toHaveBeenCalledWith(expect.objectContaining({ heroMobileTextOffsetY: '-60px' })));
+  });
+
+  it('saves a vertical photo offset for phones', async () => {
+    render(<SettingsPage />);
+    await screen.findByLabelText('Name A');
+    await userEvent.type(screen.getByLabelText(/^Phone Hero Vertical Offset/), '-15');
+    await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
+    await waitFor(() => expect(admin.updateSettings).toHaveBeenCalledWith(expect.objectContaining({ heroMobileImageOffsetY: -15 })));
+  });
+
+  it('saves a phone photo link and a vertical text offset', async () => {
+    render(<SettingsPage />);
+    await screen.findByLabelText('Name A');
+    fireEvent.change(screen.getByLabelText(/Phone Hero Image/), { target: { value: 'https://res.cloudinary.com/demo/image/upload/v1/calessa/phone.jpg' } });
+    await userEvent.type(screen.getByLabelText(/^Hero Text Vertical Offset/), '15%');
+    await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
+    await waitFor(() => expect(admin.updateSettings).toHaveBeenCalledWith(expect.objectContaining({
+      heroMobileImageUrl: 'https://res.cloudinary.com/demo/image/upload/v1/calessa/phone.jpg', heroTextOffsetY: '15%',
+    })));
+  });
+
+  it('explains a vertical offset it can\'t use', async () => {
+    render(<SettingsPage />);
+    await screen.findByLabelText('Name A');
+    await userEvent.type(screen.getByLabelText(/^Hero Text Vertical Offset/), '10vh');
+    expect(screen.getByRole('alert')).toHaveTextContent('Use pixels or a percentage');
+  });
+});

@@ -9,6 +9,7 @@ import ColorInput from '@/components/dashboard/ColorInput';
 import FloatingSaveButton from '@/components/dashboard/FloatingSaveButton';
 import FontSettings from '@/components/dashboard/FontSettings';
 import { toLocalDateTimeInput, fromLocalDateTimeInput } from '@/lib/datetime';
+import { HERO_TEXT_ALIGNS, HERO_TEXT_OFFSET } from '@/lib/heroText';
 
 const THEME_COLORS: { key: string; label: string; tooltip?: string; defaultValue: string }[] = [
   { key: 'themeBackground', label: 'Background', defaultValue: '#faf7f2' },
@@ -164,6 +165,22 @@ export default function SettingsPage() {
     </div>
   );
 
+  const heroTextOffset = (key: string, label: string, placeholder: string, tooltip: string) => {
+    const value = (form[key] as string | null | undefined) ?? '';
+    return (
+      <div>
+        <label htmlFor={key} className={labelClass}>
+          {label}
+          <InfoTooltip text={tooltip} />
+        </label>
+        <input id={key} className={inputClass} placeholder={placeholder} value={value} onChange={e => set(key, e.target.value.trim())} />
+        {value !== '' && !HERO_TEXT_OFFSET.test(value) && (
+          <p role="alert" className="mt-1 text-xs text-red-600">Use pixels or a percentage, e.g. 120px, 10% or -40px.</p>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="p-8 max-w-2xl">
       <h1 className="text-2xl font-semibold text-gray-900 mb-4">Wedding Settings</h1>
@@ -207,11 +224,33 @@ export default function SettingsPage() {
 
         <Section id="homepage" description="The big photo at the top, the welcome message, and the photos further down the page.">
           {photo('heroImageUrl', 'Hero Image URL')}
+          {photo('heroMobileImageUrl', 'Phone Hero Image (optional)', 'A separate photo for phones, whose tall screens crop a landscape photo hard: a portrait photo works best. Phones download only this one. Leave empty to use the Hero Image on phones too. Hero Horizontal/Vertical Offset then apply to computers only; phones use Phone Hero Vertical Offset.')}
+          {percent('heroMobileImageOffsetY', 'Phone Hero Vertical Offset', 'Moves the hero photo up or down on phones, by this percentage of the hero’s height. 0 = no shift (default). Positive moves it up, negative moves it down. The photo zooms in a little as it moves, so no gap appears. Once set (or once there is a phone photo), the Hero Horizontal/Vertical Offset apply to computers only.', '0', -50, 50)}
           <div className="grid grid-cols-2 gap-4">
             {percent('heroImageOffsetX', 'Hero Horizontal Offset', 'Shifts the photo by this percentage of its own width. 0 = no shift (default). Positive moves the image right, negative moves it left.', '0', -50, 50)}
             {percent('heroImageOffsetY', 'Hero Vertical Offset', 'Shifts the photo by this percentage of its own height. 0 = no shift (default). Positive moves the image up, negative moves it down.', '0', -50, 50)}
           </div>
           {percent('heroImageHeight', 'Hero Image Height', 'Height of the hero section as a percentage of the screen height. 100 = full screen (default).', '100', 20, 200)}
+          <div>
+            <label htmlFor="heroTextAlign" className={labelClass}>
+              Hero Text Alignment
+              <InfoTooltip text="How the date, your names and the RSVP button line up with each other, within the width of the text (the text itself stays where the offsets put it). Justify runs each line edge to edge where it can (the date spreads out and the button widens); single words start at the left." />
+            </label>
+            <select id="heroTextAlign" className={inputClass} value={(form.heroTextAlign as string) || 'center'}
+              onChange={e => set('heroTextAlign', e.target.value === 'center' ? '' : e.target.value)}>
+              {HERO_TEXT_ALIGNS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {heroTextOffset('heroTextOffset', 'Hero Text Horizontal Offset', 'e.g. -120px or -10%',
+              'Moves the hero text sideways from the centre of the photo, in pixels (120px) or a percentage of the screen width (10%). Negative moves it left, positive moves it right. Applies on tablets and computers; on phones the names already fill the width.')}
+            {heroTextOffset('heroTextOffsetY', 'Hero Text Vertical Offset', 'e.g. 80px or 15%',
+              'Moves the hero text up or down from the middle of the photo, in pixels (80px) or a percentage of the photo’s height (15%). Positive moves it up, negative moves it down, like the photo’s own offset. Applies on phones too, unless Phone Hero Text Vertical Offset is set.')}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {heroTextOffset('heroMobileTextOffsetY', 'Phone Hero Text Vertical Offset', 'e.g. -60px or -10%',
+              'Moves the hero text up or down on phones only, in pixels or a percentage of the photo’s height. Positive moves it up, negative moves it down. Leave empty for phones to follow Hero Text Vertical Offset; computers always use that one.')}
+          </div>
           <div>
             <label htmlFor="welcomeMessage" className={labelClass}>Welcome Message</label>
             <textarea id="welcomeMessage" className={`${inputClass} resize-none`} rows={3} value={(form.welcomeMessage as string) ?? ''} onChange={e => set('welcomeMessage', e.target.value)} />
@@ -249,7 +288,7 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        <Section id="fonts" description="The three fonts used across the public site. Keep a default, pick a Google font, or upload your own font file.">
+        <Section id="fonts" description="The fonts used across the public site. Keep a default, pick a Google font, or upload your own font file.">
           <FontSettings form={form} set={set} onUploadBusy={setUploadBusy} />
         </Section>
 
