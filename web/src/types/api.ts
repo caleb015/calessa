@@ -22,6 +22,12 @@ export interface WeddingSettings {
   themeOverlayScrim: string | null;
   welcomeMessage: string | null;
   rsvpHeading?: string | null;
+  fontHeading?: string | null;
+  fontHeadingUrl?: string | null;
+  fontBody?: string | null;
+  fontBodyUrl?: string | null;
+  fontAccent?: string | null;
+  fontAccentUrl?: string | null;
   welcomeImageUrl?: string | null;
   rsvpBannerImageUrl?: string | null;
   isPublic: boolean;

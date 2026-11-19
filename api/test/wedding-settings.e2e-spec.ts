@@ -207,7 +207,7 @@ describe('WeddingSettings (e2e)', () => {
     const patch = (body: object) => request(app.getHttpServer()).patch('/admin/settings').set('Authorization', token).send(body);
 
     afterAll(async () => {
-      await prisma.weddingSettings.update({ where: { id: 'singleton' }, data: { welcomeImageUrl: null, rsvpBannerImageUrl: null, rsvpHeading: null } });
+      await prisma.weddingSettings.update({ where: { id: 'singleton' }, data: { welcomeImageUrl: null, rsvpBannerImageUrl: null, rsvpHeading: null, fontHeading: null, fontHeadingUrl: null, fontBody: null, fontBodyUrl: null, fontAccent: null, fontAccentUrl: null } });
     });
 
     it('saves the welcome and RSVP banner photos and shows them on the public site', async () => {
@@ -231,6 +231,28 @@ describe('WeddingSettings (e2e)', () => {
       await patch({ rsvpHeading: 'x'.repeat(101) }).expect(400);
       await patch({ rsvpHeading: '' }).expect(200);
     });
+
+    it('saves fonts (a Google Fonts name, or an uploaded file) and shows them on the public site', async () => {
+      const file = 'https://res.cloudinary.com/demo/raw/upload/v1/calessa/fonts/slopes.ttf';
+      await patch({ fontHeading: 'Cormorant Garamond', fontAccent: 'Slopes', fontAccentUrl: file }).expect(200);
+      const pub = (await request(app.getHttpServer()).get('/public/settings').expect(200)).body;
+      expect(pub).toMatchObject({ fontHeading: 'Cormorant Garamond', fontHeadingUrl: null, fontAccent: 'Slopes', fontAccentUrl: file, fontBody: null });
+    });
+
+    it('goes back to the default font when a font field is emptied', async () => {
+      await patch({ fontBody: 'Jost' }).expect(200);
+      const res = await patch({ fontBody: '', fontAccent: '', fontAccentUrl: '' }).expect(200);
+      expect(res.body).toMatchObject({ fontBody: null, fontAccent: null, fontAccentUrl: null });
+    });
+
+    it.each([
+      ['fontHeading', 'Lora; color: red'],
+      ['fontHeading', '"Lora"'],
+      ['fontBody', 'x'.repeat(61)],
+      ['fontAccentUrl', 'http://example.com/font.ttf'],
+      ['fontAccentUrl', 'https://example.com/font.exe'],
+      ['fontAccentUrl', 'https://example.com/a.ttf") ; x(url'],
+    ])('rejects %s = %s', (key, value) => patch({ [key]: value }).expect(400));
 
     it('turns random order for the homepage photos on and off', async () => {
       expect((await patch({ homepageGalleryShuffle: true }).expect(200)).body.homepageGalleryShuffle).toBe(true);

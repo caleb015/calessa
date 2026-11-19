@@ -31,6 +31,7 @@ export const adminApi = {
 
   // Image uploads (signature for a direct Cloudinary upload)
   getUploadSignature: () => post('/admin/uploads/signature', {}),
+  getFontUploadSignature: () => post('/admin/uploads/signature', { kind: 'font' }),
 
   // Preview (view the site while it is not public)
   createPreviewToken: () => post<{ token: string }>('/admin/preview-token', {}),

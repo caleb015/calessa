@@ -167,7 +167,7 @@ export default function RsvpEntryPage({
 
             {/* Input + instruction — solid background so flowers don't bleed through */}
             <div className={`mt-4 transition-opacity duration-300 ${phase === 'opening' ? 'opacity-0' : ''} bg-[var(--background)] rounded-xl px-4 py-4 shadow-md`}>
-              <p className="text-xl text-[var(--muted)] [font-family:'Slopes'] mb-3">{subtext}</p>
+              <p className="text-xl text-[var(--muted)] [font-family:var(--font-accent)] mb-3">{subtext}</p>
               <input
                 type="text"
                 value={code}

@@ -49,5 +49,24 @@ describe('Image upload signature (e2e)', () => {
     expect(JSON.stringify(res.body)).not.toContain('topsecret');
     const { allowed_formats, folder, timestamp } = res.body;
     expect(res.body.signature).toBe(signParams({ allowed_formats, folder, timestamp }, 'topsecret'));
+    expect(res.body.allowed_formats).not.toMatch(/ttf|woff/);
   });
+
+  it('signs font file uploads into the fonts folder, as raw files, for font formats only', async () => {
+    process.env.CLOUDINARY_URL = 'cloudinary://111222333:topsecret@demo-cloud';
+    const res = await request(app.getHttpServer()).post('/admin/uploads/signature').set('Authorization', token)
+      .send({ kind: 'font' }).expect(201);
+    expect(res.body).toMatchObject({ folder: 'calessa/fonts', allowed_formats: 'woff2,woff,ttf,otf', resourceType: 'raw' });
+    expect(JSON.stringify(res.body)).not.toContain('topsecret');
+    const { allowed_formats, folder, timestamp } = res.body;
+    expect(res.body.signature).toBe(signParams({ allowed_formats, folder, timestamp }, 'topsecret'));
+  });
+
+  it('rejects unknown upload kinds', async () => {
+    process.env.CLOUDINARY_URL = 'cloudinary://111222333:topsecret@demo-cloud';
+    await request(app.getHttpServer()).post('/admin/uploads/signature').set('Authorization', token).send({ kind: 'video' }).expect(400);
+  });
+
+  it('requires login for font uploads too', () =>
+    request(app.getHttpServer()).post('/admin/uploads/signature').send({ kind: 'font' }).expect(401));
 });

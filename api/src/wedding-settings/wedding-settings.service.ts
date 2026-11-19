@@ -37,6 +37,10 @@ export class WeddingSettingsService {
     // An emptied photo field removes the photo.
     if (dto.welcomeImageUrl === '') data.welcomeImageUrl = null;
     if (dto.rsvpBannerImageUrl === '') data.rsvpBannerImageUrl = null;
+    // An emptied font field goes back to the default font.
+    for (const key of ['fontHeading', 'fontHeadingUrl', 'fontBody', 'fontBodyUrl', 'fontAccent', 'fontAccentUrl'] as const) {
+      if (dto[key] === '') data[key] = null;
+    }
     if (dto.weddingDate) data.weddingDate = new Date(dto.weddingDate);
     if (dto.rsvpDeadline) data.rsvpDeadline = new Date(dto.rsvpDeadline);
     const weddingDate = dto.weddingDate ? new Date(dto.weddingDate) : null;

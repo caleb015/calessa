@@ -3,6 +3,7 @@ import DesktopTopNav from '@/components/public/DesktopTopNav';
 import Link from 'next/link';
 import Maintenance from '@/components/public/Maintenance';
 import { publicApi } from '@/lib/api';
+import SiteFonts, { siteFontStyle } from '@/components/public/SiteFonts';
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const settings = await publicApi.getSettings().catch(() => null);
@@ -23,12 +24,15 @@ export default async function PublicLayout({ children }: { children: React.React
   if (settings?.themeInverseBackground) themeVars['--inverse-background'] = settings.themeInverseBackground;
   if (settings?.themeOverlayText) themeVars['--overlay-text'] = settings.themeOverlayText;
   if (settings?.themeOverlayScrim) themeVars['--overlay-scrim'] = settings.themeOverlayScrim;
+  // Fonts chosen in Settings (anything not chosen keeps the site's default font).
+  Object.assign(themeVars, siteFontStyle(settings));
 
   // Site switched off: visitors get the maintenance page; admins previewing see the site with a banner.
   const hidden = settings?.isPublic === false;
   if (hidden && !settings?.preview) {
     return (
       <div style={themeVars as React.CSSProperties}>
+        <SiteFonts settings={settings} />
         <Maintenance coupleNames={coupleNames} weddingDate={settings?.weddingDate} />
       </div>
     );
@@ -36,6 +40,7 @@ export default async function PublicLayout({ children }: { children: React.React
 
   return (
     <div className="min-h-screen flex flex-col" style={themeVars as React.CSSProperties}>
+      <SiteFonts settings={settings} />
       {hidden && (
         <div className="bg-amber-100 text-amber-900 text-xs text-center px-4 py-2">
           Preview: the site is not public, so visitors see the Under Maintenance page.{' '}

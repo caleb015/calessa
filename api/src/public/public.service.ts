@@ -67,6 +67,7 @@ export class PublicService {
       welcomeImageUrl, rsvpBannerImageUrl,
       themeBackground, themeForeground, themeMuted, themeAccent, themeBorder,
       themeSurface, themeInverseBackground, themeOverlayText, themeOverlayScrim,
+      fontHeading, fontHeadingUrl, fontBody, fontBodyUrl, fontAccent, fontAccentUrl,
       isPublic, isRsvpEnabled, allowMaybe,
       enableMealPreference, enableSongRequest, enableGuestbook,
     } = settings;
@@ -77,6 +78,7 @@ export class PublicService {
       welcomeImageUrl, rsvpBannerImageUrl,
       themeBackground, themeForeground, themeMuted, themeAccent, themeBorder,
       themeSurface, themeInverseBackground, themeOverlayText, themeOverlayScrim,
+      fontHeading, fontHeadingUrl, fontBody, fontBodyUrl, fontAccent, fontAccentUrl,
       isPublic, isRsvpEnabled, allowMaybe,
       enableMealPreference, enableSongRequest, enableGuestbook,
     };

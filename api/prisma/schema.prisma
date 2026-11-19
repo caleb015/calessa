@@ -55,6 +55,14 @@ model WeddingSettings {
   themeInverseBackground    String?
   themeOverlayText          String?
   themeOverlayScrim         String?
+  /// Fonts for the public site, one per role (headings, body text, handwritten accent). A name alone
+  /// is a Google Fonts family; a name with a file link is an uploaded font. Empty = the site's default.
+  fontHeading               String?
+  fontHeadingUrl            String?
+  fontBody                  String?
+  fontBodyUrl               String?
+  fontAccent                String?
+  fontAccentUrl             String?
   welcomeMessage            String?
   /// Photo beside the welcome message on the homepage (none = message only).
   welcomeImageUrl           String?

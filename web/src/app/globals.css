@@ -21,6 +21,8 @@
   --overlay-text: #ffffff;
   /* Gradient scrim behind --overlay-text — keep these two in sync for contrast */
   --overlay-scrim: #000000;
+  /* Handwritten accent font (can be changed in Dashboard → Settings → Fonts) */
+  --font-accent: 'Slopes', cursive;
 }
 
 @theme inline {

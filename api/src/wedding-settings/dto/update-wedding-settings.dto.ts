@@ -3,6 +3,10 @@ import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, Matches, Max, Max
 // Empty string is allowed — it means "clear this override and use the default".
 // For photo links, an empty string removes the photo.
 const PHOTO_URL = /^$|^https?:\/\/\S+$/;
+// Font names: letters, digits, spaces and hyphens (a Google Fonts family, or a label for an uploaded font).
+const FONT_NAME = /^$|^[A-Za-z0-9][A-Za-z0-9 -]{0,59}$/;
+// Uploaded font files: a secure web link to a font file.
+const FONT_URL = /^$|^https:\/\/[^\s"'()<>]+\.(woff2|woff|ttf|otf)$/i;
 const HEX_COLOR = /^$|^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
 
 export class UpdateWeddingSettingsDto {
@@ -109,6 +113,39 @@ export class UpdateWeddingSettingsDto {
   @IsOptional()
   @IsString()
   welcomeMessage?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(FONT_NAME, { message: 'fontHeading must be a font name (letters, numbers, spaces and hyphens)' })
+  fontHeading?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  @Matches(FONT_URL, { message: 'fontHeadingUrl must be an https link to a .woff2, .woff, .ttf or .otf file' })
+  fontHeadingUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(FONT_NAME, { message: 'fontBody must be a font name (letters, numbers, spaces and hyphens)' })
+  fontBody?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  @Matches(FONT_URL, { message: 'fontBodyUrl must be an https link to a .woff2, .woff, .ttf or .otf file' })
+  fontBodyUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(FONT_NAME, { message: 'fontAccent must be a font name (letters, numbers, spaces and hyphens)' })
+  fontAccent?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  @Matches(FONT_URL, { message: 'fontAccentUrl must be an https link to a .woff2, .woff, .ttf or .otf file' })
+  fontAccentUrl?: string;
 
   @IsOptional()
   @IsString()

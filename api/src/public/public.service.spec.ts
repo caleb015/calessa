@@ -30,6 +30,12 @@ const mockSettings = {
   welcomeMessage: null,
   welcomeImageUrl: null,
   rsvpHeading: null,
+  fontHeading: null,
+  fontHeadingUrl: null,
+  fontBody: null,
+  fontBodyUrl: null,
+  fontAccent: null,
+  fontAccentUrl: null,
   rsvpBannerImageUrl: null,
   isPublic: true,
   isRsvpEnabled: true,
@@ -78,6 +84,7 @@ describe('PublicService', () => {
       expect(result).toHaveProperty('heroImageHeight');
       expect(result).toHaveProperty('welcomeImageUrl');
       expect(result).toHaveProperty('rsvpHeading');
+      ['fontHeading', 'fontHeadingUrl', 'fontBody', 'fontBodyUrl', 'fontAccent', 'fontAccentUrl'].forEach(k => expect(result).toHaveProperty(k));
       expect(result).toHaveProperty('rsvpBannerImageUrl');
       expect(result).toHaveProperty('rsvpTagline');
       expect(result).toHaveProperty('rsvpSubtext');

@@ -7,6 +7,7 @@ import ImageUploadButton from '@/components/dashboard/ImageUploadButton';
 import InfoTooltip from '@/components/dashboard/InfoTooltip';
 import ColorInput from '@/components/dashboard/ColorInput';
 import FloatingSaveButton from '@/components/dashboard/FloatingSaveButton';
+import FontSettings from '@/components/dashboard/FontSettings';
 import { toLocalDateTimeInput, fromLocalDateTimeInput } from '@/lib/datetime';
 
 const THEME_COLORS: { key: string; label: string; tooltip?: string; defaultValue: string }[] = [
@@ -48,6 +49,7 @@ const SECTIONS = [
   { id: 'homepage', title: 'Homepage' },
   { id: 'rsvp', title: 'RSVP page' },
   { id: 'look', title: 'Look & feel' },
+  { id: 'fonts', title: 'Fonts' },
   { id: 'sharing', title: 'Browser tab & sharing' },
   { id: 'other', title: 'Other features' },
 ] as const;
@@ -245,6 +247,10 @@ export default function SettingsPage() {
               />
             ))}
           </div>
+        </Section>
+
+        <Section id="fonts" description="The three fonts used across the public site. Keep a default, pick a Google font, or upload your own font file.">
+          <FontSettings form={form} set={set} onUploadBusy={setUploadBusy} />
         </Section>
 
         <Section id="sharing" description="How the site appears in a browser tab, in search results, and when its link is shared.">
