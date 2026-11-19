@@ -190,6 +190,13 @@ export default function SettingsPage() {
               <ImagePreview src={(form.monogramUrl as string) ?? ''} />
             </div>
             <div>
+              <label htmlFor="rsvpHeading" className={labelClass}>
+                RSVP Page Heading
+                <InfoTooltip text="The small heading above “RSVP” on the RSVP page. Leave empty to show “You're Invited”." />
+              </label>
+              <input id="rsvpHeading" className={inputClass} placeholder="You're Invited" value={(form.rsvpHeading as string) ?? ''} onChange={e => set('rsvpHeading', e.target.value)} />
+            </div>
+            <div>
               <label className={labelClass}>RSVP Page Tagline</label>
               <input className={inputClass} placeholder="We can't wait to celebrate with you." value={(form.rsvpTagline as string) ?? ''} onChange={e => set('rsvpTagline', e.target.value)} />
             </div>

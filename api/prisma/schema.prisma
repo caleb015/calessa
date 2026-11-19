@@ -42,6 +42,8 @@ model WeddingSettings {
   heroImageOffsetY          Int?
   heroImageHeight           Int?
   monogramUrl               String?
+  /// Heading on the RSVP page (empty = "You're Invited").
+  rsvpHeading               String?
   rsvpTagline               String?
   rsvpSubtext               String?
   themeBackground           String?

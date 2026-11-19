@@ -37,8 +37,11 @@ beforeEach(() => {
 describe('Settings: homepage photos', () => {
   it('saves a welcome photo and an RSVP banner photo', async () => {
     render(<SettingsPage />);
-    await userEvent.type(await screen.findByLabelText(/Welcome Photo/), CLD('portrait'));
-    await userEvent.type(screen.getByLabelText(/RSVP Banner Photo/), CLD('fuji'));
+    // Pasted in one go (typing long links key by key is slow and adds nothing here).
+    await userEvent.click(await screen.findByLabelText(/Welcome Photo/));
+    await userEvent.paste(CLD('portrait'));
+    await userEvent.click(screen.getByLabelText(/RSVP Banner Photo/));
+    await userEvent.paste(CLD('fuji'));
     await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
     await waitFor(() => expect(admin.updateSettings).toHaveBeenCalledWith(expect.objectContaining({
       welcomeImageUrl: CLD('portrait'), rsvpBannerImageUrl: CLD('fuji'),
@@ -196,7 +199,8 @@ describe('Gallery: quick tick boxes on each photo', () => {
     await userEvent.click(screen.getByRole('button', { name: '+ Add image' }));
     expect(screen.getByRole('checkbox', { name: 'Published' })).toBeChecked(); // the form's own box (rows say "Published: …")
     expect(screen.getByRole('checkbox', { name: 'Show on homepage' })).toBeChecked();
-    await userEvent.type(screen.getByPlaceholderText('Upload an image or paste a link'), CLD('new'));
+    await userEvent.click(screen.getByPlaceholderText('Upload an image or paste a link'));
+    await userEvent.paste(CLD('new'));
     await userEvent.click(screen.getByRole('button', { name: 'Add image' }));
     await waitFor(() => expect(admin.createGalleryImage).toHaveBeenCalledWith(expect.objectContaining({
       imageUrl: CLD('new'), isPublished: true, showOnHomepage: true,

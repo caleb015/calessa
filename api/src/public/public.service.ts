@@ -63,7 +63,7 @@ export class PublicService {
     // Only expose fields safe for public consumption
     const {
       coupleNameA, coupleNameB, weddingDate, siteTitle,
-      siteDescription, heroImageUrl, heroImageOffsetX, heroImageOffsetY, heroImageHeight, monogramUrl, rsvpTagline, rsvpSubtext, welcomeMessage,
+      siteDescription, heroImageUrl, heroImageOffsetX, heroImageOffsetY, heroImageHeight, monogramUrl, rsvpHeading, rsvpTagline, rsvpSubtext, welcomeMessage,
       welcomeImageUrl, rsvpBannerImageUrl,
       themeBackground, themeForeground, themeMuted, themeAccent, themeBorder,
       themeSurface, themeInverseBackground, themeOverlayText, themeOverlayScrim,
@@ -73,7 +73,7 @@ export class PublicService {
 
     return {
       coupleNameA, coupleNameB, weddingDate, siteTitle,
-      siteDescription, heroImageUrl, heroImageOffsetX, heroImageOffsetY, heroImageHeight, monogramUrl, rsvpTagline, rsvpSubtext, welcomeMessage,
+      siteDescription, heroImageUrl, heroImageOffsetX, heroImageOffsetY, heroImageHeight, monogramUrl, rsvpHeading, rsvpTagline, rsvpSubtext, welcomeMessage,
       welcomeImageUrl, rsvpBannerImageUrl,
       themeBackground, themeForeground, themeMuted, themeAccent, themeBorder,
       themeSurface, themeInverseBackground, themeOverlayText, themeOverlayScrim,

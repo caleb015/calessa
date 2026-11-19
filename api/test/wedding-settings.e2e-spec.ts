@@ -207,7 +207,7 @@ describe('WeddingSettings (e2e)', () => {
     const patch = (body: object) => request(app.getHttpServer()).patch('/admin/settings').set('Authorization', token).send(body);
 
     afterAll(async () => {
-      await prisma.weddingSettings.update({ where: { id: 'singleton' }, data: { welcomeImageUrl: null, rsvpBannerImageUrl: null } });
+      await prisma.weddingSettings.update({ where: { id: 'singleton' }, data: { welcomeImageUrl: null, rsvpBannerImageUrl: null, rsvpHeading: null } });
     });
 
     it('saves the welcome and RSVP banner photos and shows them on the public site', async () => {
@@ -224,6 +224,13 @@ describe('WeddingSettings (e2e)', () => {
 
     it.each(['not a link', 'javascript:alert(1)', 'ftp://example.com/a.jpg'])('rejects %s as a photo link', bad =>
       patch({ rsvpBannerImageUrl: bad }).expect(400));
+
+    it('saves the RSVP page heading, shows it on the public site, and limits its length', async () => {
+      await patch({ rsvpHeading: 'Join us in Antipolo' }).expect(200);
+      expect((await request(app.getHttpServer()).get('/public/settings').expect(200)).body.rsvpHeading).toBe('Join us in Antipolo');
+      await patch({ rsvpHeading: 'x'.repeat(101) }).expect(400);
+      await patch({ rsvpHeading: '' }).expect(200);
+    });
 
     it('turns random order for the homepage photos on and off', async () => {
       expect((await patch({ homepageGalleryShuffle: true }).expect(200)).body.homepageGalleryShuffle).toBe(true);

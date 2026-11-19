@@ -14,6 +14,8 @@ const ANIMATION_MS = 600;
 interface Props {
   initialCode?: string;
   coupleNames?: string;
+  /** The small heading above "RSVP" (editable in Settings). */
+  heading?: string;
   tagline?: string;
   subtext?: string;
 }
@@ -21,6 +23,7 @@ interface Props {
 export default function RsvpEntryPage({
   initialCode = '',
   coupleNames = 'Caleb & Raissa',
+  heading = "You're Invited",
   tagline = "We can't wait to celebrate with you.",
   subtext = 'My Hoomans are tying the knot!!',
 }: Props) {
@@ -106,7 +109,7 @@ export default function RsvpEntryPage({
           </div>
 
           <p className={`text-xs uppercase tracking-[0.3em] text-[var(--muted)] mb-2 transition-opacity duration-300 ${phase === 'opening' ? 'opacity-0' : ''}`}>
-            You&apos;re Invited
+            {heading}
           </p>
           <h1 className={`text-3xl md:text-4xl font-serif mb-0 transition-opacity duration-300 ${phase === 'opening' ? 'opacity-0' : ''}`}>
             RSVP

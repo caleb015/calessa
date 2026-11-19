@@ -112,6 +112,11 @@ export class UpdateWeddingSettingsDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
+  rsvpHeading?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(2000)
   @Matches(PHOTO_URL, { message: 'welcomeImageUrl must be a web link (https://…)' })
   welcomeImageUrl?: string;

@@ -9,6 +9,7 @@ export default async function RsvpPage({ searchParams }: { searchParams: Promise
     <RsvpEntryPage
       initialCode={code ?? ''}
       coupleNames={settings ? `${settings.coupleNameA} & ${settings.coupleNameB}` : undefined}
+      heading={settings?.rsvpHeading?.trim() || undefined}
       tagline={settings?.rsvpTagline ?? undefined}
       subtext={settings?.rsvpSubtext ?? undefined}
     />

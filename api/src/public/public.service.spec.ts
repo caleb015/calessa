@@ -29,6 +29,7 @@ const mockSettings = {
   themeOverlayScrim: null,
   welcomeMessage: null,
   welcomeImageUrl: null,
+  rsvpHeading: null,
   rsvpBannerImageUrl: null,
   isPublic: true,
   isRsvpEnabled: true,
@@ -76,6 +77,7 @@ describe('PublicService', () => {
       expect(result).toHaveProperty('heroImageOffsetY');
       expect(result).toHaveProperty('heroImageHeight');
       expect(result).toHaveProperty('welcomeImageUrl');
+      expect(result).toHaveProperty('rsvpHeading');
       expect(result).toHaveProperty('rsvpBannerImageUrl');
       expect(result).toHaveProperty('rsvpTagline');
       expect(result).toHaveProperty('rsvpSubtext');
