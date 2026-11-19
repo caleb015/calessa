@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { adminApi } from '@/lib/adminApi';
+import FloatingSaveButton from '@/components/dashboard/FloatingSaveButton';
 
 interface DetailsPageForm {
   headerEyebrow: string;
@@ -30,6 +31,7 @@ export default function DetailsPageEditor() {
   const [defaults, setDefaults] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const saveButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     adminApi.getDetailsPage()
@@ -112,6 +114,7 @@ export default function DetailsPageEditor() {
 
       <div className="flex items-center gap-3">
         <button
+          ref={saveButton}
           onClick={handleSave}
           disabled={saving || !dirty}
           className="bg-gray-900 text-white px-5 py-2 rounded-md text-sm hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -121,6 +124,7 @@ export default function DetailsPageEditor() {
         {dirty && !msg && <span className="text-xs text-amber-600">Unsaved changes</span>}
         {msg && <span className={`text-sm ${msg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>{msg.text}</span>}
       </div>
+      <FloatingSaveButton saveButton={saveButton} dirty={dirty} onSave={handleSave} disabled={saving} label={saving ? 'Saving…' : 'Save changes'} />
     </div>
   );
 }

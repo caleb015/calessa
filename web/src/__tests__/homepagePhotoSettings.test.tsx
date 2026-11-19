@@ -69,9 +69,9 @@ describe('Settings: homepage photos', () => {
     global.fetch = jest.fn().mockReturnValue(new Promise(r => { finish = r; })) as jest.Mock;
     render(<SettingsPage />);
     await screen.findByLabelText(/Welcome Photo/);
-    // Two "Choose image file" inputs belong to the hero and monogram; the welcome photo's is third.
-    const inputs = screen.getAllByLabelText('Choose image file');
-    fireEvent.change(inputs[2], { target: { files: [new File(['x'], 'me.jpg', { type: 'image/jpeg' })] } });
+    // The welcome photo's own upload box (each photo field has one).
+    const field = screen.getByLabelText(/Welcome Photo/).closest('[data-field]') as HTMLElement;
+    fireEvent.change(within(field).getByLabelText('Choose image file'), { target: { files: [new File(['x'], 'me.jpg', { type: 'image/jpeg' })] } });
     expect(await screen.findByRole('button', { name: 'Waiting for upload…' })).toBeDisabled();
 
     finish({ ok: true, json: async () => ({ secure_url: 'https://res.cloudinary.com/demo/image/upload/v1/calessa/me.jpg' }) });

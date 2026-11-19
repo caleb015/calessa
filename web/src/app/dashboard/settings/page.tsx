@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { adminApi } from '@/lib/adminApi';
 import ImagePreview from '@/components/dashboard/ImagePreview';
 import ImageUploadButton from '@/components/dashboard/ImageUploadButton';
 import InfoTooltip from '@/components/dashboard/InfoTooltip';
 import ColorInput from '@/components/dashboard/ColorInput';
+import FloatingSaveButton from '@/components/dashboard/FloatingSaveButton';
 import { toLocalDateTimeInput, fromLocalDateTimeInput } from '@/lib/datetime';
 
 const THEME_COLORS: { key: string; label: string; tooltip?: string; defaultValue: string }[] = [
@@ -40,19 +41,48 @@ const THEME_COLORS: { key: string; label: string; tooltip?: string; defaultValue
   },
 ];
 
+/** The page's sections, in order (also used for the jump links at the top). */
+const SECTIONS = [
+  { id: 'visibility', title: 'Site visibility' },
+  { id: 'couple', title: 'The couple & dates' },
+  { id: 'homepage', title: 'Homepage' },
+  { id: 'rsvp', title: 'RSVP page' },
+  { id: 'look', title: 'Look & feel' },
+  { id: 'sharing', title: 'Browser tab & sharing' },
+  { id: 'other', title: 'Other features' },
+] as const;
+type SectionId = (typeof SECTIONS)[number]['id'];
+
+function Section({ id, description, children }: { id: SectionId; description?: string; children: React.ReactNode }) {
+  const title = SECTIONS.find(s => s.id === id)!.title;
+  return (
+    <section id={id} aria-labelledby={`${id}-title`} className="bg-white rounded-lg border border-gray-200 p-5 scroll-mt-6">
+      <h2 id={`${id}-title`} className="text-sm font-semibold text-gray-800">{title}</h2>
+      {description && <p className="text-xs text-gray-500 mt-1">{description}</p>}
+      <div className="mt-4 space-y-4">{children}</div>
+    </section>
+  );
+}
+
+/** Settings without bookkeeping fields, for comparing and saving. */
+const editable = ({ id, createdAt, updatedAt, ...rest }: Record<string, unknown>) => rest; // eslint-disable-line @typescript-eslint/no-unused-vars
+
 export default function SettingsPage() {
   const [form, setForm] = useState<Record<string, unknown>>({});
+  const [saved, setSaved] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const saveButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     adminApi.getSettings()
-      .then(data => { setForm(data as Record<string, unknown>); setLoading(false); })
+      .then(data => { setForm(data as Record<string, unknown>); setSaved(data as Record<string, unknown>); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
-  const set = (key: string, value: unknown) => setForm(prev => ({ ...prev, [key]: value }));
+  const set = (key: string, value: unknown) => { setForm(prev => ({ ...prev, [key]: value })); setMsg(null); };
+  const dirty = JSON.stringify(editable(form)) !== JSON.stringify(editable(saved));
 
   // Photo fields with an upload still running; saving waits until they finish.
   const [uploading, setUploading] = useState<Set<string>>(new Set());
@@ -65,13 +95,16 @@ export default function SettingsPage() {
       return next;
     });
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const save = async () => {
     setSaving(true);
     setMsg(null);
     try {
-      const { id, createdAt, updatedAt, ...payload } = form;
-      await adminApi.updateSettings(payload);
+      const sent = form;
+      const res = await adminApi.updateSettings(editable(sent)) as Record<string, unknown> | undefined;
+      // What's now saved; anything typed while saving stays as an unsaved change.
+      const now = res && typeof res === 'object' ? { ...sent, ...res } : sent;
+      setSaved(now);
+      setForm(current => (current === sent ? now : current));
       setMsg({ type: 'success', text: 'Settings saved.' });
     } catch (err: unknown) {
       setMsg({ type: 'error', text: err instanceof Error ? err.message : 'Failed to save.' });
@@ -79,163 +112,127 @@ export default function SettingsPage() {
       setSaving(false);
     }
   };
+  const handleSave = (e: React.FormEvent) => { e.preventDefault(); save(); };
 
   if (loading) return <div className="p-8 text-gray-400 text-sm">Loading...</div>;
 
   const inputClass = 'w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent';
   const labelClass = 'block text-xs font-medium text-gray-600 mb-1';
+  const busyLabel = saving ? 'Saving…' : uploading.size > 0 ? 'Waiting for upload…' : null;
+
+  const text = (key: string, label: React.ReactNode, opts: { placeholder?: string; tooltip?: string; id?: string } = {}) => (
+    <div>
+      <label htmlFor={opts.id ?? key} className={labelClass}>
+        {label}
+        {opts.tooltip && <InfoTooltip text={opts.tooltip} />}
+      </label>
+      <input id={opts.id ?? key} className={inputClass} placeholder={opts.placeholder} value={(form[key] as string) ?? ''} onChange={e => set(key, e.target.value)} />
+    </div>
+  );
+  const photo = (key: string, label: string, tooltip?: string) => (
+    <div data-field={key}>
+      <label htmlFor={key} className={labelClass}>
+        {label}
+        {tooltip && <InfoTooltip text={tooltip} />}
+      </label>
+      <input id={key} className={inputClass} placeholder="Upload an image or paste a link" value={(form[key] as string) ?? ''} onChange={e => set(key, e.target.value)} />
+      <ImageUploadButton onUploaded={url => set(key, url)} onBusyChange={busy => setUploadBusy(key, busy)} />
+      <ImagePreview src={(form[key] as string) ?? ''} />
+    </div>
+  );
+  const toggle = (key: string, label: string, hint?: string) => (
+    <label key={key} className="flex items-start gap-3 cursor-pointer">
+      <input type="checkbox" className="w-4 h-4 rounded mt-0.5" checked={!!form[key]} onChange={e => set(key, e.target.checked)} />
+      <span className="text-sm text-gray-700">
+        {label}
+        {hint && <span className="block text-xs text-gray-400">{hint}</span>}
+      </span>
+    </label>
+  );
+  const percent = (key: string, label: string, tooltip: string, placeholder: string, min: number, max: number) => (
+    <div>
+      <label htmlFor={key} className={labelClass}>
+        {label}
+        <InfoTooltip text={tooltip} />
+      </label>
+      <input id={key} type="number" min={min} max={max} className={inputClass} placeholder={placeholder}
+        value={(form[key] as number) ?? ''}
+        onChange={e => set(key, e.target.value === '' ? null : parseInt(e.target.value, 10))}
+      />
+    </div>
+  );
 
   return (
     <div className="p-8 max-w-2xl">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-8">Wedding Settings</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-4">Wedding Settings</h1>
+
+      <nav aria-label="Settings sections" className="flex flex-wrap gap-1.5 mb-6">
+        {SECTIONS.map(s => (
+          <a key={s.id} href={`#${s.id}`} className="text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-100">
+            {s.title}
+          </a>
+        ))}
+      </nav>
 
       <form onSubmit={handleSave} className="space-y-6">
 
-        {/* Couple */}
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">The Couple</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Name A</label>
-              <input className={inputClass} value={(form.coupleNameA as string) ?? ''} onChange={e => set('coupleNameA', e.target.value)} />
-            </div>
-            <div>
-              <label className={labelClass}>Name B</label>
-              <input className={inputClass} value={(form.coupleNameB as string) ?? ''} onChange={e => set('coupleNameB', e.target.value)} />
-            </div>
-          </div>
-        </div>
+        <Section id="visibility" description="While the site is private, visitors see an Under Maintenance page with a countdown. You can still look around with Preview.">
+          {toggle('isPublic', 'Site is public')}
+        </Section>
 
-        {/* Dates */}
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">Dates</h2>
+        <Section id="couple">
+          <div className="grid grid-cols-2 gap-4">
+            {text('coupleNameA', 'Name A')}
+            {text('coupleNameB', 'Name B')}
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Wedding Date</label>
-              <input type="datetime-local" className={inputClass}
+              <label htmlFor="weddingDate" className={labelClass}>Wedding Date</label>
+              <input id="weddingDate" type="datetime-local" className={inputClass}
                 value={form.weddingDate ? toLocalDateTimeInput(form.weddingDate as string) : ''}
                 onChange={e => set('weddingDate', fromLocalDateTimeInput(e.target.value))}
               />
             </div>
             <div>
-              <label className={labelClass}>RSVP Deadline</label>
-              <input type="datetime-local" className={inputClass}
+              <label htmlFor="rsvpDeadline" className={labelClass}>RSVP Deadline</label>
+              <input id="rsvpDeadline" type="datetime-local" className={inputClass}
                 value={form.rsvpDeadline ? toLocalDateTimeInput(form.rsvpDeadline as string) : ''}
                 onChange={e => set('rsvpDeadline', fromLocalDateTimeInput(e.target.value))}
               />
             </div>
           </div>
-        </div>
+        </Section>
 
-        {/* Site */}
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">Site Content</h2>
-          <div className="space-y-3">
-            <div>
-              <label className={labelClass}>
-                Browser Tab Title
-                <InfoTooltip text="Shown in the browser tab and as the title when this page is shared as a link preview." />
-              </label>
-              <input className={inputClass} value={(form.siteTitle as string) ?? ''} onChange={e => set('siteTitle', e.target.value)} />
-            </div>
-            <div>
-              <label className={labelClass}>
-                Browser Tab Description
-                <InfoTooltip text="Shown beneath the title in search results and link previews when this page is shared — not displayed anywhere on the site itself." />
-              </label>
-              <input className={inputClass} value={(form.siteDescription as string) ?? ''} onChange={e => set('siteDescription', e.target.value)} />
-            </div>
-            <div>
-              <label className={labelClass}>Hero Image URL</label>
-              <input className={inputClass} placeholder="Upload an image or paste a link" value={(form.heroImageUrl as string) ?? ''} onChange={e => set('heroImageUrl', e.target.value)} />
-              <ImageUploadButton onUploaded={url => set('heroImageUrl', url)} />
-              <ImagePreview src={(form.heroImageUrl as string) ?? ''} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>
-                  Hero Horizontal Offset
-                  <InfoTooltip text="Shifts the photo by this percentage of its own width. 0 = no shift (default). Positive moves the image right, negative moves it left." />
-                </label>
-                <input type="number" min={-50} max={50} className={inputClass} placeholder="0"
-                  value={(form.heroImageOffsetX as number) ?? ''}
-                  onChange={e => set('heroImageOffsetX', e.target.value === '' ? null : parseInt(e.target.value, 10))}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>
-                  Hero Vertical Offset
-                  <InfoTooltip text="Shifts the photo by this percentage of its own height. 0 = no shift (default). Positive moves the image up, negative moves it down." />
-                </label>
-                <input type="number" min={-50} max={50} className={inputClass} placeholder="0"
-                  value={(form.heroImageOffsetY as number) ?? ''}
-                  onChange={e => set('heroImageOffsetY', e.target.value === '' ? null : parseInt(e.target.value, 10))}
-                />
-              </div>
-            </div>
-            <div>
-              <label className={labelClass}>
-                Hero Image Height
-                <InfoTooltip text="Height of the hero section as a percentage of the screen height. 100 = full screen (default)." />
-              </label>
-              <input type="number" min={20} max={200} className={inputClass} placeholder="100"
-                value={(form.heroImageHeight as number) ?? ''}
-                onChange={e => set('heroImageHeight', e.target.value === '' ? null : parseInt(e.target.value, 10))}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Monogram URL</label>
-              <input className={inputClass} placeholder="Upload an image or paste a link" value={(form.monogramUrl as string) ?? ''} onChange={e => set('monogramUrl', e.target.value)} />
-              <ImageUploadButton onUploaded={url => set('monogramUrl', url)} />
-              <ImagePreview src={(form.monogramUrl as string) ?? ''} />
-            </div>
-            <div>
-              <label htmlFor="rsvpHeading" className={labelClass}>
-                RSVP Page Heading
-                <InfoTooltip text="The small heading above “RSVP” on the RSVP page. Leave empty to show “You're Invited”." />
-              </label>
-              <input id="rsvpHeading" className={inputClass} placeholder="You're Invited" value={(form.rsvpHeading as string) ?? ''} onChange={e => set('rsvpHeading', e.target.value)} />
-            </div>
-            <div>
-              <label className={labelClass}>RSVP Page Tagline</label>
-              <input className={inputClass} placeholder="We can't wait to celebrate with you." value={(form.rsvpTagline as string) ?? ''} onChange={e => set('rsvpTagline', e.target.value)} />
-            </div>
-            <div>
-              <label className={labelClass}>RSVP Page Subtext</label>
-              <input className={inputClass} placeholder="My Hoomans are tying the knot!!" value={(form.rsvpSubtext as string) ?? ''} onChange={e => set('rsvpSubtext', e.target.value)} />
-            </div>
-            <div>
-              <label className={labelClass}>Welcome Message</label>
-              <textarea className={`${inputClass} resize-none`} rows={3} value={(form.welcomeMessage as string) ?? ''} onChange={e => set('welcomeMessage', e.target.value)} />
-            </div>
-            <div>
-              <label htmlFor="welcomeImageUrl" className={labelClass}>
-                Welcome Photo (optional)
-                <InfoTooltip text="Shown beside the welcome message on the homepage. Leave empty to show the message on its own." />
-              </label>
-              <input id="welcomeImageUrl" className={inputClass} placeholder="Upload an image or paste a link" value={(form.welcomeImageUrl as string) ?? ''} onChange={e => set('welcomeImageUrl', e.target.value)} />
-              <ImageUploadButton onUploaded={url => set('welcomeImageUrl', url)} onBusyChange={busy => setUploadBusy('welcomeImageUrl', busy)} />
-              <ImagePreview src={(form.welcomeImageUrl as string) ?? ''} />
-            </div>
-            <div>
-              <label htmlFor="rsvpBannerImageUrl" className={labelClass}>
-                RSVP Banner Photo (optional)
-                <InfoTooltip text="Shown behind “Will you join us?” near the bottom of the homepage. Leave empty for a plain colour." />
-              </label>
-              <input id="rsvpBannerImageUrl" className={inputClass} placeholder="Upload an image or paste a link" value={(form.rsvpBannerImageUrl as string) ?? ''} onChange={e => set('rsvpBannerImageUrl', e.target.value)} />
-              <ImageUploadButton onUploaded={url => set('rsvpBannerImageUrl', url)} onBusyChange={busy => setUploadBusy('rsvpBannerImageUrl', busy)} />
-              <ImagePreview src={(form.rsvpBannerImageUrl as string) ?? ''} />
-            </div>
+        <Section id="homepage" description="The big photo at the top, the welcome message, and the photos further down the page.">
+          {photo('heroImageUrl', 'Hero Image URL')}
+          <div className="grid grid-cols-2 gap-4">
+            {percent('heroImageOffsetX', 'Hero Horizontal Offset', 'Shifts the photo by this percentage of its own width. 0 = no shift (default). Positive moves the image right, negative moves it left.', '0', -50, 50)}
+            {percent('heroImageOffsetY', 'Hero Vertical Offset', 'Shifts the photo by this percentage of its own height. 0 = no shift (default). Positive moves the image up, negative moves it down.', '0', -50, 50)}
           </div>
-        </div>
+          {percent('heroImageHeight', 'Hero Image Height', 'Height of the hero section as a percentage of the screen height. 100 = full screen (default).', '100', 20, 200)}
+          <div>
+            <label htmlFor="welcomeMessage" className={labelClass}>Welcome Message</label>
+            <textarea id="welcomeMessage" className={`${inputClass} resize-none`} rows={3} value={(form.welcomeMessage as string) ?? ''} onChange={e => set('welcomeMessage', e.target.value)} />
+          </div>
+          {photo('welcomeImageUrl', 'Welcome Photo (optional)', 'Shown beside the welcome message on the homepage. Leave empty to show the message on its own.')}
+          {photo('rsvpBannerImageUrl', 'RSVP Banner Photo (optional)', 'Shown behind “Will you join us?” near the bottom of the homepage. Leave empty for a plain colour.')}
+          {toggle('homepageGalleryShuffle', 'Show homepage Moments photos in random order (a fresh order on each visit)', 'Choose which photos appear in Content → Gallery, with “On homepage”.')}
+        </Section>
 
-        {/* Theme Colors */}
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-1 flex items-center">
-            Theme Colors
-            <InfoTooltip text="Controls the color palette across the public site. Leave a field blank to use the default shown." />
-          </h2>
-          <p className="text-xs text-gray-400 mb-4">Leave any field blank to use its default.</p>
+        <Section id="rsvp" description="The page guests use to reply, and what they can answer.">
+          {text('rsvpHeading', 'RSVP Page Heading', { placeholder: "You're Invited", tooltip: "The small heading above “RSVP” on the RSVP page. Leave empty to show “You're Invited”." })}
+          {text('rsvpTagline', 'RSVP Page Tagline', { placeholder: "We can't wait to celebrate with you.", tooltip: 'The small line under your names at the top of the RSVP page.' })}
+          {text('rsvpSubtext', 'RSVP Page Subtext', { placeholder: 'My Hoomans are tying the knot!!', tooltip: 'The handwritten line in the invitation code box, below Odie.' })}
+          <div className="space-y-3 pt-1">
+            {toggle('isRsvpEnabled', 'RSVPs open')}
+            {toggle('allowMaybe', 'Allow "Maybe" response')}
+            {toggle('enableMealPreference', 'Enable meal preference')}
+            {toggle('enableSongRequest', 'Enable song requests')}
+          </div>
+        </Section>
+
+        <Section id="look" description="The monogram and colours used across the public site. Leave a colour blank to use the default shown.">
+          {photo('monogramUrl', 'Monogram URL', 'Shown in the site’s top navigation and as the browser tab icon.')}
           <div className="grid grid-cols-2 gap-4">
             {THEME_COLORS.map(({ key, label, tooltip, defaultValue }) => (
               <ColorInput
@@ -248,33 +245,16 @@ export default function SettingsPage() {
               />
             ))}
           </div>
-        </div>
+        </Section>
 
-        {/* Feature Toggles */}
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">Feature Toggles</h2>
-          <div className="space-y-3">
-            {[
-              { key: 'isPublic', label: 'Site is public' },
-              { key: 'isRsvpEnabled', label: 'RSVPs open' },
-              { key: 'allowMaybe', label: 'Allow "Maybe" response' },
-              { key: 'enableMealPreference', label: 'Enable meal preference' },
-              { key: 'enableSongRequest', label: 'Enable song requests' },
-              { key: 'enableGuestbook', label: 'Enable guestbook' },
-              { key: 'homepageGalleryShuffle', label: 'Show homepage Moments photos in random order (a fresh order on each visit)' },
-            ].map(({ key, label }) => (
-              <label key={key} className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded"
-                  checked={!!(form[key])}
-                  onChange={e => set(key, e.target.checked)}
-                />
-                <span className="text-sm text-gray-700">{label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
+        <Section id="sharing" description="How the site appears in a browser tab, in search results, and when its link is shared.">
+          {text('siteTitle', 'Browser Tab Title', { tooltip: 'Shown in the browser tab and as the title when this page is shared as a link preview.' })}
+          {text('siteDescription', 'Browser Tab Description', { tooltip: 'Shown beneath the title in search results and link previews when this page is shared — not displayed anywhere on the site itself.' })}
+        </Section>
+
+        <Section id="other">
+          {toggle('enableGuestbook', 'Enable guestbook')}
+        </Section>
 
         {msg && (
           <p className={`text-sm ${msg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
@@ -282,14 +262,26 @@ export default function SettingsPage() {
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={saving || uploading.size > 0}
-          className="bg-gray-900 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-700 disabled:opacity-50 transition-colors"
-        >
-          {saving ? 'Saving…' : uploading.size > 0 ? 'Waiting for upload…' : 'Save Settings'}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            ref={saveButton}
+            type="submit"
+            disabled={saving || uploading.size > 0}
+            className="bg-gray-900 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          >
+            {busyLabel ?? 'Save Settings'}
+          </button>
+          {dirty && !msg && <span className="text-xs text-amber-600">Unsaved changes</span>}
+        </div>
       </form>
+
+      <FloatingSaveButton
+        saveButton={saveButton}
+        dirty={dirty}
+        onSave={save}
+        disabled={saving || uploading.size > 0}
+        label={busyLabel ?? 'Save changes'}
+      />
     </div>
   );
 }

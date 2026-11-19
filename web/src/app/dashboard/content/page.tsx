@@ -10,6 +10,7 @@ import { fitHeightUrl, thumbnailUrl } from '@/lib/upload';
 import DetailsPageEditor from '@/components/dashboard/DetailsPageEditor';
 import DressCodeSettingsEditor from '@/components/dashboard/DressCodeSettingsEditor';
 import { toLocalDateTimeInput, fromLocalDateTimeInput } from '@/lib/datetime';
+import { confirmDiscard } from '@/lib/unsavedChanges';
 
 type FieldType = 'text' | 'textarea' | 'datetime' | 'number' | 'checkbox' | 'email' | 'image' | 'images';
 
@@ -417,6 +418,7 @@ export default function ContentPage() {
   const visibleItems = listed.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
 
   const switchTab = (key: string) => {
+    if (key !== activeTab && !confirmDiscard()) return; // a settings form on this tab has unsaved changes
     setActiveTab(key);
     setEditingId(null);
     setFormState({});

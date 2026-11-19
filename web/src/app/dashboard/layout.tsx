@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { confirmLeave } from '@/lib/unsavedChanges';
 import {
   RxDashboard, RxGear, RxPerson, RxEnvelopeClosed,
   RxTable, RxImage, RxCalendar, RxExit, RxEyeOpen, RxPlay,
@@ -70,7 +71,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Profile
           </Link>
           <button
-            onClick={logout}
+            onClick={() => { if (confirmLeave()) logout(); }}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
           >
             <RxExit size={15} />
