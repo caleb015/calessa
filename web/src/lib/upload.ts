@@ -59,6 +59,16 @@ export function fitWidthUrl(url: string, width: number): string {
     : url;
 }
 
+/**
+ * A Cloudinary image scaled to at most `height` pixels tall, never cropped (keeps its own shape). A GIF
+ * becomes a light JPEG still, like `croppedUrl`. Other URLs are returned as-is.
+ */
+export function scaledToHeightUrl(url: string, height: number): string {
+  if (!url.includes('res.cloudinary.com') || !url.includes('/image/upload/f_auto,q_auto,c_limit,w_2400/')) return url;
+  const options = /\.gif$/i.test(url) ? `pg_${GIF_STILL_FRAME}/f_jpg,q_auto,c_limit,h_${height}` : `f_auto,q_auto,c_limit,h_${height}`;
+  return url.replace('/f_auto,q_auto,c_limit,w_2400/', `/${options}/`);
+}
+
 /** A Cloudinary image scaled down to at most `height` pixels tall (never cropped); other URLs as-is. */
 export function fitHeightUrl(url: string, height: number): string {
   return url.includes('res.cloudinary.com') && url.includes('/image/upload/f_auto,q_auto,c_limit,w_2400/')

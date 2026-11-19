@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import SettingsPage from '@/app/dashboard/settings/page';
 import ContentPage from '@/app/dashboard/content/page';
 import { adminApi } from '@/lib/adminApi';
-import { croppedUrl } from '@/lib/upload';
+import { croppedUrl, scaledToHeightUrl } from '@/lib/upload';
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn() }),
@@ -224,5 +224,18 @@ describe('croppedUrl', () => {
   it('turns a GIF into a light JPEG still taken a few frames in', () => {
     expect(croppedUrl(CLD('party', 'GIF'), 800, 600))
       .toBe('https://res.cloudinary.com/demo/image/upload/pg_10/f_jpg,q_auto,c_fill,g_auto,w_800,h_600/v1/calessa/party.GIF');
+  });
+});
+
+describe('scaledToHeightUrl', () => {
+  it('scales a Cloudinary photo to a height without cropping, and leaves other links alone', () => {
+    expect(scaledToHeightUrl(CLD('wide'), 800))
+      .toBe('https://res.cloudinary.com/demo/image/upload/f_auto,q_auto,c_limit,h_800/v1/calessa/wide.jpg');
+    expect(scaledToHeightUrl('https://example.com/a.jpg', 800)).toBe('https://example.com/a.jpg');
+  });
+
+  it('turns a GIF into a light JPEG still', () => {
+    expect(scaledToHeightUrl(CLD('party', 'gif'), 400))
+      .toBe('https://res.cloudinary.com/demo/image/upload/pg_10/f_jpg,q_auto,c_limit,h_400/v1/calessa/party.gif');
   });
 });
